@@ -96,13 +96,13 @@ class Host:
          traceback.print_exc(file=self.logger)
          return False
 
-   def add_service(self, port, proto, app, value):
+   def add_service(self, port, proto, value, uri=None, content=None, \
+                        username=None, password=None):
       service_name = "%s/%s" % (port, proto)
       if self.services.has_key(service_name):
          pass
-      else:
-         self.services[service_name] = Service(port, proto, app, value, \
-               self.logger)
+      self.services[service_name] = Service(port, proto, value, \
+               self.logger, uri, content, username, password)
 
    def check(self, this_round):
       score = int(self.value)
@@ -117,7 +117,7 @@ class Host:
             if percent_failed < 100:
                self.check_services(this_round)
             else:
-               self.max_services(this_round)
+               self.fail_services(this_round)
             if globalvars.binjitsu:
                score = int(self.value) - (int(self.value)*percent_failed/100)
             else:
@@ -129,7 +129,7 @@ class Host:
                   self.logger.err("%s scored: %s\n" % (self.hostname,score))
                pass
          else:
-            self.max_services(this_round)
+            self.fail_services(this_round)
       except:
          traceback.print_exc(file=self.logger)
       self.set_score(this_round, score)
@@ -156,13 +156,13 @@ class Host:
                (this_round, self.hostname, this_value))
       self.scores.set_score(this_round, this_value)
 
-   def max_services(self, this_round):   
+   def fail_services(self, this_round):   
       if globalvars.verbose:
-         self.logger.err("Maxing service scores for %s:\n" % self.hostname)
+         self.logger.err("Failing service scores for %s:\n" % self.hostname)
       services = self.services.keys()
       for service in services:
          if globalvars.verbose:
-            self.logger.err("\tMaxing for %s:" % service)
+            self.logger.err("\tFailing for %s:" % service)
          self.services[service].set_score(this_round)
 
    def get_score(self, this_round):
@@ -178,6 +178,17 @@ class Host:
          traceback.print_exc(file=self.logger)
          return False
 
+   def get_health(self):
+      service_hash = {}
+      for service in self.services:
+         name = "%s/%s" % (self.services[service].port, \
+                  self.services[service].protocol)
+         state = self.services[service].get_state()
+         if service_hash.has_key(name):
+            self.logger.err("Found duplicate service %s" % name)
+         else:
+            service_hash[name] = state
+      return service_hash
 
 
 def main():

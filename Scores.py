@@ -46,10 +46,13 @@ class Scores():
       return total   
 
    def get_score(self, this_round=None):
+      which_round = self.latest_round
+      score = 0
       if this_round:
-         return self.rounds[int(this_round)]
-      else:
-         return self.rounds[self.latest_round]
+         which_round = int(this_round)
+      if self.rounds.has_key(which_round):
+         score = self.rounds[which_round]
+      return score
 
    def set_score(self, this_round, value):
       self.rounds[int(this_round)] = int(value)

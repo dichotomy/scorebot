@@ -35,7 +35,7 @@ class Injects(threading.Thread):
    classdocs
    '''
 
-   def __init__(self, smtp_ip="192.168.100.56"):
+   def __init__(self, smtp_ip="10.150.100.70"):
       '''
       Constructor
       '''
@@ -47,8 +47,12 @@ class Injects(threading.Thread):
       self.smtp_ip = smtp_ip
       self.smtpserver = smtplib.SMTP()
       self.start_time = time.time()
-      self.to_addresses = ['"Blue Team 1" <blueteam@zencart.hec1.com>', \
-                           '"Blue Team 2" <blueteam@zencart.hec2.com>'] 
+      self.to_addresses = ['"Alpha" <alpha@alpha.net>', \
+                           '"Beta" <beta@beta.net>', \
+                           '"Gamma" <gamma@gamma.net>', \
+                           '"Delta" <delta@delta.net>', \
+                           '"Epsilon" <epsilon@epsilon.net>'
+                           ] 
       self.from_address = '"Gold Team" <earnoth@nagios-i3v1.ctf.com>'
       self.teams = []
       self.did_time = None

@@ -28,6 +28,7 @@ import Queue
 import random
 import threading
 import traceback
+import globalvars
 from Flag import Flag
 
 class FlagStore(threading.Thread):
@@ -55,17 +56,18 @@ class FlagStore(threading.Thread):
                name = self.find(flag)
                # Is this a real flag?
                if name:
+                  print "recieved %s from %s" % (thief, flag)
                   team = self.flags[name].get_team()
                   # Is this a real team?
                   if self.teams.has_key(team):
-                     if self.teams[team].has_key(flag):
-                        self.teams[team][flag].append(thief)
+                     if self.teams[team].has_key(name):
+                        self.teams[team][name].append(thief)
                      else:
-                        self.teams[team][flag] = [thief]
+                        self.teams[team][name] = [thief]
                      if self.theft.has_key(thief):
-                        self.theft[thief].append(flag) 
+                        self.theft[thief].append(name) 
                      else:
-                        self.theft[thief] = [flag]
+                        self.theft[thief] = [name]
                      if self.bandits.has_key(thief):
                         self.bandits[thief].append(name)
                      else:
@@ -89,9 +91,9 @@ class FlagStore(threading.Thread):
                   self.bandits[bandit] = []
                   self.logger.out("%s registered\n" % bandit)
             else:
-               self.logger.out("Unrecognized code %s" % msg_type)
-            time.sleep(1)
+               self.logger.out("Unrecognized code %s\n" % msg_type)
          except Queue.Empty, err:
+            time.sleep(1)
             pass
          except:
             my_traceback = traceback.format_exc()
@@ -106,6 +108,8 @@ class FlagStore(threading.Thread):
       self.logger.out("Team %s, round %s:\n" % (team, round))
       if self.theft.has_key(team):
          #on the board, not bad, but how much?...
+         for name in self.theft[team]:
+            stolen += self.flags[name].get_score()
          stolen = len(self.theft[team])
          self.logger.out("\tStole %s\n" % (",".join(self.theft[team])))
       else:
@@ -117,18 +121,22 @@ class FlagStore(threading.Thread):
          lost_flags = len(self.teams[team].keys())
          if lost_flags:
             # uhoh....
-            for flag in self.teams[team].keys():
-               lost += len(self.teams[team][flag])
+            for name in self.teams[team].keys():
+               score = self.flags[name].get_score()
+               lost += (len(self.teams[team][name]) * score)
             self.logger.out("\tLost %s\n" % 
                               (",".join(self.teams[team].keys())))
          else:
             # skillz!  (or...no worthy opponents... ;-)
             pass
       # do the math...
-      flag_score = stolen - (lost * .1)
+      if globalvars.binjitsu:
+         flag_score = stolen - (lost * .1)
+      else:
+         flag_score = lost
       return flag_score
 
-   def add(self, team, name, value):
+   def add(self, team, name, value, score=None):
       #initialize our score-keeping variables as new team names come in
       if self.teams.has_key(team):
          pass
@@ -139,9 +147,9 @@ class FlagStore(threading.Thread):
       else:
          self.theft[team] = []
       flag_name = "%s_%s" % (team, name)
-      self.logger.out("Adding %s:%s\n\tfor team %s\n" %
-                        (flag_name,value,team))
-      this_flag = Flag(team, flag_name, value)
+      self.logger.out("Adding %s:%s:%s\n\tfor team %s\n" %
+                        (flag_name,value,score,team))
+      this_flag = Flag(team, flag_name, value, score)
       flag_team = this_flag.get_team()
       flag_name = this_flag.get_name()
       flag_value = this_flag.get_value()
@@ -174,16 +182,14 @@ class FlagStore(threading.Thread):
    def get_lost(self, team):
       flags_by_name = []
       if self.teams.has_key(team):
-         for flag in self.teams[team].keys():
-            name = self.find(flag)
+         for name in self.teams[team].keys():
             flags_by_name.append(name)
       return flags_by_name
 
    def get_stolen(self, team):
       flags_by_name = []
       if self.theft.has_key(team):
-         for flag in self.theft[team]:
-            name = self.find(flag)
+         for name in self.theft[team]:
             flags_by_name.append(name)
       return flags_by_name
 
@@ -195,18 +201,6 @@ class FlagStore(threading.Thread):
       return raw_flags
 
    def get_bandits(self):
-      #flags_by_name = {}
-      #for thief in self.theft.keys():
-      #   if self.teams.has_key(thief):
-      #      continue
-      #   else:
-      #      for flag in self.theft[thief]:
-      #         flag = self.theft[thief]
-      #         name = self.find(flag)
-      #         if flags_by_name.has_key(thief):
-      #            flags_by_name[thief].append(name)
-      #         else:
-      #            flags_by_name[thief] = [name]
       return self.bandits
 
 

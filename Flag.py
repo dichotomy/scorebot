@@ -26,25 +26,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class Flag:
 
-   def __init__(self, team, name, value):
-       self.team = str(team)
-       self.name = str(name)
-       self.value = str(value)
+   def __init__(self, team, name, value, score=None):
+      self.team = str(team)
+      self.name = str(name)
+      self.value = str(value)
+      if score:
+         self.score = int(score)
+      else:
+         self.score = 1
 
    def get_team(self):
-       return self.team
+      return self.team
 
    def get_name(self):
-       return self.name
+      return self.name
 
    def get_value(self):
-       return self.value
+      return self.value
+
+   def get_score(self):
+      return self.score
 
    def set_team(self, team):
-       self.team = str(team)
+      self.team = str(team)
 
    def set_name(self, name):
-       self.name = str(name)
+      self.name = str(name)
 
    def set_value(self, value):
-       self.value = str(value)
+      self.value = str(value)
+
+   def set_score(self, score):
+      self.score = int(score)

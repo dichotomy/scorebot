@@ -40,9 +40,11 @@ from BlueTeam import BlueTeam
 from FlagStore import FlagStore
 from FlagServer import FlagServer
 from Scoreboard import Scoreboard
+from MessageStore import MessageStore
 
-shortargs = "hbc:vdq"
-longargs = ["help", "verbose", "debug", "quick", "binjitsu", "config="]
+shortargs = "hbc:vdqn"
+longargs = ["help", "verbose", "debug", "quick", "binjitsu", "config=", \
+            "nomovie"]
 team_header_re = re.compile("BLUETEAM (\S+)")
 inject_header_re = re.compile("INJECT (\S+):(\d+):(\d+) HEAD")
 inject_subject_re = re.compile("INJECT SUBJECT: (.*)$")
@@ -51,9 +53,14 @@ comment_re = re.compile("^#")
 comma_re = re.compile(",")
 dns_re = re.compile("DNS=")
 flag_re = re.compile("FLAG=(\S+),(.+)")
+uri_re = re.compile("uri:(.+)")
+password_re = re.compile("password:(.+)")
+username_re = re.compile("username:(.+)")
+content_re = re.compile("content:(.+)")
 host_configline_re = re.compile(".+:\d+=\d+/\w+-\d+")
 globalvars.verbose = False
 globalvars.binjitsu = False
+globalvars.nomovie = False
 usage_str = """
    Usage:  %s [options]
    
@@ -134,17 +141,32 @@ def read_config(cfg_file, flag_store):
          (hostname_value, services_values_str) = line.split("=")
          (hostname, value) = hostname_value.split(":")
          this_host = blues[this_team].add_host(hostname, value)
-         if comma_re.search(services_values_str):
-            services_values = services_values_str.split(",")
-            services = []
-            for service_value in services_values:
-               (service, value) = service_value.split("-")
-               (port, proto) = service.split("/")
-               blues[this_team].add_service(hostname, port, proto, value)
-         else:
-            (service, value) = services_values_str.split("-")
+         services_values = services_values_str.split(",")
+         services = []
+         for service_value in services_values:
+            parts = service_value.split("-")
+            (service, value) = parts[0:2]
+            remaining_parts = parts[2:]
+            content = None
+            uri = None
+            password = None
+            username = None
+            for part in remaining_parts:
+               if content_re.match(part):
+                  (content,) = content_re.match(part).groups()
+               elif uri_re.match(part):
+                  (uri,) = uri_re.match(part).groups()
+               elif password_re.match(part):
+                  (password,) = password_re.match(part).groups()
+               elif username_re.match(part):
+                  (username,) = username_re.match(part).groups()
+               else:
+                  sys.stderr.write("Bad config line: \n\t%s\n" % line)
+                  sys.stderr.write("Failure to parse service %s\n" % \
+                                    service_value)
             (port, proto) = service.split("/")
-            blues[this_team].add_service(hostname, port, proto, value)
+            blues[this_team].add_service(hostname, port, proto, value, \
+                                             uri, content, username, password)
       elif in_inject:
          injects.add_line(inject_name, line)
       elif dns_re.match(line):
@@ -153,10 +175,15 @@ def read_config(cfg_file, flag_store):
          dns = None
       elif flag_re.match(line):
          flag_match_obj = flag_re.match(line)
-         (name, value) = flag_match_obj.groups()
-         blues[this_team].add_flag(name, value)
+         parts = flag_match_obj.groups()
+         if len(parts) == 2:
+            (name, value) = parts
+            blues[this_team].add_flag(name, value)
+         elif len(parts) == 3:
+            (name, score, value) = parts
+            blues[this_team].add_flag(name, value, score)
       else:
-         sys.stderr.write("Warning, bad config line:\n\t%s" % line)
+         sys.stderr.write("Warning, bad config line:\n\t%s\n" % line)
    for team in blues.keys():
       injects.add_team(team)
    return blues
@@ -181,21 +208,28 @@ def main():
          globalvars.verbose = True
       elif o in ("-q", "--quick"):
          globalvars.quick = True
+      elif o in ("-q", "--quick"):
+         globalvars.quick = True
+      elif o in ("-n", "--nomovie"):
+         globalvars.nomovie = True
       else:
          assert False, "unhandled option"
-   queue_obj = Queue.Queue()
+   flag_queue_obj = Queue.Queue()
+   message_queue_obj = Queue.Queue()
    logger_obj = Logger("scorebot")
-   flag_store = FlagStore(logger_obj, queue_obj)
-   flag_server = FlagServer(logger_obj, queue_obj)
+   flag_store = FlagStore(logger_obj, flag_queue_obj)
+   message_store = MessageStore(logger_obj, message_queue_obj)
+   flag_server = FlagServer(logger_obj, flag_queue_obj, message_queue_obj)
    t = threading.Thread(target=flag_server.serve_forever)
    t.start()
    blue_teams = read_config(cfg_file, flag_store)      
-   myscoreboard = Scoreboard(blue_teams, flag_store)
+   myscoreboard = Scoreboard(blue_teams, flag_store, message_store)
    myscoreboard.start()
    for team in blue_teams.keys():
-      blue_teams[team].add_queue(queue_obj)
+      blue_teams[team].add_queue(flag_queue_obj)
       blue_teams[team].start()
    flag_store.start()
+   message_store.start()
    injects.start()   
 
 if __name__ == "__main__":

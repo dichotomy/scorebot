@@ -13,6 +13,7 @@ Scorebot runs best in Linux, but should work in Windows.
 Python 2.7 or greater is recommended.
 
 To install all dependencies on Python, run: 
+   apt-get install python-dnspython python-rrdtool apache2
 
 
 BUGS

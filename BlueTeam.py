@@ -75,6 +75,7 @@ class BlueTeam(threading.Thread):
       # Number of rounds finished
       self.this_round = 1 
       self.flag_store = flags
+      self.current_score = 0
 
    def add_flag(self, name, value):
       self.flag_store.add(self.teamname, name, value)
@@ -106,8 +107,7 @@ class BlueTeam(threading.Thread):
                      queue_str = self.teamname+"|"+str(self.this_round)
                      self.queue_obj.put(queue_str)
                      self.go_time += self.interval
-                     self.set_score(self.this_round)
-                     self.this_round += 1      
+                     self.set_score()
                   except:   
                      traceback.print_exc(file=self.logger)
                elif go_time_lt.tm_min == (rightnow_lt.tm_min + 1):
@@ -161,11 +161,13 @@ class BlueTeam(threading.Thread):
       else:   
          self.logger.err(del_host_blue_err_str % (self.teamname, hostname))
 
-   def add_service(self, hostname, port, proto, value, app=None):
+   def add_service(self, hostname, port, proto, value, uri=None, content=None, 
+                        username=None, password=None):
       if self.hosts.has_key(hostname):
          self.logger.err(add_srvc_blue_str % \
                (self.teamname, port, proto, value, hostname))
-         self.hosts[hostname].add_service(port, proto, app, value)
+         self.hosts[hostname].add_service(port, proto, value, uri, content, \
+                        username, password)
       else:   
          self.logger.err(add_srvc_blue_err_str % \
                (self.teamname, port, proto, hostname))
@@ -179,30 +181,49 @@ class BlueTeam(threading.Thread):
          self.logger.err(add_srvc_blue_err_str % \
                (self.teamname, port, proto, hostname))
 
-   def tally(self):      
-      this_round = self.this_round - 1
-      this_score = self.scores.total()
-      flag_score = self.flag_store.score(self.teamname, this_round)
-      final_score = this_score * flag_score
-      return [this_round, final_score]
+   def get_score(self, this_round=None):
+      if not this_round:
+         this_round = self.this_round - 1
+      this_score = self.scores.get_score(this_round)
+      return [this_round, this_score]
 
-   def set_score(self, this_round, value=None):
-      if value == None:
-         myscore = self.get_score(this_round)
-      else:
-         myscore = value
-      print "Blueteam %s round %s scored %s\n" % \
-              (self.teamname, this_round, myscore)
-      self.scores.set_score(this_round, myscore)
-      print "Blueteam %s tally: %s\n" % (self.teamname, self.tally())
-          
-
-   def get_score(self, this_round):
-      score = 0
+   def set_score(self, this_round=None, value=None):
+      if this_round and value:
+         this_round = self.this_round
+         self.scores.set_score(this_round, value)
+         return
+      myscore = 0
       hostlist = self.hosts.keys()
       for host in hostlist:
-         score += self.hosts[host].get_score(this_round)
-      return score
+         myscore += self.hosts[host].get_score(self.this_round)
+      if globalvars.binjitsu:
+         this_score = self.scores.get_score(self.this_round)
+         flag_score = self.flag_store.score(self.teamname, self.this_round)
+         round_score = (myscore * flag_score) 
+         self.current_score += round_score 
+      else:
+         this_score = self.scores.get_score(self.this_round)
+         flag_score = self.flag_store.score(self.teamname, self.this_round)
+         round_score = (myscore + (flag_score * 1000))
+         self.current_score += round_score 
+      print "Blueteam %s round %s scored %s for a new total of %s\n" % \
+              (self.teamname, self.this_round, round_score, self.current_score)
+      self.scores.set_score(self.this_round, self.current_score)
+      print "Blueteam %s tally: %s\n" % (self.teamname, self.get_score())
+      self.this_round += 1      
+
+   def get_health(self):
+      host_hash = {}
+      for host in self.hosts:
+         name = self.hosts[host].hostname
+         service_hash = self.hosts[host].get_health()
+         if host_hash.has_key(name):
+            self.logger.err("Found duplicate host %s" % name)
+         else:
+            host_hash[name] = service_hash
+      return host_hash
+
+
 
 def main():
    '''

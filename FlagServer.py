@@ -28,29 +28,58 @@ import SocketServer
 import globalvars
 import socket
 import re
+import random
+
+class Responses():
+
+   def __init__(self):
+      self.responses = []
+      self.add("What're you trying to pull?!")
+      self.add("LAAAAAAAAAAAAAAAAAAAME")
+      self.add("DOOD...seriously?!")
+      self.add("SECRET CODE:  %d" % random.randint(1000000000,10000000000))
+
+   def add(self, msg):
+      self.responses.append(msg)
+
+   def get_responses(self):
+      max_index = len(self.responses) - 1
+      index = random.randint(0, max_index)
+      return self.responses[index]
 
 class FlagHandler(SocketServer.BaseRequestHandler):
 
    def __init__(self, request, client_address, server):
+      # Flag submission
       self.msg_re = re.compile("(\S+),(.+)")
+      # Red Cell Registration
       self.reg_re = re.compile("(register:)(.+)")
+      # Change password(!)
+      self.change_re = re.compile("(change:)(.+)")
+      # Update Scorebot banner
+      self.message_re = re.compile("message:(.+)")
+      self.responses = Responses()
+      self.banner = "This is Scorebot v2.0, please send your request\nREQ> "
       SocketServer.BaseRequestHandler.__init__(self, request, client_address, server)
 
    def handle(self):
       # self.request is the client connection
+      self.request.send(self.banner)
       data = self.request.recv(1024)  # clip input at 1Kb
       if data:
          clean_data = data.strip()
+         # Flag submission
          if self.msg_re.match(clean_data):
             reply = self.msg_re.match(clean_data)
             self.server.logger.out("%s:%d sent |%s|\n" % 
                          (self.client_address[0], self.client_address[1], 
                           data.strip()))
             if reply:
-               self.server.queue.put([0, reply])
-               self.request.send(data)
+               self.server.flag_queue.put([0, reply])
+               self.request.send("ACK> %s" % data)
             else:
                self.request.send("What are you trying to pull?!?")
+         # Red cell registration      
          elif self.reg_re.match(clean_data):
             reply = self.reg_re.match(clean_data)
             (label, bandit) = reply.groups()
@@ -58,15 +87,31 @@ class FlagHandler(SocketServer.BaseRequestHandler):
                          (self.client_address[0], self.client_address[1], 
                           data.strip()))
             if reply:
-               self.server.queue.put([1, reply])
-               self.request.send("Registration for %s acknowledged" %
+               self.server.flag_queue.put([1, reply])
+               self.request.send("Registration for %s acknowledged\n" %
                                bandit)
             else:
+               self.mischief()
+         elif self.message_re.match(clean_data):
+            reply = self.message_re.match(clean_data)
+            (message,) = reply.groups()
+            self.server.logger.out("%s:%d sent |%s|\n" % 
+                         (self.client_address[0], self.client_address[1], 
+                          data.strip()))
+            if reply:
+               self.server.message_queue.put(message)
+               self.request.send("ACK> %s" % data)
+            else:
                self.request.send("What are you trying to pull?!?")
+         else:
+            self.mischief()
       else:
          self.server.logger.out("%s:%d sent null message\n" % 
                          (self.client_address[0], self.client_address[1]))
       self.request.close()
+
+   def mischief(self):
+      self.request.send("%s\n" % self.responses.get_response())
 
 
 class FlagServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
@@ -74,12 +119,14 @@ class FlagServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
    classdocs
    '''
 
-   def __init__(self, logger, queue, port=50007, handler=FlagHandler):
+   def __init__(self, logger, flag_queue, message_queue, port=50007, \
+                  handler=FlagHandler):
       '''
       Constructor
       '''
       self.logger = logger
-      self.queue = queue
+      self.flag_queue = flag_queue
+      self.message_queue = message_queue
       SocketServer.TCPServer.__init__(self, ('', port), handler)
       return
 
