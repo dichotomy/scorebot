@@ -42,7 +42,7 @@ class Inject(object):
       self.challenge = ""
       self.response = ""
       self.end_time = None
-      self.delivery = "\r\n\r\nThis task is to be completed by %s today.  Reply to this email with required materials when the task is complete." 
+      self.delivery = "\r\n\r\nThis task is to be completed by %s today."
       self.subject = ""
       self.scores = Scores()
 

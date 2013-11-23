@@ -51,13 +51,15 @@ class FlagHandler(SocketServer.BaseRequestHandler):
 
    def __init__(self, request, client_address, server):
       # Flag submission
-      self.msg_re = re.compile("(\S+),(.+)")
+      self.msg_re = re.compile("flag:(\S+),(.+)")
       # Red Cell Registration
       self.reg_re = re.compile("(register:)(.+)")
       # Change password(!)
       self.change_re = re.compile("(change:)(.+)")
       # Update Scorebot banner
       self.message_re = re.compile("message:(.+)")
+      # Integrity flags:  TEAM,FLAGVALUE
+      self.integrity_re = re.compile("integrity:(\S+),(.+)")
       self.responses = Responses()
       self.banner = "This is Scorebot v2.0, please send your request\nREQ> "
       SocketServer.BaseRequestHandler.__init__(self, request, client_address, server)
@@ -92,6 +94,7 @@ class FlagHandler(SocketServer.BaseRequestHandler):
                                bandit)
             else:
                self.mischief()
+         # Banner system update      
          elif self.message_re.match(clean_data):
             reply = self.message_re.match(clean_data)
             (message,) = reply.groups()
@@ -100,6 +103,17 @@ class FlagHandler(SocketServer.BaseRequestHandler):
                           data.strip()))
             if reply:
                self.server.message_queue.put(message)
+               self.request.send("ACK> %s" % data)
+            else:
+               self.request.send("What are you trying to pull?!?")
+         # Integrity flag submission
+         elif self.integrity_re.match(clean_data):
+            reply = self.integrity_re.match(clean_data)
+            self.server.logger.out("%s:%d sent |%s|\n" % 
+                         (self.client_address[0], self.client_address[1], 
+                          data.strip()))
+            if reply:
+               self.server.flag_queue.put([2, reply])
                self.request.send("ACK> %s" % data)
             else:
                self.request.send("What are you trying to pull?!?")

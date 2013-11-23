@@ -30,6 +30,7 @@ import threading
 import traceback
 import globalvars
 from Flag import Flag
+web_dir = "/var/www"
 
 class FlagStore(threading.Thread):
 
@@ -42,6 +43,7 @@ class FlagStore(threading.Thread):
       self.theft = {}
       self.bogus = {}
       self.bandits = {}
+      self.integrity = {}
 
    def run(self):
       while True:
@@ -90,6 +92,22 @@ class FlagStore(threading.Thread):
                else:
                   self.bandits[bandit] = []
                   self.logger.out("%s registered\n" % bandit)
+            elif msg_type == 2:
+               (team, flag) = match_obj.groups()
+               self.logger.out("Got integrity sumbission %s:%s\n" % (team,flag))
+               name = self.find(flag)
+               # Is this a real flag?
+                  if name:
+                     self.logger.out("Received %s from %s\n" % (flag, team))
+                  
+                  if self.integrity.has_key(team):
+                     self.integrity[team].append(name)
+                  else:
+                     self.integrity[team] = []
+                     self.integrity[team].append(name)
+               else:      
+                  msg = "Flag %s from team %s does not exist\n" 
+                  self.logger.err(msg % (flag, team))
             else:
                self.logger.out("Unrecognized code %s\n" % msg_type)
          except Queue.Empty, err:
@@ -115,7 +133,7 @@ class FlagStore(threading.Thread):
       else:
          # lame...get on with it!
          pass
-      # For larger games, we take points for lost flags - did they lose any???
+      # We take points for lost flags - did they lose any???
       if self.teams.has_key(team):
          # Let's see.....
          lost_flags = len(self.teams[team].keys())
@@ -129,11 +147,15 @@ class FlagStore(threading.Thread):
          else:
             # skillz!  (or...no worthy opponents... ;-)
             pass
+      if self.integrity.has_key(team):
+         integrity_score = len(self.integrity[team])
+         self.logger.out("\tIntegrity %s\n" % 
+                              (",".join(self.integrity[team])))
       # do the math...
       if globalvars.binjitsu:
-         flag_score = stolen - (lost * .1)
+         flag_score = stolen - (lost * .5) + integrity_score
       else:
-         flag_score = lost
+         flag_score = lost - integrity_score
       return flag_score
 
    def add(self, team, name, value, score=None):
@@ -146,6 +168,10 @@ class FlagStore(threading.Thread):
          pass
       else:
          self.theft[team] = []
+      if self.integrity.has_key(team):
+         pass
+      else:
+         self.integrity[team] = []
       flag_name = "%s_%s" % (team, name)
       self.logger.out("Adding %s:%s:%s\n\tfor team %s\n" %
                         (flag_name,value,score,team))
@@ -183,7 +209,16 @@ class FlagStore(threading.Thread):
       flags_by_name = []
       if self.teams.has_key(team):
          for name in self.teams[team].keys():
-            flags_by_name.append(name)
+            flag_only = name.replace(team+"_", "")
+            flags_by_name.append(flag_only)
+      return flags_by_name
+
+   def get_integrity(self, team):
+      flags_by_name = []
+      if self.integrity.has_key(team):
+         for name in self.integrity[team]:
+            flag_only = name.replace(team+"_", "")
+            flags_by_name.append(flag_only)
       return flags_by_name
 
    def get_stolen(self, team):

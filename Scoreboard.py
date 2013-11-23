@@ -353,6 +353,13 @@ class Scoreboard(threading.Thread):
                self.new_flag = True
       this_row = table_row % this_row
       this_table += this_row
+      # Integrity flags
+      this_row = table_cell % "Integrity"
+      for team in self.teams.keys():
+         flags = self.flag_store.get_integrity(team)
+         this_row += table_cell % "\n".join(flags)
+      this_row = table_row % this_row
+      this_table += this_row
       this_table = nowrap_table % this_table
       flag_text += this_table
       bandits = self.flag_store.get_bandits()

@@ -76,6 +76,7 @@ class BlueTeam(threading.Thread):
       self.this_round = 1 
       self.flag_store = flags
       self.current_score = 0
+      self.last_flag_score = 0
 
    def add_flag(self, name, value):
       self.flag_store.add(self.teamname, name, value)
@@ -106,7 +107,12 @@ class BlueTeam(threading.Thread):
                      self.check()
                      queue_str = self.teamname+"|"+str(self.this_round)
                      self.queue_obj.put(queue_str)
-                     self.go_time += self.interval
+                     now = time.time()
+                     new_go = self.go_time + self.interval
+                     if new_go < now:
+                        self.go_time = now + 60
+                     else:
+                        self.go_time = new_go
                      self.set_score()
                   except:   
                      traceback.print_exc(file=self.logger)
@@ -199,12 +205,22 @@ class BlueTeam(threading.Thread):
       if globalvars.binjitsu:
          this_score = self.scores.get_score(self.this_round)
          flag_score = self.flag_store.score(self.teamname, self.this_round)
-         round_score = (myscore * flag_score) 
+         if flag_score != self.last_flag_score:
+            this_flag_score = flag_score - self.last_flag_score
+            self.last_flag_score = flag_score
+         else:
+            this_flag_score = 0
+         round_score = (myscore * this_flag_score) 
          self.current_score += round_score 
       else:
          this_score = self.scores.get_score(self.this_round)
          flag_score = self.flag_store.score(self.teamname, self.this_round)
-         round_score = (myscore + (flag_score * 1000))
+         if flag_score != self.last_flag_score:
+            this_flag_score = flag_score - self.last_flag_score
+            round_score = (myscore + (this_flag_score * 1000))
+            self.last_flag_score = flag_score
+         else:
+            round_score = myscore
          self.current_score += round_score 
       print "Blueteam %s round %s scored %s for a new total of %s\n" % \
               (self.teamname, self.this_round, round_score, self.current_score)

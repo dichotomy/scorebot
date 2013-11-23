@@ -53,14 +53,14 @@ class Injects(threading.Thread):
                            '"Delta" <delta@delta.net>', \
                            '"Epsilon" <epsilon@epsilon.net>'
                            ] 
-      self.from_address = '"Gold Team" <earnoth@nagios-i3v1.ctf.com>'
+      self.from_address = '"Gold Team" <admin@goldteam.net>'
       self.teams = []
       self.did_time = None
 
    def run(self):
       #wait until an hour after gametime
       self.logger.out("Starting inject engine\n")
-      interval = 15 * 60
+      interval = 10 * 60
       for name in self.injects.keys():
          go_time = time.time()
          self.injects[name].schedule(go_time)

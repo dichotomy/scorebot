@@ -131,7 +131,7 @@ def read_config(cfg_file, flag_store):
          in_inject = False
       elif inject_subject_re.match(line):
          inject_subject_re_obj = inject_subject_re.match(line)
-         subject = inject_subject_re_obj.groups() 
+         subject = inject_subject_re_obj.groups()[0] 
          injects.set_subject(inject_name, subject)
       elif host_configline_re.search(line):
          if in_inject:
