@@ -39,11 +39,10 @@ def get_blueTeams(config, flag_store):
     for b in raw_blueteams:
         blueteam_json = json.loads(b)
         this_team = blueteam_json['name']
-        print this_team
         blues[this_team] = BlueTeam(this_team, start_time, flag_store)
         blues[this_team].add_dns(blueteam_json['dns'])
         for host in blueteam_json['hosts'].keys():
-            host_dict = blueteam_json[this_team][host]
+            host_dict = blueteam_json['hosts'][host]
             hostname = host_dict['hostname']
             score = host_dict['score']
             services = host_dict['services']
@@ -71,7 +70,11 @@ def get_blueTeams(config, flag_store):
                 blues[this_team].add_service(hostname, port, protocol,
                                              service_score, uri, content,
                                              username, password)
-                return blues
+        flags = blueteam_json['flags']
+        for flagname in blueteam_json['flags'].keys():
+            flagvalue = flags[flagname]
+            blues[this_team].add_flag(flagname, flagvalue)
+    return blues
 
 # config.close()
 
@@ -79,4 +82,4 @@ if __name__ == '__main__':
     flag_queue_obj = Queue.Queue()
     logger_obj = Logger("scorebot_test")
     flag_store = FlagStore(logger_obj, flag_queue_obj)
-    get_blueTeams(blueteams_cfg, flag_store)
+    blue_teams = get_blueTeams(blueteams_cfg, flag_store)

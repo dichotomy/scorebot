@@ -91,7 +91,8 @@
                                  "port" : "80",
                                  "protocol" : "tcp",
                                  "uri" : "dokuwiki/doku.php",
-                                 "content" : "DokuWiki snapshot"
+                                 "content" : "DokuWiki snapshot",
+                                 "service_score" : 50
                                },
                                {
                                  "port" : "22",
@@ -218,7 +219,8 @@
                                  "port" : "80",
                                  "protocol" : "tcp",
                                  "uri" : "dokuwiki/doku.php",
-                                 "content" : "DokuWiki snapshot"
+                                 "content" : "DokuWiki snapshot",
+                                 "service_score" : 50
                                },
                                {
                                  "port" : "22",
@@ -345,7 +347,8 @@
                                  "port" : "80",
                                  "protocol" : "tcp",
                                  "uri" : "dokuwiki/doku.php",
-                                 "content" : "DokuWiki snapshot"
+                                 "content" : "DokuWiki snapshot",
+                                 "service_score" : 50
                                },
                                {
                                  "port" : "22",
