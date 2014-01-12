@@ -1,6 +1,8 @@
 {
     "name" : "BLUETEAM ALPHA",
     "dns" : "10.150.101.100",
+    "team_score" : 0,
+    "current_round" : 1,
     "hosts" : {
         "domain" : {
                     "hostname" : "domain.alpha.net",
@@ -129,6 +131,8 @@
 {
     "name" : "BLUETEAM GAMMA",
     "dns" : "10.150.103.100",
+    "team_score" : 0,
+    "current_round" : 1,
     "hosts" : {
         "domain" : {
                     "hostname" : "domain.gamma.net",
@@ -257,6 +261,8 @@
 {
     "name" : "BLUETEAM DELTA",
     "dns" : "10.150.104.100",
+    "team_score" : 0,
+    "current_round" : 1,
     "hosts" : {
         "domain" : {
                     "hostname" : "domain.delta.net",

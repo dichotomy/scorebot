@@ -23,14 +23,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
 class Pwner(object):
-   '''
-   classdocs
-   '''
+    '''
+    classdocs
+    '''
 
 
-   def __init__(self, name):
-      '''
-      Constructor
-      '''
-      self.name = name
-      self.scores = Scores()
+    def __init__(self, name):
+        '''
+        Constructor
+        '''
+        self.name = name
+        self.scores = Scores()

@@ -32,27 +32,27 @@ import globalvars
 
 class MessageStore(threading.Thread):
 
-   def __init__(self, logger, queue):
-      threading.Thread.__init__(self)
-      self.logger = logger
-      self.queue_obj = queue
-      self.messages = []
-      self.current_message = "This is Scorebot v1.0"
-      self.messages.append(self.current_message)
+    def __init__(self, logger, queue):
+        threading.Thread.__init__(self)
+        self.logger = logger
+        self.queue_obj = queue
+        self.messages = []
+        self.current_message = "This is Scorebot v1.0"
+        self.messages.append(self.current_message)
 
-   def run(self):
-      while True:
-         message = None
-         try:
-            self.current_message = self.queue_obj.get(True, 1)
-            self.messages.append(self.current_message)
-         except Queue.Empty, err:
-            time.sleep(1)
-            pass
-         except:
-            my_traceback = traceback.format_exc()
-            err = sys.exc_info()[0]
-            self.logger.out("Had a problem: %s\n%s\n" % (err, my_traceback))
-  
-   def get_message(self):
-      return self.current_message
+    def run(self):
+        while True:
+            message = None
+            try:
+                self.current_message = self.queue_obj.get(True, 1)
+                self.messages.append(self.current_message)
+            except Queue.Empty, err:
+                time.sleep(1)
+                pass
+            except:
+                my_traceback = traceback.format_exc()
+                err = sys.exc_info()[0]
+                self.logger.out("Had a problem: %s\n%s\n" % (err, my_traceback))
+
+    def get_message(self):
+        return self.current_message

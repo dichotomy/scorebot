@@ -23,41 +23,41 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
 class Scores():
-   '''
-   classdocs
-   '''
+    '''
+    classdocs
+    '''
 
 
-   def __init__(self):
-      '''
-      Constructor
-      '''
-      self.latest_round = 1
-      self.rounds = {}
+    def __init__(self):
+        '''
+        Constructor
+        '''
+        self.latest_round = 1
+        self.rounds = {}
 
-   def new_score(self, value):
-      self.latest_round += 1
-      self.rounds[self.latest_round] = int(value)
+    def new_score(self, value):
+        self.latest_round += 1
+        self.rounds[self.latest_round] = int(value)
 
-   def total(self):
-      total = 0
-      for this_round in self.rounds.keys():
-         total += self.rounds[this_round]
-      return total   
+    def total(self):
+        total = 0
+        for this_round in self.rounds.keys():
+            total += self.rounds[this_round]
+        return total
 
-   def get_score(self, this_round=None):
-      which_round = self.latest_round
-      score = 0
-      if this_round:
-         which_round = int(this_round)
-      if self.rounds.has_key(which_round):
-         score = self.rounds[which_round]
-      return score
+    def get_score(self, this_round=None):
+        which_round = self.latest_round
+        score = 0
+        if this_round:
+            which_round = int(this_round)
+        if self.rounds.has_key(which_round):
+            score = self.rounds[which_round]
+        return score
 
-   def set_score(self, this_round, value):
-      self.rounds[int(this_round)] = int(value)
-      all_rounds = self.rounds.keys()
-      self.latest_rounds = max(all_rounds)
+    def set_score(self, this_round, value):
+        self.rounds[int(this_round)] = int(value)
+        all_rounds = self.rounds.keys()
+        self.latest_rounds = max(all_rounds)
 
-   def dump(self):
-      print self.rounds
+    def dump(self):
+        print self.rounds
