@@ -388,6 +388,8 @@ class Scoreboard(threading.Thread):
             graphs = ""
             for team in self.teams.keys():
                 # render the graphs
+                print team
+                print type(team)
                 round_score = self.teams[team].get_score()
                 this_round = round_score[0]
                 score = round_score[1]
