@@ -80,7 +80,7 @@ def get_blueTeams(config, flag_store):
     for b in raw_blueteams:
         blueteam_json = json.loads(b)
         #db.testgame.insert(blueteam_json)
-        this_team = blueteam_json['name']
+        this_team = str(blueteam_json['name'])
         blues[this_team] = BlueTeam(this_team, start_time, flag_store)
         blues[this_team].add_dns(blueteam_json['dns'])
         for host in blueteam_json['hosts'].keys():
