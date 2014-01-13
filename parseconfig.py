@@ -16,7 +16,7 @@ from Injects import Injects
 from BlueTeam import BlueTeam
 from FlagStore import FlagStore
 from Logger import Logger
-import pymongo
+#import pymongo
 # from pprint import pprint
 
 shortargs = "hbc:vdqn"
@@ -71,15 +71,15 @@ def usage():
 
 
 def get_blueTeams(config, flag_store):
-    conn = pymongo.MongoClient()
-    db = conn.scorebot
+    #conn = pymongo.MongoClient()
+    #db = conn.scorebot
     blues = {}
     start_time = make_start_time()
     this_team = None
     raw_blueteams = config.split(",\n\n")
     for b in raw_blueteams:
         blueteam_json = json.loads(b)
-        db.testgame.insert(blueteam_json)
+        #db.testgame.insert(blueteam_json)
         this_team = blueteam_json['name']
         blues[this_team] = BlueTeam(this_team, start_time, flag_store)
         blues[this_team].add_dns(blueteam_json['dns'])
@@ -108,7 +108,7 @@ def get_blueTeams(config, flag_store):
                     username = None
                 port = service['port']
                 protocol = service['protocol']
-                service_score = service['service_score']
+                service_score = str(service['service_score'])
                 blues[this_team].add_service(hostname, port, protocol,
                                              service_score, uri, content,
                                              username, password)
