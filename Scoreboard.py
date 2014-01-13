@@ -394,7 +394,7 @@ class Scoreboard(threading.Thread):
                 this_round = round_score[0]
                 score = round_score[1]
                 scores += self.latest_scores[team] % (this_round, team, score)
-                self.rrd_update(team, score)
+                self.rrd_update(str(team), score)
                 self.rrd_graph(team)
                 team_imgfilename = "%s.png" % team
                 graphs += graph_line % team_imgfilename
