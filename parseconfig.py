@@ -82,40 +82,40 @@ def get_blueTeams(config, flag_store):
         #db.testgame.insert(blueteam_json)
         this_team = str(blueteam_json['name'])
         blues[this_team] = BlueTeam(this_team, start_time, flag_store)
-        blues[this_team].add_dns(blueteam_json['dns'])
+        blues[this_team].add_dns(str(blueteam_json['dns']))
         for host in blueteam_json['hosts'].keys():
             host_dict = blueteam_json['hosts'][host]
-            hostname = host_dict['hostname']
-            score = host_dict['score']
+            hostname = str(host_dict['hostname'])
+            score = str(host_dict['score'])
             services = host_dict['services']
             blues[this_team].add_host(hostname, score)
             for service in services:
                 try:
-                    content = service['content']
+                    content = str(service['content'])
                 except:
                     content = None
                 try:
-                    uri = service['uri']
+                    uri = str(service['uri'])
                 except:
                     uri = None
                 try:
-                    password = service['password']
+                    password = str(service['password'])
                 except:
                     password = None
                 try:
-                    username = service['username']
+                    username = str(service['username'])
                 except:
                     username = None
-                port = service['port']
-                protocol = service['protocol']
+                port = str(service['port'])
+                protocol = str(service['protocol'])
                 service_score = str(service['service_score'])
                 blues[this_team].add_service(hostname, port, protocol,
                                              service_score, uri, content,
                                              username, password)
         flags = blueteam_json['flags']
         for flagname in blueteam_json['flags'].keys():
-            flagvalue = flags[flagname]
-            blues[this_team].add_flag(flagname, flagvalue)
+            flagvalue = str(flags[flagname])
+            blues[this_team].add_flag(str(flagname), flagvalue)
     return blues
 
 
