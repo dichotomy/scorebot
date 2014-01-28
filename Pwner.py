@@ -5,7 +5,7 @@ Created on Dec 18, 2011
 
 Pwner.py is a module in the scorebot program.  It's purpose is to track pwnerships.
 
-Copyright (C) 2011  Dichotomy
+Copyright (C) 2011   Dichotomy
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -23,14 +23,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
 class Pwner(object):
-    '''
-    classdocs
-    '''
+   '''
+   classdocs
+   '''
 
 
-    def __init__(self, name):
-        '''
-        Constructor
-        '''
-        self.name = name
-        self.scores = Scores()
+   def __init__(self, name):
+      '''
+      Constructor
+      '''
+      self.name = name
+      self.scores = Scores()
