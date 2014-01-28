@@ -28,13 +28,15 @@ import Queue
 import random
 import threading
 import traceback
+import time
 import globalvars
 from Flag import Flag
 web_dir = "/var/www"
+from pymongo import MongoClient
 
 class FlagStore(threading.Thread):
 
-    def __init__(self, logger, queue):
+    def __init__(self, logger, queue, dbname):
         threading.Thread.__init__(self)
         self.logger = logger
         self.queue_obj = queue
@@ -44,6 +46,9 @@ class FlagStore(threading.Thread):
         self.bogus = {}
         self.bandits = {}
         self.integrity = {}
+        self.conn = MongoClient()
+        self.db = self.conn[dbname]
+
 
     def run(self):
         while True:
@@ -72,6 +77,8 @@ class FlagStore(threading.Thread):
                                 self.theft[thief] = [name]
                             if self.bandits.has_key(thief):
                                 self.bandits[thief].append(name)
+                                self.db.bandits.update({"bandit_name": thief},
+                                                    {"$push": {"stolen": name}})
                             else:
                                 pass #do nothing, because bandits need to reg
                         else:
@@ -91,6 +98,8 @@ class FlagStore(threading.Thread):
                         self.logger.out(msg)
                     else:
                         self.bandits[bandit] = []
+                        self.db.bandits.insert({"bandit_name": bandit,
+                                               "stolen": []})
                         self.logger.out("%s registered\n" % bandit)
                 elif msg_type == 2:
                     (team, flag) = match_obj.groups()

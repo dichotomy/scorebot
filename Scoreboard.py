@@ -221,7 +221,7 @@ graph_line = "<img src=\"%s\">"
 
 class Scoreboard(threading.Thread):
 
-    def __init__(self, teams, flag_store, message_store):
+    def __init__(self, teams, flag_store, message_store, current_round=0):
         threading.Thread.__init__(self)
         self.logger = Logger("Scoreboard")
         self.teams = teams
@@ -233,7 +233,7 @@ class Scoreboard(threading.Thread):
         self.flag_store = flag_store
         self.message_store = message_store
         self.team_scores = {}
-        self.current_round = 0
+        self.current_round = current_round
         self.all_flags_found = []
         self.new_flag = False
         self.movie_dir = "/var/www/movies/"

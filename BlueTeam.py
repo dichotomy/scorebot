@@ -48,11 +48,13 @@ class BlueTeam(threading.Thread):
     classdocs
     '''
 
-    def __init__(self, teamname, start_time, flags, queue=None, interval=300):
+    def __init__(self, teamname, start_time, flags, this_round=1, current_score=0, id=None, db=None, queue=None, interval=300):
         '''
         Constructor
         '''
         threading.Thread.__init__(self)
+        self.id = id
+        self.db = db
         self.queue_obj = queue
         now = time.strftime("%Y %b %d %H:%M:%S", time.localtime(time.time()))
         self.dns = dns.resolver.Resolver()
@@ -73,9 +75,9 @@ class BlueTeam(threading.Thread):
         self.interval = interval
         self.did_time = None
         # Number of rounds finished
-        self.this_round = 1
+        self.this_round = this_round
         self.flag_store = flags
-        self.current_score = 0
+        self.current_score = current_score
         self.last_flag_score = 0
 
     def add_flag(self, name, value):
@@ -227,6 +229,8 @@ class BlueTeam(threading.Thread):
         self.scores.set_score(self.this_round, self.current_score)
         print "Blueteam %s tally: %s\n" % (self.teamname, self.get_score())
         self.this_round += 1
+        self.db.update({"_id": self.id}, {"$set": {"current_round": self.this_round}})
+        self.db.update({"_id": self.id}, {"$set": {"team_score": self.current_score}})
 
     def get_health(self):
         host_hash = {}
