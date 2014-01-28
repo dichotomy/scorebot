@@ -47,7 +47,7 @@ class Service:
    '''
 
    def __init__(self, port, protocol, value, logger, uri="index.html", \
-                     content=None, username=None, password=None):
+                 content=None, username=None, password=None):
       '''
       Constructor
       '''
@@ -67,16 +67,16 @@ class Service:
       if password:
          self.password = password
       else:
-         self.password = "abcd1234" 
+         self.password = "abcd1234"
       if username:
          self.username = username
       else:
          self.username = "blueteam"
-      self.mail_re = re.compile("220")   
+      self.mail_re = re.compile("220")
 
    def check(self, this_round, ipaddress, timeout):
       service_name = "%s/%s" % (self.port, self.protocol)
-      myscore = self.value 
+      myscore = self.value
       if tcp_80_re.match(service_name):
          ############################################
          try:
@@ -88,7 +88,7 @@ class Service:
             mysock.settimeout(timeout)
             if globalvars.verbose:
                self.logger.err("connected!\n")
-         except:   
+         except:
             if globalvars.verbose:
                self.logger.err("there was a problem...\n")
             myscore = self.value * 1
@@ -188,7 +188,7 @@ class Service:
          try:
             if globalvars.verbose:
                self.logger.err("\t\t\tTrying to login with %s and %s..." % \
-                                 (self.username, self.password))
+                             (self.username, self.password))
             myftp.login(self.username, self.password)
             if globalvars.verbose:
                self.logger.err("success!\n")
@@ -250,7 +250,7 @@ class Service:
             mysock.settimeout(timeout)
             if globalvars.verbose:
                self.logger.err("connected!\n")
-         except:   
+         except:
             if globalvars.verbose:
                self.logger.err("there was a problem...\n")
             myscore = self.value * 1
@@ -312,7 +312,7 @@ class Service:
             myscore = self.value * 0
             self.set_score(this_round, myscore)
             return myscore
-         except:   
+         except:
             if globalvars.verbose:
                self.logger.err("there was a problem...\n")
             myscore = self.value * 1
@@ -344,9 +344,9 @@ class Service:
       else:
          this_value = value
       self.logger.out("Round %s service %s score %s\n" % \
-               (this_round, service_name, this_value))
+             (this_round, service_name, this_value))
       self.logger.err("Round %s service %s score %s\n" % \
-               (this_round, service_name, this_value))
+             (this_round, service_name, this_value))
       self.scores.set_score(this_round, this_value)
 
    def get_state(self):

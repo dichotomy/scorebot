@@ -3,7 +3,7 @@ Created on Dec 29, 2011
 
 @author: dichotomy@riseup.net
 
-Scoreboard.py is a module in the scorebot program.  It produces the scorebaord HTML pages.
+Scoreboard.py is a module in the scorebot program. It produces the scorebaord HTML pages.
 
 Copyright (C) 2011 Dichotomy
 
@@ -42,21 +42,21 @@ flags_filename = "flags.html"
 scoreboard_filename = "ctf_scoreboard.html"
 
 movie_html = '''<HTML><HEAD>
-      <TITLE>Movie Frame</TITLE>
-      <script type="text/javascript" src="/jwplayer/jwplayer.js"></script>
-      <meta http-equiv="refresh" content="%s">
+     <TITLE>Movie Frame</TITLE>
+     <script type="text/javascript" src="/jwplayer/jwplayer.js"></script>
+     <meta http-equiv="refresh" content="%s">
 </HEAD>
 
-<BODY bgcolor="000000"> 
+<BODY bgcolor="000000">
    <div id="myElement">Loading the player...</div>
 
    <script type="text/javascript">
-      jwplayer("myElement").setup({
-        file: "%s",
-        autostart: true,
-        width:  "100%%",
-        height:  "100%%"
-      });
+     jwplayer("myElement").setup({
+      file: "%s",
+      autostart: true,
+      width:   "100%%",
+      height:  "100%%"
+     });
    </script>
 </BODY></HTML> '''
 
@@ -64,67 +64,67 @@ style = '''
 <style type="text/css">
 body
 {
-        background-color:#000000;
+      background-color:#000000;
 }
 
 h1
 {
-        color:orange;
-        text-align:center;
-        color:#00aa00;
+      color:orange;
+      text-align:center;
+      color:#00aa00;
 }
 
 marquee
 {
-        font-family:"Courier";
-        font-size:48px;
-        color:#00aa00;
+      font-family:"Courier";
+      font-size:48px;
+      color:#00aa00;
 }
 
 p
 {
-        font-family:"Courier";
-        font-size:18px;
-        color:#00aa00;
+      font-family:"Courier";
+      font-size:18px;
+      color:#00aa00;
 }
 
 th
 {
-        font-family:"Courier";
-        font-size:24px;
-        color:#FF9900;
+      font-family:"Courier";
+      font-size:24px;
+      color:#FF9900;
 }
 
 td
 {
-        font-family:"Courier";
-        font-size:24px;
-        color:#00aa00;
-}       
+      font-family:"Courier";
+      font-size:24px;
+      color:#00aa00;
+}
 
 td.green
 {
-        font-family:"Courier";
-        font-size:24px;
-        color:#ffffff;
-        background-color:#00aa00;
-}       
+      font-family:"Courier";
+      font-size:24px;
+      color:#ffffff;
+      background-color:#00aa00;
+}
 
 td.yellow
 {
-        font-family:"Courier";
-        font-size:24px;
-        color:#000000;
-        background-color:#ffff00;
-}       
+      font-family:"Courier";
+      font-size:24px;
+      color:#000000;
+      background-color:#ffff00;
+}
 
 td.red
 {
-        font-family:"Courier";
-        font-size:24px;
-        color:#000000;
-        background-color:#ff0000;
-}       
+      font-family:"Courier";
+      font-size:24px;
+      color:#000000;
+      background-color:#ff0000;
+}
 
 
 </style>
@@ -135,23 +135,23 @@ header = "<html><head>%s</head>" % style
 ccdc_scoreboard_html = '''
 <html>
    <head>
-      <title>CTF Current Score</title>
-      <meta http-equiv="refresh" content="10">
+     <title>CTF Current Score</title>
+     <meta http-equiv="refresh" content="10">
    </head>
    <frameset cols="40%%,*">
-      <frameset rows="30%%,70%%">
-         <frame src="%s">
-         <frame src="%s">
-      </frameset> <frameset rows="50%%,50%%">
-         <frameset rows="50%%,50%%">
-            <frame src="bt1injects.html">
-            <frame src="bt1pwnage.html">
-         </frameset>
-         <frameset rows="50%%,50%%">
-            <frame src="bt2injects.html">
-            <frame src="bt2pwnage.html">
-         </frameset>
-      </frameset>
+     <frameset rows="30%%,70%%">
+       <frame src="%s">
+       <frame src="%s">
+     </frameset> <frameset rows="50%%,50%%">
+       <frameset rows="50%%,50%%">
+         <frame src="bt1injects.html">
+         <frame src="bt1pwnage.html">
+       </frameset>
+       <frameset rows="50%%,50%%">
+         <frame src="bt2injects.html">
+         <frame src="bt2pwnage.html">
+       </frameset>
+     </frameset>
    </frameset>
 </html>
 ''' % (score_filename, graph_filename)
@@ -159,18 +159,18 @@ ccdc_scoreboard_html = '''
 binjitsu_scoreboard_html = '''
 <html>
    <head>
-      <title>CTF Current Score</title>
-      <meta http-equiv="refresh" content="10">
+     <title>CTF Current Score</title>
+     <meta http-equiv="refresh" content="10">
    </head>
    <frameset rows="5%%,*">
-      <frame src="marquee.html">
-      <frameset cols="30%%,*">
-         <frameset rows="30%%,70%%">
-            <frame src="%s">
-            <frame src="flags.html">
-         </frameset>
+     <frame src="marquee.html">
+     <frameset cols="30%%,*">
+       <frameset rows="30%%,70%%">
          <frame src="%s">
-      </frameset>
+         <frame src="flags.html">
+       </frameset>
+       <frame src="%s">
+     </frameset>
    </frameset>
 </html>
 ''' % (scores_filename, health_filename)
@@ -178,13 +178,13 @@ binjitsu_scoreboard_html = '''
 #if globalvars.binjitsu:
 scoreboard_html = binjitsu_scoreboard_html
 #else:
-#   scoreboard_html = ccdc_scoreboard_html
+#  scoreboard_html = ccdc_scoreboard_html
 
-score_html = header + "<body><H1>%s</H1></body></html>" 
+score_html = header + "<body><H1>%s</H1></body></html>"
 
-marquee_html = header + "<body><marquee behavior=\"scroll\" direction=\"left\" scrollamount=\"20\">%s</marquee></body></html>" 
+marquee_html = header + "<body><marquee behavior=\"scroll\" direction=\"left\" scrollamount=\"20\">%s</marquee></body></html>"
 
-scores_html = header + "<body><h1>Score</h><br>%s</body></html>" 
+scores_html = header + "<body><h1>Score</h><br>%s</body></html>"
 
 graph_html = header + "<body>%s</body></html>"
 
@@ -221,7 +221,7 @@ graph_line = "<img src=\"%s\">"
 
 class Scoreboard(threading.Thread):
 
-   def __init__(self, teams, flag_store, message_store):
+   def __init__(self, teams, flag_store, message_store, current_round=0):
       threading.Thread.__init__(self)
       self.logger = Logger("Scoreboard")
       self.teams = teams
@@ -233,7 +233,7 @@ class Scoreboard(threading.Thread):
       self.flag_store = flag_store
       self.message_store = message_store
       self.team_scores = {}
-      self.current_round = 0
+      self.current_round = current_round
       self.all_flags_found = []
       self.new_flag = False
       self.movie_dir = "/var/www/movies/"
@@ -314,7 +314,7 @@ class Scoreboard(threading.Thread):
                      this_row += table_cell_green % health
                   else:
                      self.logger.err("Unknown health status %s for %s\n" % \
-                           (health, host+service))
+                          (health, host+service))
                else:
                   this_row += table_cell % ""
             this_row = table_row % this_row
@@ -367,10 +367,10 @@ class Scoreboard(threading.Thread):
       for bandit in bandits.keys():
          flags = ", ".join(bandits[bandit])
          flag_subtext = flags_sub_section % \
-                       (("<p>Flags Stolen by %s" % bandit), flags)
+                    (("<p>Flags Stolen by %s" % bandit), flags)
          flag_final_txt += flag_subtext
       flag_text += flags_team_section % \
-                         ("<p>Redcell", flag_final_txt)
+                     ("<p>Redcell", flag_final_txt)
       # write the flags file
       flags_file = open("%s/%s" % (web_dir, flags_filename), "w")
       flags_file.write(flags_html % flag_text)
@@ -388,6 +388,8 @@ class Scoreboard(threading.Thread):
          graphs = ""
          for team in self.teams.keys():
             # render the graphs
+            print team
+            print type(team)
             round_score = self.teams[team].get_score()
             this_round = round_score[0]
             score = round_score[1]
@@ -405,7 +407,7 @@ class Scoreboard(threading.Thread):
             (movie_time, movie) = self.pick_movie()
             movie_name = "movies/%s" % movie
             self.logger.out("picked movie %s, length %s" % \
-                     (movie_name, movie_time))
+                   (movie_name, movie_time))
             if movie_name:
                scoreboard.write(movie_html % (movie_time, movie_name))
                self.new_flag = False
@@ -426,7 +428,7 @@ class Scoreboard(threading.Thread):
          full_filename = os.path.join(self.movie_dir, filename)
          try:
             p = subprocess.Popen(["ffmpeg", "-i", full_filename], \
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = p.communicate()
          except:
             self.logger.err("Error processing movie:\n%s\n" % full_filename)
@@ -435,12 +437,12 @@ class Scoreboard(threading.Thread):
             match_obj = self.duration_re.search(err)
          else:
             self.logger.err("Error processing movie:%s\n%s\n" % \
-                                 (full_filename, err))
+                            (full_filename, err))
             next
          (hrs, mins, secs, dec) = match_obj.groups()
          if hrs > 0:
             next
-         time = secs + str(int(mins) * 60) 
+         time = secs + str(int(mins) * 60)
          movies[filename] = time
       if len(movies) > 0:
          options = movies.keys()
@@ -457,25 +459,25 @@ class Scoreboard(threading.Thread):
          pass
       else:
          rrdtool.create(rrdfilename,"-s", "300",\
-               "DS:GrandTotal:GAUGE:600:-1250000:12500003",\
-               "RRA:LAST:0.5:1:50")
+              "DS:GrandTotal:GAUGE:600:-1250000:12500003",\
+              "RRA:LAST:0.5:1:50")
       self.logger.out("Updating RRD for team %s with score %s\n" % \
-            (team, score))   
+           (team, score))
       rrdtool.update(rrdfilename, "-t", "GrandTotal", "N:%s" % score)
 
    def rrd_graph(self, team):
       rrdfilename = "%s.rrd" % team
       imgfilename = "%s/%s.png" % (web_dir, team)
       rrdtool.graph(imgfilename, \
-            "-s", "-14h",\
-            "-t", "Total score for %s" % team, \
-            "--lazy", \
-            "-h", "300", "-w", "500", \
-            "-l 0", "-a", "PNG", \
-            "-v Points", \
-            "DEF:GrandTotal=%s:GrandTotal:LAST" % rrdfilename,
-            "AREA:GrandTotal#AA0000:Points",\
-            "LINE1:GrandTotal#FF0000",\
-            "GPRINT:GrandTotal:MAX:  Max\\: %5.1lf %s",\
-            "GPRINT:GrandTotal:LAST: Current\\: %5.1lf %Spoints\\n",\
-            "HRULE:0#000000")
+           "-s", "-14h",\
+           "-t", "Total score for %s" % team, \
+           "--lazy", \
+           "-h", "300", "-w", "500", \
+           "-l 0", "-a", "PNG", \
+           "-v Points", \
+           "DEF:GrandTotal=%s:GrandTotal:LAST" % rrdfilename,
+           "AREA:GrandTotal#AA0000:Points",\
+           "LINE1:GrandTotal#FF0000",\
+           "GPRINT:GrandTotal:MAX:  Max\\: %5.1lf %s",\
+           "GPRINT:GrandTotal:LAST: Current\\: %5.1lf %Spoints\\n",\
+           "HRULE:0#000000")

@@ -1,0 +1,455 @@
+{
+    "name" : "BLUETEAM ALPHA",
+    "dns" : "10.150.101.100",
+    "team_score" : 0,
+    "current_round" : 1,
+    "hosts" : {
+        "domain" : {
+                    "hostname" : "domain.alpha.net",
+                    "score" : 100,
+                    "services" : [{
+                                    "port" : "80",
+                                    "protocol" : "tcp",
+                                    "uri" : "/",
+                                    "content" : "IIS7",
+                                    "service_score" : 100
+                                 }]
+        },
+        "www" : {
+                    "hostname" : "www.alpha.net",
+                    "score" : 100,
+                    "services" : [{
+                                    "port" : "80",
+                                    "protocol" : "tcp",
+                                    "uri" : "/",
+                                    "content" : "shopping cart program by Zen Cart",
+                                    "service_score" : 50
+                                  },
+                                  {
+                                    "port" : "21",
+                                    "protocol" : "tcp",
+                                    "service_score" : 50
+                                  }]
+        },
+        "drupal" : {
+                      "hostname" : "drupal.alpha.net",
+                      "score" : 100,
+                      "services" : [{
+                                      "port" : "21",
+                                      "protocol" : "tcp",
+                                      "password" : "Plantain1",
+                                      "service_score" : 50
+                                   },
+                                   {
+                                      "port" : "80",
+                                      "protocol" : "tcp",
+                                      "uri" : "drupal/",
+                                      "content" : "Drupal 7",
+                                      "service_score" : 50
+                                   }]
+        },
+        "filesvr" : {
+                     "hostname" : "filesvr.alpha.net",
+                     "score" : 100,
+                     "services" : [{
+                                    "port" : "80",
+                                    "protocol" : "tcp",
+                                    "uri" : "/",
+                                    "content" : "Under Construction",
+                                    "service_score" : 100
+                                  }]
+        },
+        "mail" : {
+                  "hostname" : "mail.alpha.net",
+                  "score" : 100,
+                  "services" : [{
+                                 "port" : "80",
+                                 "protocol" : "tcp",
+                                 "uri" : "/",
+                                 "content" : "Just another WordPress site",
+                                 "service_score" : 50
+                               },
+                               {
+                                 "port" : "25",
+                                 "protocol" : "tcp",
+                                 "service_score" : 50
+                               }]
+        },
+        "suse" : {
+                  "hostname" : "suse.alpha.net",
+                  "score" : 100,
+                  "services" : [{
+                                 "port" : "80",
+                                 "protocol" : "tcp",
+                                 "uri" : "/",
+                                 "content" : "Just another WordPress site",
+                                 "service_score" : 100
+                               }]
+        },
+        "wiki" : {
+                  "hostname" : "wiki.alpha.net",
+                  "score" : 100,
+                  "services" : [{
+                                 "port" : "80",
+                                 "protocol" : "tcp",
+                                 "uri" : "dokuwiki/doku.php",
+                                 "content" : "DokuWiki snapshot",
+                                 "service_score" : 50
+                               },
+                               {
+                                 "port" : "22",
+                                 "protocol" : "tcp",
+                                 "service_score" : 50
+                               }]
+        }
+    },
+    "flags" : {
+        "domu" : "0xbecBT1",
+        "pf" : "0x54a722734",
+        "lp" : "0x89b3b0b04",
+        "sf" : "0x5c2c7089b",
+        "X1FS" : "0xd51e1dce2",
+        "23FS" : "0x330089847",
+        "281FS" : "0x222bfe285",
+        "282FS" : "0x31f464a3e",
+        "C1FS" : "0x3ac1eadd",
+        "D1FS" : "0x16e8af95e5",
+        "SFS" : "0xe8dee6cf9",
+        "U1FS" : "0x16bc6dbaee",
+        "U2FS" : "0x161162d3e1",
+        "FFS" : "0xbf964e6c6",
+        "NFS" : "0x159017e60c",
+        "AJ" : "c2ee3ac13f79f6b7b1f0af397cf19a20",
+        "JC" : "f7872db0f70352753457bd10874b3216",
+        "JP" : "4edb25db0ad3229ab75da157c1609068",
+        "WO1" : "8acc860c913121eaf168245a68319c25",
+        "WO2" : "d63bd21fc80ee3d1c01dafd9865a85e8",
+        "DNS" : "10.150.102.100"
+    }
+},
+
+{
+    "name" : "BLUETEAM GAMMA",
+    "dns" : "10.150.103.100",
+    "team_score" : 0,
+    "current_round" : 1,
+    "hosts" : {
+        "domain" : {
+                    "hostname" : "domain.gamma.net",
+                    "score" : 100,
+                    "services" : [{
+                                    "port" : "80",
+                                    "protocol" : "tcp",
+                                    "uri" : "/",
+                                    "content" : "IIS7",
+                                    "service_score" : 100
+                                 }]
+        },
+        "www" : {
+                    "hostname" : "www.gamma.net",
+                    "score" : 100,
+                    "services" : [{
+                                    "port" : "80",
+                                    "protocol" : "tcp",
+                                    "uri" : "/",
+                                    "content" : "shopping cart program by Zen Cart",
+                                    "service_score" : 50
+                                  },
+                                  {
+                                    "port" : "21",
+                                    "protocol" : "tcp",
+                                    "service_score" : 50
+                                  }]
+        },
+        "drupal" : {
+                      "hostname" : "drupal.gamma.net",
+                      "score" : 100,
+                      "services" : [{
+                                      "port" : "21",
+                                      "protocol" : "tcp",
+                                      "password" : "Plantain1",
+                                      "service_score" : 50
+                                   },
+                                   {
+                                      "port" : "80",
+                                      "protocol" : "tcp",
+                                      "uri" : "drupal/",
+                                      "content" : "Drupal 7",
+                                      "service_score" : 50
+                                   }]
+        },
+        "filesvr" : {
+                     "hostname" : "filesvr.gamma.net",
+                     "score" : 100,
+                     "services" : [{
+                                    "port" : "80",
+                                    "protocol" : "tcp",
+                                    "uri" : "/",
+                                    "content" : "Under Construction",
+                                    "service_score" : 100
+                                  }]
+        },
+        "mail" : {
+                  "hostname" : "mail.gamma.net",
+                  "score" : 100,
+                  "services" : [{
+                                 "port" : "80",
+                                 "protocol" : "tcp",
+                                 "uri" : "/",
+                                 "content" : "Just another WordPress site",
+                                 "service_score" : 50
+                               },
+                               {
+                                 "port" : "25",
+                                 "protocol" : "tcp",
+                                 "service_score" : 50
+                               }]
+        },
+        "suse" : {
+                  "hostname" : "suse.gamma.net",
+                  "score" : 100,
+                  "services" : [{
+                                 "port" : "80",
+                                 "protocol" : "tcp",
+                                 "uri" : "/",
+                                 "content" : "Just another WordPress site",
+                                 "service_score" : 100
+                               }]
+        },
+        "wiki" : {
+                  "hostname" : "wiki.gamma.net",
+                  "score" : 100,
+                  "services" : [{
+                                 "port" : "80",
+                                 "protocol" : "tcp",
+                                 "uri" : "dokuwiki/doku.php",
+                                 "content" : "DokuWiki snapshot",
+                                 "service_score" : 50
+                               },
+                               {
+                                 "port" : "22",
+                                 "protocol" : "tcp",
+                                 "service_score" : 50
+                               }]
+        }
+    },
+    "flags" : {
+        "domu" : "0x13cbBT3",
+        "pf" : "0x914132c89",
+        "lp" : "0x15803653e5",
+        "sf" : "0x796b546cb",
+        "X1FS" : "0xd51e1dce2",
+        "23FS" : "0x3fd2bab1f",
+        "281FS" : "0x3b70b60cb",
+        "282FS" : "0x1420f9ecf9",
+        "C1FS" : "0x1f639d878",
+        "D1FS" : "0x7b8175269",
+        "SFS" : "0xb75811d2e",
+        "U1FS" : "0x323c9cfd2",
+        "U2FS" : "0x60aa4d45",
+        "FFS" : "0xae6e31942",
+        "NFS" : "0x116e7daec1",
+        "AJ" : "ee7d3a77e1519326538be6adac592aca",
+        "JC" : "d558ca7a56b2c72c2cce03fbfd84a478",
+        "JP" : "9b0723d5624695f1a4341d3d14b4dc55",
+        "WO1" : "a5e856ea1d4a34bb14b86952f6acd6a4",
+        "WO2" : "a3601364ea5914a3fd5abb468ca743f0"
+
+    }
+},
+
+{
+    "name" : "BLUETEAM DELTA",
+    "dns" : "10.150.104.100",
+    "team_score" : 0,
+    "current_round" : 1,
+    "hosts" : {
+        "domain" : {
+                    "hostname" : "domain.delta.net",
+                    "score" : 100,
+                    "services" : [{
+                                    "port" : "80",
+                                    "protocol" : "tcp",
+                                    "uri" : "/",
+                                    "content" : "IIS7",
+                                    "service_score" : 100
+                                 }]
+        },
+        "www" : {
+                    "hostname" : "www.delta.net",
+                    "score" : 100,
+                    "services" : [{
+                                    "port" : "80",
+                                    "protocol" : "tcp",
+                                    "uri" : "/",
+                                    "content" : "shopping cart program by Zen Cart",
+                                    "service_score" : 50
+                                  },
+                                  {
+                                    "port" : "21",
+                                    "protocol" : "tcp",
+                                    "service_score" : 50
+                                  }]
+        },
+        "drupal" : {
+                      "hostname" : "drupal.delta.net",
+                      "score" : 100,
+                      "services" : [{
+                                      "port" : "21",
+                                      "protocol" : "tcp",
+                                      "password" : "Plantain1",
+                                      "service_score" : 50
+                                   },
+                                   {
+                                      "port" : "80",
+                                      "protocol" : "tcp",
+                                      "uri" : "drupal/",
+                                      "content" : "Drupal 7",
+                                      "service_score" : 50
+                                   }]
+        },
+        "filesvr" : {
+                     "hostname" : "filesvr.delta.net",
+                     "score" : 100,
+                     "services" : [{
+                                    "port" : "80",
+                                    "protocol" : "tcp",
+                                    "uri" : "/",
+                                    "content" : "Under Construction",
+                                    "service_score" : 100
+                                  }]
+        },
+        "mail" : {
+                  "hostname" : "mail.delta.net",
+                  "score" : 100,
+                  "services" : [{
+                                 "port" : "80",
+                                 "protocol" : "tcp",
+                                 "uri" : "/",
+                                 "content" : "Just another WordPress site",
+                                 "service_score" : 50
+                               },
+                               {
+                                 "port" : "25",
+                                 "protocol" : "tcp",
+                                 "service_score" : 50
+                               }]
+        },
+        "suse" : {
+                  "hostname" : "suse.delta.net",
+                  "score" : 100,
+                  "services" : [{
+                                 "port" : "80",
+                                 "protocol" : "tcp",
+                                 "uri" : "/",
+                                 "content" : "Just another WordPress site",
+                                 "service_score" : 100
+                               }]
+        },
+        "wiki" : {
+                  "hostname" : "wiki.delta.net",
+                  "score" : 100,
+                  "services" : [{
+                                 "port" : "80",
+                                 "protocol" : "tcp",
+                                 "uri" : "dokuwiki/doku.php",
+                                 "content" : "DokuWiki snapshot",
+                                 "service_score" : 50
+                               },
+                               {
+                                 "port" : "22",
+                                 "protocol" : "tcp",
+                                 "service_score" : 50
+                               }]
+        }
+    },
+    "flags" : {
+        "domu" : "0x4fe9BT4",
+        "pf" : "0x96a279f24",
+        "lp" : "0x1c1a1afa0",
+        "sf" : "0x15c0a8595a",
+        "X1FS" : "0x103ee247f2",
+        "23FS" : "0x1641461d42",
+        "281FS" : "0xed4d4d40a",
+        "282FS" : "0x780ff0b6a",
+        "C1FS" : "0x11248903ab",
+        "D1FS" : "0xf7b873fac",
+        "SFS" : "0x6cbaefb64",
+        "U1FS" : "0x135ebca19d",
+        "U2FS" : "0x10e381839e",
+        "FFS" : "0x7e26f90a8",
+        "NFS" : "0xe4f6218a5",
+        "AJ" : "ee7d3a77e1519326538be6adac592aca",
+        "JC" : "d558ca7a56b2c72c2cce03fbfd84a478",
+        "JP" : "9b0723d5624695f1a4341d3d14b4dc55",
+        "WO1" : "a5e856ea1d4a34bb14b86952f6acd6a4",
+        "WO2" : "a3601364ea5914a3fd5abb468ca743f0",
+        "DNS" : "10.150.104.100"
+    }
+}
+
+
+INJECT 1:5000:180 HEAD
+INJECT SUBJECT:  Change Record
+Create a spreadsheet of all the changes your team makes. You must email
+these logs at the time specified
+
+INJECT FOOTER
+INJECT 2:5000:60 HEAD
+INJECT SUBJECT:  New Users
+Please add 5 users in your Active Directory server.  The users must have email accounts on your mail server.  The username/passwords are:
+a. Edgar Smythe/Lucas1834
+b. Judy Thompson/Besson2012
+c. Roland Henderson/Lean3258
+d. Mary Campo/Geffen2834
+e. Jack Crow/Lasseter1999
+
+INJECT FOOTER
+INJECT 3:5000:30 HEAD
+INJECT SUBJECT:  Audit Deliverable
+Managament has been asked by Audit to provide a complete inventory of all systems presently active in the company's networks, both internal and external.
+
+IT teams are to take a total assessment of the systems they are responsible for and reply to this email with a list.  Present the data in table format.  For each system, the following pieces of information are equired:
+    * Hostname
+    * IP address
+    * Operating System
+    * Running Services
+    * Internet-facing vs. Internal
+
+Employees should be aware that audit will be verifying our presented inventories with independent scans, so it is imperetive that the list be accurate and complete.  Failure to do so will result in an audit finding for the team.
+
+INJECT FOOTER
+INJECT 4:5000:60 HEAD
+INJECT SUBJECT:  DNS update
+Add the following entries to the DNS server
+
+www2  (last octet is .99)
+mail2 (last octet is .108)
+db    (last octet is .66)
+db2   (last octet is .88)
+
+INJECT FOOTER
+INJECT 5:5000:60 HEAD
+INJECT SUBJECT:  Connections are slow
+The helpdesk is receiving calls that our services are slow.  Please investigate and remedy the solution.  
+
+Reply with a diagnosis of the issue and what was done to remedy it.  Include the time the fix was implemented.
+
+INJECT FOOTER
+INJECT 6:5000:60 HEAD
+INJECT SUBJECT:  Inventory Report
+Management would like a downtime report.  Please give a full report with the following fields for each affected system and service:
+
+   System Name
+   Services Down
+   Outage Duration
+   Expected Recovery Time
+   Reason for the outage
+
+INJECT FOOTER
+INJECT 7:5000:60 HEAD
+INJECT SUBJECT:  Fix Tomcat
+It has come to Management's attention that the Tomcat instances on win2k8-1 and win2k8-2 are not functioning.  Please remedy this immediately.
+
+INJECT FOOTER
+

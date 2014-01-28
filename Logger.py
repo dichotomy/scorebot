@@ -5,7 +5,7 @@ Created on Dec 27, 2011
 
 Logger.py is a module in the scorebot program.  It's purpose is to write logs for all other modules.
 
-Copyright (C) 2011  Dichotomy
+Copyright (C) 2011   Dichotomy
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -33,14 +33,14 @@ class Logger:
       self.outfile = open(self.outfilename, "a")
       self.errfile = open(self.errfilename, "a")
 
-   def out(self, message):   
+   def out(self, message):
       self.outfile.write(message)
       self.outfile.flush()
 
    def write(self, message):
       self.err(message)
 
-   def err(self, message):   
+   def err(self, message):
       self.errfile.write(message)
       self.errfile.flush()
 
@@ -49,4 +49,3 @@ class Logger:
 
    def get_out_file(self):
       return self.outfile
-

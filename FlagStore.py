@@ -5,7 +5,7 @@ Created on Aug 24, 2012
 
 FlagStore.py is a module in the scorebot program.  It's purpose is to manage flags during a competition.
 
-Copyright (C) 2012  Dichotomy
+Copyright (C) 2012   Dichotomy
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,13 +28,15 @@ import Queue
 import random
 import threading
 import traceback
+import time
 import globalvars
 from Flag import Flag
 web_dir = "/var/www"
+from pymongo import MongoClient
 
 class FlagStore(threading.Thread):
 
-   def __init__(self, logger, queue):
+   def __init__(self, logger, queue, dbname):
       threading.Thread.__init__(self)
       self.logger = logger
       self.queue_obj = queue
@@ -44,6 +46,9 @@ class FlagStore(threading.Thread):
       self.bogus = {}
       self.bandits = {}
       self.integrity = {}
+      self.conn = MongoClient()
+      self.db = self.conn[dbname]
+
 
    def run(self):
       while True:
@@ -67,19 +72,21 @@ class FlagStore(threading.Thread):
                      else:
                         self.teams[team][name] = [thief]
                      if self.theft.has_key(thief):
-                        self.theft[thief].append(name) 
+                        self.theft[thief].append(name)
                      else:
                         self.theft[thief] = [name]
                      if self.bandits.has_key(thief):
                         self.bandits[thief].append(name)
+                        self.db.bandits.update({"bandit_name": thief},
+                                       {"$push": {"stolen": name}})
                      else:
                         pass #do nothing, because bandits need to reg
                   else:
-                     msg = "Flag %s has a bad team value:%s\n" 
+                     msg = "Flag %s has a bad team value:%s\n"
                      self.logger.err(msg % (flag, team))
                else:
-                  self.logger.out("Didn't find a team for %s:%s\n" % 
-                                  (thief, name))
+                  self.logger.out("Didn't find a team for %s:%s\n" %
+                              (thief, name))
                   if self.bogus.has_key(thief):
                      self.bogus[thief].append(flag)
                   else:
@@ -91,22 +98,24 @@ class FlagStore(threading.Thread):
                   self.logger.out(msg)
                else:
                   self.bandits[bandit] = []
+                  self.db.bandits.insert({"bandit_name": bandit,
+                                    "stolen": []})
                   self.logger.out("%s registered\n" % bandit)
             elif msg_type == 2:
                (team, flag) = match_obj.groups()
                self.logger.out("Got integrity sumbission %s:%s\n" % (team,flag))
                name = self.find(flag)
                # Is this a real flag?
-                  if name:
-                     self.logger.out("Received %s from %s\n" % (flag, team))
-                  
+               if name:
+                  self.logger.out("Received %s from %s\n" % (flag, team))
+
                   if self.integrity.has_key(team):
                      self.integrity[team].append(name)
                   else:
                      self.integrity[team] = []
                      self.integrity[team].append(name)
-               else:      
-                  msg = "Flag %s from team %s does not exist\n" 
+               else:
+                  msg = "Flag %s from team %s does not exist\n"
                   self.logger.err(msg % (flag, team))
             else:
                self.logger.out("Unrecognized code %s\n" % msg_type)
@@ -117,12 +126,12 @@ class FlagStore(threading.Thread):
             my_traceback = traceback.format_exc()
             err = sys.exc_info()[0]
             self.logger.out("Had a problem: %s\n%s\n" % (err, my_traceback))
-            
+
 
    def score(self, team, round):
       stolen = 0
-      lost = 0 
-      # find out how l33t they are 
+      lost = 0
+      # find out how l33t they are
       self.logger.out("Team %s, round %s:\n" % (team, round))
       if self.theft.has_key(team):
          #on the board, not bad, but how much?...
@@ -142,15 +151,15 @@ class FlagStore(threading.Thread):
             for name in self.teams[team].keys():
                score = self.flags[name].get_score()
                lost += (len(self.teams[team][name]) * score)
-            self.logger.out("\tLost %s\n" % 
-                              (",".join(self.teams[team].keys())))
+            self.logger.out("\tLost %s\n" %
+                          (",".join(self.teams[team].keys())))
          else:
             # skillz!  (or...no worthy opponents... ;-)
             pass
       if self.integrity.has_key(team):
          integrity_score = len(self.integrity[team])
-         self.logger.out("\tIntegrity %s\n" % 
-                              (",".join(self.integrity[team])))
+         self.logger.out("\tIntegrity %s\n" %
+                         (",".join(self.integrity[team])))
       # do the math...
       if globalvars.binjitsu:
          flag_score = stolen - (lost * .5) + integrity_score
@@ -174,17 +183,17 @@ class FlagStore(threading.Thread):
          self.integrity[team] = []
       flag_name = "%s_%s" % (team, name)
       self.logger.out("Adding %s:%s:%s\n\tfor team %s\n" %
-                        (flag_name,value,score,team))
+                    (flag_name,value,score,team))
       this_flag = Flag(team, flag_name, value, score)
       flag_team = this_flag.get_team()
       flag_name = this_flag.get_name()
       flag_value = this_flag.get_value()
-      self.logger.out("Set    %s:%s\n\tfor team %s\n" % \
-                         (flag_name,flag_value,flag_team))
+      self.logger.out("Set %s:%s\n\tfor team %s\n" % \
+                     (flag_name,flag_value,flag_team))
       if self.flags.has_key(name):
          old_value = self.flags[flag_name].get_value()
-         self.logger.out("Clobbering team %s flag %s:%s with %s:%s\n" % 
-                         (team, name, old_value, flag_name, value))
+         self.logger.out("Clobbering team %s flag %s:%s with %s:%s\n" %
+                     (team, name, old_value, flag_name, value))
       self.flags[flag_name] = this_flag
 
    def get(self, name):

@@ -5,7 +5,7 @@ Created on Jul 31, 2013
 
 FlagStore.py is a module in the scorebot program.  It's purpose is to manage flags during a competition.
 
-Copyright (C) 2012  Dichotomy
+Copyright (C) 2012   Dichotomy
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -53,6 +53,6 @@ class MessageStore(threading.Thread):
             my_traceback = traceback.format_exc()
             err = sys.exc_info()[0]
             self.logger.out("Had a problem: %s\n%s\n" % (err, my_traceback))
-  
+
    def get_message(self):
       return self.current_message

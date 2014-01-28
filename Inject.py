@@ -5,7 +5,7 @@ Created on Dec 18, 2011
 
 Inject.py is a module in the scorebot program.  It's purpose is to manage and deliver Injects during a CTF competition.
 
-Copyright (C) 2011  Dichotomy
+Copyright (C) 2011   Dichotomy
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -53,7 +53,7 @@ class Inject(object):
       self.subject = subject
 
    def schedule(self, start_time):
-      self.end_time = int(start_time) + self.duration 
+      self.end_time = int(start_time) + self.duration
       end_time_lt = time.localtime(self.end_time)
       end_time_str = time.strftime("%a, %d %b %Y at %H:%M", end_time_lt)
       self.delivery = self.delivery % end_time_str

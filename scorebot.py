@@ -44,7 +44,7 @@ from MessageStore import MessageStore
 
 shortargs = "hbc:vdqn"
 longargs = ["help", "verbose", "debug", "quick", "binjitsu", "config=", \
-            "nomovie"]
+         "nomovie"]
 team_header_re = re.compile("BLUETEAM (\S+)")
 inject_header_re = re.compile("INJECT (\S+):(\d+):(\d+) HEAD")
 inject_subject_re = re.compile("INJECT SUBJECT: (.*)$")
@@ -63,14 +63,14 @@ globalvars.binjitsu = False
 globalvars.nomovie = False
 usage_str = """
    Usage:  %s [options]
-   
+
    Options:
-      --help 
-      --quick
-      --binjitsu
-      --verbose
-      --debug
-      --config=<filename>
+     --help
+     --quick
+     --binjitsu
+     --verbose
+     --debug
+     --config=<filename>
 """
 injects = Injects()
 
@@ -82,12 +82,12 @@ def make_start_time():
    tens = rightnow_lt.tm_min - ones
    if ones < 5:
       next_tens = tens + 5
-   else:   
+   else:
       next_tens = tens + 10
    time_tuple = (rightnow_lt.tm_year, rightnow_lt.tm_mon, \
-         rightnow_lt.tm_mday, rightnow_lt.tm_hour, next_tens, \
-         rightnow_lt.tm_sec, rightnow_lt.tm_wday, rightnow_lt.tm_yday, \
-         rightnow_lt.tm_isdst)
+        rightnow_lt.tm_mday, rightnow_lt.tm_hour, next_tens, \
+        rightnow_lt.tm_sec, rightnow_lt.tm_wday, rightnow_lt.tm_yday, \
+        rightnow_lt.tm_isdst)
    # Return the time when the clock starts
    return time.mktime(time_tuple)
 
@@ -131,7 +131,7 @@ def read_config(cfg_file, flag_store):
          in_inject = False
       elif inject_subject_re.match(line):
          inject_subject_re_obj = inject_subject_re.match(line)
-         subject = inject_subject_re_obj.groups()[0] 
+         subject = inject_subject_re_obj.groups()[0]
          injects.set_subject(inject_name, subject)
       elif host_configline_re.search(line):
          if in_inject:
@@ -163,10 +163,10 @@ def read_config(cfg_file, flag_store):
                else:
                   sys.stderr.write("Bad config line: \n\t%s\n" % line)
                   sys.stderr.write("Failure to parse service %s\n" % \
-                                    service_value)
+                                service_value)
             (port, proto) = service.split("/")
             blues[this_team].add_service(hostname, port, proto, value, \
-                                             uri, content, username, password)
+                                     uri, content, username, password)
       elif in_inject:
          injects.add_line(inject_name, line)
       elif dns_re.match(line):
@@ -187,7 +187,7 @@ def read_config(cfg_file, flag_store):
    for team in blues.keys():
       injects.add_team(team)
    return blues
-   
+
 def main():
    try:
       opts, args = getopt.getopt(sys.argv[1:], shortargs, longargs)
@@ -222,7 +222,7 @@ def main():
    flag_server = FlagServer(logger_obj, flag_queue_obj, message_queue_obj)
    t = threading.Thread(target=flag_server.serve_forever)
    t.start()
-   blue_teams = read_config(cfg_file, flag_store)      
+   blue_teams = read_config(cfg_file, flag_store)
    myscoreboard = Scoreboard(blue_teams, flag_store, message_store)
    myscoreboard.start()
    for team in blue_teams.keys():
@@ -230,7 +230,7 @@ def main():
       blue_teams[team].start()
    flag_store.start()
    message_store.start()
-   injects.start()   
+   injects.start()
 
 if __name__ == "__main__":
    main()

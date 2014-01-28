@@ -5,7 +5,7 @@ Created on Dec 18, 2011
 
 Scores.py is a module in the scorebot program.  It's purpose is to track scores for a given team or Redcell player
 
-Copyright (C) 2011  Dichotomy
+Copyright (C) 2011   Dichotomy
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -43,7 +43,7 @@ class Scores():
       total = 0
       for this_round in self.rounds.keys():
          total += self.rounds[this_round]
-      return total   
+      return total
 
    def get_score(self, this_round=None):
       which_round = self.latest_round

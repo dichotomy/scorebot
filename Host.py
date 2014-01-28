@@ -3,7 +3,7 @@ Created on Dec 18, 2011
 
 @author: dichotomy@riseup.net
 
-Copyright (C) 2011  Dichotomy
+Copyright (C) 2011   Dichotomy
 
 Host.py is a module in the scorebot program.  It's purpose is to manage Host information during a competition.
 
@@ -33,7 +33,7 @@ from Logger import Logger
 from Service import Service
 
 ctfnet_re = re.compile("^10")
-score_str = "Round %s host %s scored %s\n" 
+score_str = "Round %s host %s scored %s\n"
 
 class Host:
    '''
@@ -47,7 +47,7 @@ class Host:
       self.hostname = hostname
       if dns:
          self.dns = dns
-      else:   
+      else:
          self.dns = dns.resolver.Resolver()
       self.logger = logger
       self.dns.lifetime = 3
@@ -97,12 +97,12 @@ class Host:
          return False
 
    def add_service(self, port, proto, value, uri=None, content=None, \
-                        username=None, password=None):
+                   username=None, password=None):
       service_name = "%s/%s" % (port, proto)
       if self.services.has_key(service_name):
          pass
       self.services[service_name] = Service(port, proto, value, \
-               self.logger, uri, content, username, password)
+             self.logger, uri, content, username, password)
 
    def check(self, this_round):
       score = int(self.value)
@@ -110,7 +110,7 @@ class Host:
          if self.lookup():
             if globalvars.verbose:
                self.logger.err("Checking for %s(%s) with ping...\n" \
-                     % (self.hostname, self.ipaddress))
+                    % (self.hostname, self.ipaddress))
             myping = Ping.Ping()
             results = myping.quiet_ping(self.ipaddress)
             percent_failed = int(results[0])
@@ -135,7 +135,7 @@ class Host:
       self.set_score(this_round, score)
       return score
 
-   def check_services(self, this_round):   
+   def check_services(self, this_round):
       if globalvars.verbose:
          self.logger.err("Checking services for %s:\n" % self.hostname)
       services = self.services.keys()
@@ -143,20 +143,20 @@ class Host:
          if globalvars.verbose:
             self.logger.err("\tChecking %s\n" % service)
          self.services[service].check(this_round, \
-               self.ipaddress, self.timeout)
+              self.ipaddress, self.timeout)
 
-   def set_score(self, this_round, value=None):      
+   def set_score(self, this_round, value=None):
       if value == None:
          this_value = self.value
       else:
          this_value = value
       self.logger.out("Round %s host %s score %s\n" % \
-               (this_round, self.hostname, this_value))
+             (this_round, self.hostname, this_value))
       self.logger.err("Round %s host %s score %s\n" % \
-               (this_round, self.hostname, this_value))
+             (this_round, self.hostname, this_value))
       self.scores.set_score(this_round, this_value)
 
-   def fail_services(self, this_round):   
+   def fail_services(self, this_round):
       if globalvars.verbose:
          self.logger.err("Failing service scores for %s:\n" % self.hostname)
       services = self.services.keys()
@@ -172,7 +172,7 @@ class Host:
          services = self.services.keys()
          for service in services:
             score += self.services[service].get_score(this_round)
-         return score   
+         return score
       except:
          self.logger.err("Had a problem with host %s:\n" % self.hostname)
          traceback.print_exc(file=self.logger)
@@ -182,7 +182,7 @@ class Host:
       service_hash = {}
       for service in self.services:
          name = "%s/%s" % (self.services[service].port, \
-                  self.services[service].protocol)
+                self.services[service].protocol)
          state = self.services[service].get_state()
          if service_hash.has_key(name):
             self.logger.err("Found duplicate service %s" % name)
