@@ -48,11 +48,13 @@ class BlueTeam(threading.Thread):
    classdocs
    '''
 
-   def __init__(self, teamname, start_time, flags, queue=None, interval=300):
+   def __init__(self, teamname, start_time, flags, this_round=1, current_score=0, id=None, db=None, queue=None, interval=300):
       '''
       Constructor
       '''
       threading.Thread.__init__(self)
+      self.id = id
+      self.db = db
       self.queue_obj = queue
       now = time.strftime("%Y %b %d %H:%M:%S", time.localtime(time.time()))
       self.dns = dns.resolver.Resolver()
@@ -67,15 +69,15 @@ class BlueTeam(threading.Thread):
       self.logger.out("| Starting run for Blueteam %s\n" % self.teamname)
       self.logger.out("| Start time: %s\n" % now)
       self.hosts = {}
-      self.scores = Scores() 
+      self.scores = Scores()
       self.start_time = start_time
       self.go_time = self.start_time
       self.interval = interval
       self.did_time = None
       # Number of rounds finished
-      self.this_round = 1 
+      self.this_round = this_round
       self.flag_store = flags
-      self.current_score = 0
+      self.current_score = current_score
       self.last_flag_score = 0
 
    def add_flag(self, name, value):
@@ -101,7 +103,7 @@ class BlueTeam(threading.Thread):
          if go_time_lt.tm_mday == rightnow_lt.tm_mday:
             if go_time_lt.tm_hour == rightnow_lt.tm_hour:
                if go_time_lt.tm_min == rightnow_lt.tm_min:
-                  try:      
+                  try:
                      print "Now is %s" % rightnow
                      self.did_time = self.go_time
                      self.check()
@@ -114,7 +116,7 @@ class BlueTeam(threading.Thread):
                      else:
                         self.go_time = new_go
                      self.set_score()
-                  except:   
+                  except:
                      traceback.print_exc(file=self.logger)
                elif go_time_lt.tm_min == (rightnow_lt.tm_min + 1):
                   print "Counting down for %s: %s to %s..." % \
@@ -156,7 +158,7 @@ class BlueTeam(threading.Thread):
    def add_host(self, hostname, value):
       if self.hosts.has_key(hostname):
          self.logger.err(clobber_host_blue_str % (self.teamname, hostname))
-      else:   
+      else:
          self.logger.err(add_host_blue_str % (self.teamname, hostname))
       self.hosts[hostname] = Host(hostname, value, self.logger, self.dns)
 
@@ -164,17 +166,17 @@ class BlueTeam(threading.Thread):
       if self.hosts.has_key(hostname):
          self.logger.err(del_host_blue_str % (self.teamname, hostname))
          del(self.hosts[hostname])
-      else:   
+      else:
          self.logger.err(del_host_blue_err_str % (self.teamname, hostname))
 
-   def add_service(self, hostname, port, proto, value, uri=None, content=None, 
+   def add_service(self, hostname, port, proto, value, uri=None, content=None,
                         username=None, password=None):
       if self.hosts.has_key(hostname):
          self.logger.err(add_srvc_blue_str % \
                (self.teamname, port, proto, value, hostname))
          self.hosts[hostname].add_service(port, proto, value, uri, content, \
                         username, password)
-      else:   
+      else:
          self.logger.err(add_srvc_blue_err_str % \
                (self.teamname, port, proto, hostname))
 
@@ -183,7 +185,7 @@ class BlueTeam(threading.Thread):
          self.logger.err(add_srvc_blue_str % \
                (self.teamname, port, proto, hostname))
          self.hosts[hostname].del_service(port, proto, app, value)
-      else:   
+      else:
          self.logger.err(add_srvc_blue_err_str % \
                (self.teamname, port, proto, hostname))
 
@@ -210,8 +212,8 @@ class BlueTeam(threading.Thread):
             self.last_flag_score = flag_score
          else:
             this_flag_score = 0
-         round_score = (myscore * this_flag_score) 
-         self.current_score += round_score 
+         round_score = (myscore * this_flag_score)
+         self.current_score += round_score
       else:
          this_score = self.scores.get_score(self.this_round)
          flag_score = self.flag_store.score(self.teamname, self.this_round)
@@ -221,12 +223,14 @@ class BlueTeam(threading.Thread):
             self.last_flag_score = flag_score
          else:
             round_score = myscore
-         self.current_score += round_score 
+         self.current_score += round_score
       print "Blueteam %s round %s scored %s for a new total of %s\n" % \
               (self.teamname, self.this_round, round_score, self.current_score)
       self.scores.set_score(self.this_round, self.current_score)
       print "Blueteam %s tally: %s\n" % (self.teamname, self.get_score())
-      self.this_round += 1      
+      self.this_round += 1
+      self.db.update({"_id": self.id}, {"$set": {"current_round": self.this_round}})
+      self.db.update({"_id": self.id}, {"$set": {"team_score": self.current_score}})
 
    def get_health(self):
       host_hash = {}
