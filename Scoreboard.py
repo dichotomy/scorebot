@@ -47,7 +47,7 @@ movie_html = '''<HTML><HEAD>
       <meta http-equiv="refresh" content="%s">
 </HEAD>
 
-<BODY bgcolor="000000"> 
+<BODY bgcolor="000000">
    <div id="myElement">Loading the player...</div>
 
    <script type="text/javascript">
@@ -100,7 +100,7 @@ td
         font-family:"Courier";
         font-size:24px;
         color:#00aa00;
-}       
+}
 
 td.green
 {
@@ -108,7 +108,7 @@ td.green
         font-size:24px;
         color:#ffffff;
         background-color:#00aa00;
-}       
+}
 
 td.yellow
 {
@@ -116,7 +116,7 @@ td.yellow
         font-size:24px;
         color:#000000;
         background-color:#ffff00;
-}       
+}
 
 td.red
 {
@@ -124,7 +124,7 @@ td.red
         font-size:24px;
         color:#000000;
         background-color:#ff0000;
-}       
+}
 
 
 </style>
@@ -180,11 +180,11 @@ scoreboard_html = binjitsu_scoreboard_html
 #else:
 #   scoreboard_html = ccdc_scoreboard_html
 
-score_html = header + "<body><H1>%s</H1></body></html>" 
+score_html = header + "<body><H1>%s</H1></body></html>"
 
-marquee_html = header + "<body><marquee behavior=\"scroll\" direction=\"left\" scrollamount=\"20\">%s</marquee></body></html>" 
+marquee_html = header + "<body><marquee behavior=\"scroll\" direction=\"left\" scrollamount=\"20\">%s</marquee></body></html>"
 
-scores_html = header + "<body><h1>Score</h><br>%s</body></html>" 
+scores_html = header + "<body><h1>Score</h><br>%s</body></html>"
 
 graph_html = header + "<body>%s</body></html>"
 
@@ -221,7 +221,7 @@ graph_line = "<img src=\"%s\">"
 
 class Scoreboard(threading.Thread):
 
-   def __init__(self, teams, flag_store, message_store):
+   def __init__(self, teams, flag_store, message_store, current_round=0):
       threading.Thread.__init__(self)
       self.logger = Logger("Scoreboard")
       self.teams = teams
@@ -233,7 +233,7 @@ class Scoreboard(threading.Thread):
       self.flag_store = flag_store
       self.message_store = message_store
       self.team_scores = {}
-      self.current_round = 0
+      self.current_round = current_round
       self.all_flags_found = []
       self.new_flag = False
       self.movie_dir = "/var/www/movies/"
@@ -440,7 +440,7 @@ class Scoreboard(threading.Thread):
          (hrs, mins, secs, dec) = match_obj.groups()
          if hrs > 0:
             next
-         time = secs + str(int(mins) * 60) 
+         time = secs + str(int(mins) * 60)
          movies[filename] = time
       if len(movies) > 0:
          options = movies.keys()
@@ -460,7 +460,7 @@ class Scoreboard(threading.Thread):
                "DS:GrandTotal:GAUGE:600:-1250000:12500003",\
                "RRA:LAST:0.5:1:50")
       self.logger.out("Updating RRD for team %s with score %s\n" % \
-            (team, score))   
+            (team, score))
       rrdtool.update(rrdfilename, "-t", "GrandTotal", "N:%s" % score)
 
    def rrd_graph(self, team):
