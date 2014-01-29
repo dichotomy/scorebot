@@ -48,7 +48,7 @@ class BlueTeam(threading.Thread):
    classdocs
    '''
 
-   def __init__(self, teamname, start_time, flags, this_round=1, current_score=0, id=None, queue=None, interval=300):
+   def __init__(self, teamname, start_time, flags, this_round=1, current_score=0, id=None, db=None, queue=None, interval=300):
       '''
       Constructor
       '''

@@ -270,8 +270,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-#    flag_queue_obj = Queue.Queue()
-#    logger_obj = Logger("scorebot_test")
-#    flag_store = FlagStore(logger_obj, flag_queue_obj)
-#    blue_teams = get_blueTeams(blueteams_cfg, flag_store)
-#    get_injects(config, blue_teams)

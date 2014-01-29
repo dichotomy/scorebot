@@ -96,15 +96,15 @@ class FlagStore(threading.Thread):
                   self.logger.out(msg)
                else:
                   self.bandits[bandit] = []
-                  self.db.bandits.insert({"bandit_name": bandit, "stolen: []})
+                  self.db.bandits.insert({"bandit_name": bandit, "stolen": []})
                   self.logger.out("%s registered\n" % bandit)
             elif msg_type == 2:
                (team, flag) = match_obj.groups()
                self.logger.out("Got integrity sumbission %s:%s\n" % (team,flag))
                name = self.find(flag)
                # Is this a real flag?
-                  if name:
-                     self.logger.out("Received %s from %s\n" % (flag, team))
+               if name:
+                  self.logger.out("Received %s from %s\n" % (flag, team))
 
                   if self.integrity.has_key(team):
                      self.integrity[team].append(name)

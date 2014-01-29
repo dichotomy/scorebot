@@ -1,6 +1,4 @@
-
-<!-- saved from url=(0062)https://raw.github.com/gionnec/scorebot/mongo/scorebotcfg.json -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css"></style></head><body style=""><pre style="word-wrap: break-word; white-space: pre-wrap;">{
+{
     "name" : "BLUETEAM ALPHA",
     "dns" : "10.150.101.100",
     "team_score" : 0,
@@ -454,5 +452,3 @@ INJECT SUBJECT:  Fix Tomcat
 It has come to Management's attention that the Tomcat instances on win2k8-1 and win2k8-2 are not functioning.  Please remedy this immediately.
 
 INJECT FOOTER
-
-</pre><div id="window-resizer-tooltip"><a href="https://raw.github.com/gionnec/scorebot/mongo/scorebotcfg.json#" title="Edit settings" style="background-image: url(chrome-extension://kkelicaakdanhinjdeammmilcgefonfh/images/icon_19.png);"></a><span class="tooltipTitle">Window size: </span><span class="tooltipWidth" id="winWidth"></span> x <span class="tooltipHeight" id="winHeight"></span><br><span class="tooltipTitle">Viewport size: </span><span class="tooltipWidth" id="vpWidth"></span> x <span class="tooltipHeight" id="vpHeight"></span></div></body></html>
