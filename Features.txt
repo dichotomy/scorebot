@@ -1,0 +1,4 @@
+MongoDB backend
+AJAX scoreboard w/bottle server
+Realtime scoring
+
