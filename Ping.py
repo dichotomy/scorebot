@@ -105,7 +105,7 @@ import time
 # From /usr/include/linux/icmp.h; your milage may vary.
 ICMP_ECHO_REQUEST = 8 # Seems to be the same on Solaris.
 
-class Ping:
+class Ping(object):
 
    def __init__(self):
       pass

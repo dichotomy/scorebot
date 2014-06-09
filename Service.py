@@ -41,7 +41,7 @@ tcp_21_re = re.compile("21/tcp")
 tcp_25_re = re.compile("25/tcp")
 udp_53_re = re.compile("53/udp")
 
-class Service:
+class Service(object):
    '''
    classdocs
    '''
@@ -52,7 +52,7 @@ class Service:
       Constructor
       '''
       self.logger = logger
-      self.port = port
+      self.port = int(port)
       self.protocol = protocol
       self.value = float(value)
       self.scores = Scores()

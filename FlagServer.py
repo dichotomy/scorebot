@@ -30,7 +30,7 @@ import socket
 import re
 import random
 
-class Responses():
+class Responses(object):
 
    def __init__(self):
       self.responses = []

@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
 
-class Flag:
+class Flag(object):
 
    def __init__(self, team, name, value, score=None):
       self.team = str(team)

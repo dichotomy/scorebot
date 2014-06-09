@@ -33,7 +33,7 @@ from Logger import Logger
 
 dupe_round_err = "Serious problem: dupe round %s for team %s\n"
 
-web_dir = "/var/www"
+web_dir = "/var/www/html"
 score_filename = "latest_scores.html"
 scores_filename = "scores.html"
 graph_filename = "graphs.html"
