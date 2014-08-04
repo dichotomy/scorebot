@@ -37,7 +37,7 @@ class MessageStore(threading.Thread):
       self.logger = logger
       self.queue_obj = queue
       self.messages = []
-      self.current_message = "This is Scorebot v1.0"
+      self.current_message = "This is Scorebot v2.0"
       self.messages.append(self.current_message)
 
    def run(self):

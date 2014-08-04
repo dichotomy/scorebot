@@ -27,6 +27,7 @@ import traceback
 import DNS
 import Ping
 import globalvars
+import jsonpickle
 from Scores import Scores
 from Logger import Logger
 from Service import Service
@@ -186,6 +187,33 @@ class Host(object):
             else:
                 service_hash[name] = state
         return service_hash
+
+    def get_scores(self):
+        services_scores = {}
+        for service in self.services:
+            services_scores[service] = self.services[service].get_scores()
+        host_total_scores = {"host":self.scores, "services": services_scores}
+        return host_total_scores
+
+    def set_scores(self, host_total_scores):
+        """  Function to import and process the json object exported by get_scores()
+        """
+        if "host" in host_total_scores:
+            self.scores = host_total_scores["host"]
+        else:
+            json_obj = jsonpickle.encode(host_total_scores)
+            raise Exception ("Invalid team_scores hash, missing host score! \n%s\n" % json_obj)
+        if "services" in host_total_scores:
+            for service in self.services:
+                if service in host_total_scores["services"]:
+                    self.services[service].set_scores(host_total_scores["services"][service])
+                else:
+                    json_obj = jsonpickle.encode(host_total_scores)
+                    raise Exception ("Invalid service score hash in scores! \n%s\n" % json_obj)
+        else:
+            json_obj = jsonpickle.encode(host_total_scores)
+            raise Exception ("Invalid team_scores hash, missing services scores! \n%s\n" % json_obj)
+
 
 
 def main():

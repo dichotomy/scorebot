@@ -12,8 +12,9 @@ Scorebot depends upon dnspython (http://www.dnspython.org/).
 Scorebot runs best in Linux, but should work in Windows.
 Python 2.7 or greater is recommended.
 
-To install all dependencies on Python, run: 
-   apt-get install python-dnspython python-rrdtool apache2
+To install all dependencies on Ubuntu, run:
+   apt-get install python-dnspython python-rrdtool apache2 python-pymongo python-dns python-setuptools
+   easy_install jaraco.modb
 
 
 BUGS

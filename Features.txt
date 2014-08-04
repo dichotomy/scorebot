@@ -1,4 +1,6 @@
-MongoDB backend
-AJAX scoreboard w/bottle server
-Realtime scoring
-
+#todo - GAME STATE on Scoreboard:  Started, Paused, pre-game, etc
+#todo - MongoDB backend
+#todo - AJAX scoreboard w/bottle server
+#todo - Realtime scoring
+#todo - "Business processes" that use email and neutral (hackable) websites that produce content the players must process for points.  This sets up the vector for client-side compromise via email spoofing and watering hole attacks.
+#todo - realtime changes to game:  new assets, etc

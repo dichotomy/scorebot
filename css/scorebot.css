@@ -1,0 +1,304 @@
+body {
+  background: #000;
+  color: #333;
+  font-size: 11px;
+  height: auto;
+  padding-bottom: 20px;
+}
+
+h1.marquee {
+    overflow: hidden;
+    padding: 10px 0;
+    color: #00AA00;
+    text-align: center;
+}
+
+h1.score,
+h2.score,
+h3.score,
+h4.score,
+h5.score,
+h1.score_label,
+h2.score_label,
+h3.score_label,
+h4.score_label,
+h5.score_label,
+h1.flag,
+h2.flag,
+h3.flag,
+h4.flag,
+h5.flag,
+h1.flag_label,
+h2.flag_label,
+h3.flag_label,
+h4.flag_label,
+h5.flag_label,
+h1.beacon,
+h2.beacon,
+h3.beacon,
+h4.beacon,
+h5.beacon,
+h5.beacon_title,
+h5.beacon_title,
+h1.health,
+h2.health,
+h3.health,
+h4.health,
+h5.health,
+h5.health_title,
+h5.beacon_title {
+    color:#00AA00;
+    text-align: left;
+}
+
+h1.ticket,
+h2.ticket,
+h3.ticket,
+h4.ticket,
+h5.ticket,
+h5.ticket_title,
+h5.ticket_title {
+    color:#00AA00;
+    text-align: left;
+}
+
+p {
+    color: #00AA00;
+}
+
+.container_12,
+.container_16,
+.container_24 {
+  margin-bottom: 20px;
+}
+
+.left {
+    margin-left: auto;
+    margin-right: auto;
+    /*width: 410px;*/
+    width: 25%;
+    float: left;
+}
+
+.right {
+    margin-left: auto;
+    margin-right: auto;
+    width: 75%;
+    float: left;
+}
+
+.top,
+.bottom {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    float: left;
+}
+
+.flags {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    float: left;
+}
+
+div.beacon_team {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    float: left;
+}
+
+div.ticket_team {
+    margin-left: auto;
+    margin-right: auto;
+    width: 20%;
+    float: left;
+}
+
+div.ticket {
+    margin-left: auto;
+    margin-right: auto;
+    width: 35%;
+    float: left;
+}
+
+div.beacon_team_title {
+    margin-left: auto;
+    margin-right: auto;
+    width: 20%;
+    float: left;
+}
+
+div.beacon {
+    margin-left: auto;
+    margin-right: auto;
+    float: left;
+}
+
+div.beacon_fill {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
+div.beacon_title,
+div.health_title {
+    margin-left: auto;
+    margin-right: auto;
+    width: 95%;
+    float: left;
+    height: 20px;
+}
+
+div.health_header {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    float: left;
+    height: 20px;
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+.ticket_label,
+.score_label {
+    margin-left: auto;
+    margin-right: auto;
+    width: 95%;
+    float: left;
+    height: 20px;
+}
+
+.flag_label {
+    margin-left: auto;
+    margin-right: auto;
+    width: 95%;
+    float: left;
+}
+
+.scores,
+.beacon_container,
+.ticket_container,
+.flag_container {
+    margin-left: auto;
+    margin-right: auto;
+    width: 95%;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+.score{
+    margin-left: auto;
+    margin-right: auto;
+    width: 100px;
+    float: left;
+    height: 20px;
+}
+
+.flag,
+.health{
+    margin-left: auto;
+    margin-right: auto;
+    width: 50px;
+    float: left;
+}
+
+.health_service {
+    margin-left: auto;
+    margin-right: auto;
+    width: 65px;
+    height: 20px;
+    float: left;
+    text-align: right;
+}
+
+.health_label {
+    margin-left: auto;
+    margin-right: auto;
+    width: 80px;
+    height: 20px;
+    float: left;
+}
+
+.services {
+    margin-left: auto;
+    margin-right: auto;
+    width: 1000px;
+    float: left;
+}
+
+.ticket_block,
+.beacon_block,
+.service_block {
+    margin-left: auto;
+    margin-right: auto;
+    /*width: 500px;*/
+    width: 48%;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+.flag_block {
+    margin-left: auto;
+    margin-right: auto;
+    width: 400px;
+    float: left;
+}
+
+.service_host {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100px;
+    float: left;
+    height: 20px;
+}
+
+.green {
+    background-color: #00AA00;
+    width: 60px;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+    height: 20px;
+}
+
+.yellow {
+    background-color: #FFFF00;
+    width: 60px;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+    height: 20px;
+}
+
+.red {
+    background-color: #FF0000;
+    width: 60px;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+    height: 20px;
+}
+
+.empty {
+    width: 60px;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+    height: 20px;
+    color:#000000;
+}
+
+.scoreindent,
+.indent {
+    width: 5%;
+    float: left;
+    height: 20px;
+}
+
+.movie {
+    position: relative;
+}

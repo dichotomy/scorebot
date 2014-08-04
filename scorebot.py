@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import getopt
 import sys
 import time
+import Queue
 import traceback
 import jaraco.modb
 from pymongo import MongoClient
@@ -53,7 +54,7 @@ usage_str = """
         --verbose
         --debug
         --database=<db_name>
-        --restore=<gameID>
+        --resume=<gameID>
         --config=<filename>
 """
 
@@ -69,7 +70,7 @@ def main():
         traceback.print_exc(file=sys.stderr)
     cfg_file = "scorebotcfg.json"
     database = "Scorebot"
-    resume = None
+    obj_id = None
     for o, a in opts:
         if o in ("-h", "--help"):
             usage()
@@ -80,6 +81,8 @@ def main():
             globalvars.binjitsu = True
         elif o in ("-v", "--verbose"):
             globalvars.verbose = True
+        elif o in ("-d", "--debug"):
+            globalvars.debug = True
         elif o in ("-q", "--quick"):
             globalvars.quick = True
         elif o in ("-q", "--quick"):
@@ -87,7 +90,7 @@ def main():
         elif o in ("-n", "--nomovie"):
             globalvars.nomovie = True
         elif o in ("-r", "--resume"):
-            resume = a
+            obj_id = a
         elif o in ("-d", "--database"):
             database = a
         else:
@@ -95,21 +98,29 @@ def main():
     client = MongoClient()
     db = client[database]
     col = db["Games"]
-    if resume:
-        obj_id = ObjectId(resume)
-        result = col.find_one(obj_id)
-        ctf_game_obj = jaraco.modb.decode(decode_dict(result))
+    if obj_id:
+        ctf_game_obj = CTFgame(col, cfg_file, obj_id)
+        # Cannot use jaraco.modb - bugs prevent Scorebot's structure from being recovered
+        # https://github.com/jsonpickle/jsonpickle/issues/74
+        #obj_id = ObjectId(resume)
+        #result = col.find_one(obj_id)
+        #ctf_game_obj = jaraco.modb.decode(decode_dict(result))
     else:
-        ctf_game_obj = CTFgame(cfg_file)
-        json_obj = jaraco.modb.encode(ctf_game_obj)
-        obj_id = col.save(json_obj)
-        sys.stdout.write("Your game ID is %s\n" % str(obj_id))
+        ctf_game_obj = CTFgame(col, cfg_file)
+        # Cannot use jaraco.modb - bugs prevent Scorebot's structure from being recovered
+        # https://github.com/jsonpickle/jsonpickle/issues/74
+        #json_obj = jaraco.modb.encode(ctf_game_obj)
+        #obj_id = col.save(json_obj)
+        #sys.stdout.write("Your game ID is %s\n" % str(obj_id))
     ctf_game_obj.start_game()
+    ctf_game_obj.start()
     while True:
         time.sleep(10)
-        json_obj = jaraco.modb.encode(ctf_game_obj)
-        json_obj["_id"] = obj_id
-        col.save(json_obj)
+        # Cannot use jaraco.modb - bugs prevent Scorebot's structure from being recovered
+        # https://github.com/jsonpickle/jsonpickle/issues/74
+        #json_obj = jaraco.modb.encode(ctf_game_obj)
+        #json_obj["_id"] = obj_id
+        #col.save(json_obj)
     sys.stdout.write("GAME OVER.\n")
     sys.stdout.write("Your game ID is %s\n" % str(obj_id))
 

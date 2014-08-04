@@ -27,41 +27,42 @@ import globalvars
 from Scores import Scores
 
 class Inject(object):
-   '''
-   classdocs
-   '''
+    '''
+    classdocs
+    '''
 
 
-   def __init__(self, name, value, duration):
-      '''
-      Constructor
-      '''
-      self.name = name
-      self.value = int(value)
-      self.duration = int(duration) * 60
-      self.challenge = ""
-      self.response = ""
-      self.end_time = None
-      self.delivery = "\r\n\r\nThis task is to be completed by %s today."
-      self.subject = ""
-      self.scores = Scores()
+    def __init__(self, name, value, duration, ticket=False):
+        '''
+        Constructor
+        '''
+        self.name = name
+        self.value = int(value)
+        self.duration = int(duration) * 60
+        self.challenge = ""
+        self.response = ""
+        self.end_time = None
+        self.delivery = "\r\n\r\nThis task is to be completed by %s today."
+        self.subject = ""
+        self.scores = Scores()
+        self.ticket = ticket
 
-   def add_line(self, line):
-      self.challenge += line
+    def add_line(self, line):
+        self.challenge += line
 
-   def set_subject(self, subject):
-      self.subject = subject
+    def set_subject(self, subject):
+        self.subject = subject
 
-   def schedule(self, start_time):
-      self.end_time = int(start_time) + self.duration 
-      end_time_lt = time.localtime(self.end_time)
-      end_time_str = time.strftime("%a, %d %b %Y at %H:%M", end_time_lt)
-      self.delivery = self.delivery % end_time_str
+    def schedule(self, start_time):
+        self.end_time = int(start_time) + self.duration
+        end_time_lt = time.localtime(self.end_time)
+        end_time_str = time.strftime("%a, %d %b %Y at %H:%M", end_time_lt)
+        self.delivery = self.delivery % end_time_str
 
-   def get_text(self):
-      message = self.challenge
-      message += self.delivery
-      return message
+    def get_text(self):
+        message = self.challenge
+        message += self.delivery
+        return message
 
-   def get_subject(self):
-      return self.subject
+    def get_subject(self):
+        return self.subject

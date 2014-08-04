@@ -28,7 +28,10 @@ import traceback
 import threading
 import time
 import Queue
+import pprint
 import globalvars
+import jsonpickle
+import re
 from Host import Host
 from Logger import Logger
 from Scores import Scores
@@ -40,6 +43,7 @@ add_host_blue_str = "Blueteam %s:  Adding host %s\n"
 add_srvc_blue_str = "Blueteam %s:  Adding service %s/%s with value %s to host %s\n"
 add_srvc_blue_err_str = "Blueteam %s:  Failed adding service %s/%s with value %s to host %s\n"
 clobber_host_blue_str = "Blueteam %s:  clobbering host %s!\n"
+host_re = re.compile("(\w+).*$")
 
 class BlueTeam(threading.Thread):
     '''
@@ -75,12 +79,39 @@ class BlueTeam(threading.Thread):
         self.flag_store = flags
         self.current_score = current_score
         self.last_flag_score = 0
+        self.last_ticket_score = 0
+        self.nets = []
+        self.pp = pprint.PrettyPrinter(indent=2)
+        self.email = ""
+        self.ticket_obj = None
+
+    def set_ticket_interface(self, ticket_obj):
+        self.ticket_obj = ticket_obj
+
+    def set_email(self, email):
+        self.email = email
+
+    def get_email(self):
+        return self.email
 
     def get_teamname(self):
          return self.teamname
 
-    def add_flag(self, name, value):
-        self.flag_store.add(self.teamname, name, value)
+    def add_flag(self, name, value, score=1, answer=""):
+        self.flag_store.add(self.teamname, name, value, score, answer)
+
+    def add_net(self, net):
+        if net in self.nets:
+            pass
+        else:
+            self.nets.append(net)
+
+    def has_ip(self, ip):
+        for net in self.nets:
+            if net in ip:
+                return True
+        return False
+
 
     def run(self):
         print "Firing up Blueteam %s, go time is %s" % \
@@ -203,56 +234,112 @@ class BlueTeam(threading.Thread):
     def get_score(self, this_round=None):
         if not this_round:
             this_round = self.this_round - 1
-        this_score = self.scores.get_score(this_round)
+        #this_score = self.scores.get_score(this_round)
+        this_score = self.scores.total()
         return [this_round, this_score]
+
+    def get_all_rounds(self):
+        scores = {}
+        for round, score in self.scores:
+            scores[round] = score
+        return scores
+
+    def get_scores(self):
+        team_scores = {}
+        team_scores["hosts"] = {}
+        team_scores["teamscore"] = self.scores
+        for host in self.hosts:
+            host_score = self.hosts[host].get_scores()
+            team_scores["hosts"][host] = host_score
+        team_scores["round"] = self.this_round
+        return team_scores
+
+    def set_scores(self, team_scores):
+        """  Function to import and process the json object exported by get_scores()
+        """
+        if "teamscore" in team_scores:
+            self.scores = team_scores["teamscore"]
+            if globalvars.debug:
+                print "Set team score for %s to %s" % (self.teamname, self.scores)
+                json_obj = jsonpickle.encode(self.scores)
+                self.pp.pprint(json_obj)
+        else:
+            json_obj = jsonpickle.encode(team_scores)
+            raise Exception ("Invalid team_scores hash, missing team score! \n%s\n" % json_obj)
+        if "round" in team_scores:
+            self.this_round = team_scores["round"]
+            if globalvars.debug:
+                print "Set round for %s to %s" % (self.teamname, self.this_round)
+        else:
+            json_obj = jsonpickle.encode(team_scores)
+            raise Exception ("Invalid team_scores hash, missing round! \n%s\n" % json_obj)
+        if "hosts" in team_scores:
+            for host in self.hosts:
+                if host in team_scores["hosts"]:
+                    self.hosts[host].set_scores(team_scores["hosts"][host])
+                else:
+                    json_obj = jsonpickle.encode(team_scores)
+                    raise Exception ("Invalid team_scores hash! \n%s\n" % json_obj)
+        else:
+            json_obj = jsonpickle.encode(team_scores)
+            raise Exception ("Invalid team_scores hash, missing hosts! \n%s\n" % json_obj)
 
     def set_score(self, this_round=None, value=None):
         if this_round and value:
             this_round = self.this_round
             self.scores.set_score(this_round, value)
             return
-        myscore = 0
-        hostlist = self.hosts.keys()
-        for host in hostlist:
-            myscore += self.hosts[host].get_score(self.this_round)
+        service_score = 0
+        for host in self.hosts:
+            service_score += self.hosts[host].get_score(self.this_round)
+        (all_tickets, closed_tickets) = self.get_tickets()
+        ticket_score = int(closed_tickets) * 1000
+        if ticket_score == self.last_ticket_score:
+            ticket_score = 0
+        else:
+            self.last_ticket_score = ticket_score
+        if int(all_tickets) < int(closed_tickets):
+            self.logger.err("There are more closed tickets than all for %s!" % self.teamname)
         if globalvars.binjitsu:
-            this_score = self.scores.get_score(self.this_round)
             flag_score = self.flag_store.score(self.teamname, self.this_round)
             if flag_score != self.last_flag_score:
                 this_flag_score = flag_score - self.last_flag_score
                 self.last_flag_score = flag_score
             else:
                 this_flag_score = 0
-            round_score = (myscore * this_flag_score)
-            self.current_score += round_score
+            round_score = (service_score * this_flag_score)
         else:
-            this_score = self.scores.get_score(self.this_round)
             flag_score = self.flag_store.score(self.teamname, self.this_round)
             if flag_score != self.last_flag_score:
                 this_flag_score = flag_score - self.last_flag_score
-                round_score = (myscore + (this_flag_score * 1000))
+                round_score = (service_score + (this_flag_score * 1000))
                 self.last_flag_score = flag_score
             else:
-                round_score = myscore
-            self.current_score += round_score
+                round_score = service_score
+        round_score += ticket_score
+        self.scores.set_score(self.this_round, round_score)
+        total = self.scores.total()
         print "Blueteam %s round %s scored %s for a new total of %s\n" % \
-                  (self.teamname, self.this_round, round_score, self.current_score)
-        self.scores.set_score(self.this_round, self.current_score)
+                  (self.teamname, self.this_round, round_score, total)
         print "Blueteam %s tally: %s\n" % (self.teamname, self.get_score())
         self.this_round += 1
-        #self.db.update({"_id": self.id}, {"$set": {"current_round": self.this_round}})
-        #self.db.update({"_id": self.id}, {"$set": {"team_score": self.current_score}})
 
     def get_health(self):
         host_hash = {}
         for host in self.hosts:
             name = self.hosts[host].hostname
+            clean_name = host_re.match(name).groups()[0]
             service_hash = self.hosts[host].get_health()
-            if host_hash.has_key(name):
+            if host_hash.has_key(clean_name):
                 self.logger.err("Found duplicate host %s" % name)
             else:
-                host_hash[name] = service_hash
+                host_hash[clean_name] = service_hash
         return host_hash
+
+    def get_tickets(self):
+        all_tickets = self.ticket_obj.get_team_tickets(self.teamname)
+        closed_tickets = self.ticket_obj.get_team_closed(self.teamname)
+        return all_tickets, closed_tickets
 
 
 

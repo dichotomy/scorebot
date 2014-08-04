@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 '''
 Created on Dec 18, 2011
 
@@ -23,41 +24,68 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
 class Scores(object):
-   '''
-   classdocs
-   '''
+    '''
+    classdocs
+    '''
 
 
-   def __init__(self):
-      '''
-      Constructor
-      '''
-      self.latest_round = 1
-      self.rounds = {}
+    def __init__(self):
+        '''
+        Constructor
+        '''
+        self.latest_round = 1
+        self.rounds = {}
+        self.itteration = 1
 
-   def new_score(self, value):
-      self.latest_round += 1
-      self.rounds[self.latest_round] = int(value)
 
-   def total(self):
-      total = 0
-      for this_round in self.rounds.keys():
-         total += self.rounds[this_round]
-      return total   
+    def new_score(self, value):
+        self.latest_round += 1
+        self.rounds[self.latest_round] = int(value)
 
-   def get_score(self, this_round=None):
-      which_round = self.latest_round
-      score = 0
-      if this_round:
-         which_round = int(this_round)
-      if self.rounds.has_key(which_round):
-         score = self.rounds[which_round]
-      return score
+    def total(self):
+        total = 0
+        for this_round in self.rounds:
+            total += self.rounds[this_round]
+        return total
 
-   def set_score(self, this_round, value):
-      self.rounds[int(this_round)] = int(value)
-      all_rounds = self.rounds.keys()
-      self.latest_rounds = max(all_rounds)
+    def get_score(self, this_round=None):
+        which_round = self.latest_round
+        score = 0
+        if this_round:
+            which_round = int(this_round)
+        if which_round in self.rounds:
+            score = self.rounds[which_round]
+        return score
 
-   def dump(self):
-      print self.rounds
+    def set_score(self, this_round, value):
+        self.rounds[int(this_round)] = int(value)
+        self.latest_round += 1
+
+    def dump(self):
+        print self.rounds
+
+    def __iter__(self):
+          return self
+
+    def next(self):
+        if self.itteration < self.latest_round:
+            score = self.rounds[self.itteration]
+            self.itteration += 1
+            return self.itteration-1, score
+        else:
+            self.itteration = 1
+            raise StopIteration
+
+if __name__ == "__main__":
+    import random
+    score_obj = Scores()
+    for n in range(1,10):
+        score = int(random.random()*100)
+        score_obj.set_score(n, score)
+        print "Round %s; Score %s" % (n, score)
+    round = 0
+    for round, score in score_obj:
+        print "Round %s; Score %s" % (round, score)
+    for round, score in score_obj:
+        print "Round %s; Score %s" % (round, score)
+

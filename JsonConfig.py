@@ -25,30 +25,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 __author__ = 'dichotomy'
 
-import getopt
-import sys
-import re
-import os
 import time
-import Queue
-import traceback
-import re
 import json
-
-import threading
-import globalvars
-from Logger import Logger
 from Injects import Injects
 from BlueTeam import BlueTeam
+from TicketInterface import TicketInterface
 
 class JsonConfig(object):
 
     def __init__(self, filename, flag_store, params=None):
         self.filename = filename
-        jfile = open(self.filename)
-        self.config = json.load(jfile)  #Should this stay Unicode, or convert?
+        self.config = None
         self.flag_store = flag_store
         self.start_time = self.make_start_time()
+        self.params = params
+
+    def get_json(self):
+        return self.config
+
+    def set_json(self, config):
+        self.config = config
 
     def make_start_time(self):
         rightnow = time.time()
@@ -67,7 +63,12 @@ class JsonConfig(object):
         # Return the time when the clock starts
         return time.mktime(time_tuple)
 
-    def process(self):
+    def process(self, config=None):
+        if config:
+            self.config = config
+        else:
+            jfile = open(self.filename)
+            self.config = json.load(jfile)  #Should this stay Unicode, or convert?
         blue_teams = {}
         # todo - clean up this code, make sure it can handle unexpected situations
         first_pass = True
@@ -82,9 +83,16 @@ class JsonConfig(object):
         else:
             raise Exception("No bluteams given!")
         if "injects" in self.config:
+            ticket_obj = TicketInterface()
             injects = Injects()
+            for team in blue_teams:
+                blue_teams[team].set_ticket_interface(ticket_obj)
+                email = blue_teams[team].get_email()
+                injects.add_email(team, email)
             for inject in self.config["injects"]:
                 self.proc_injects(inject, injects)
+        else:
+            injects = None
         return (blue_teams, injects)
 
     def proc_blueteam(self, blueteam):
@@ -93,20 +101,30 @@ class JsonConfig(object):
             blue_obj = BlueTeam(this_team, self.start_time, self.flag_store)
         else:
             raise Exception("No name given for blueteam!")
+        if "email" in blueteam:
+            email = str(blueteam["email"])
+            blue_obj.set_email(email)
+        else:
+            raise Exception("No email given for blueteam %s!" % this_team)
         if "dns" in blueteam:
             dns = str(blueteam["dns"])
             blue_obj.add_dns(dns)
         else:
             raise Exception("No DNS given for blueteam %s!" % this_team)
+        if "nets" in blueteam:
+            for net in blueteam["nets"]:
+                blue_obj.add_net(net)
+        else:
+            raise Exception("No Nets entry for blueteam %s!" % this_team)
         if "hosts" in blueteam:
             for host in blueteam["hosts"]:
                 self.proc_hosts(blue_obj, host)
         else:
             raise Exception("No Hosts entry for blueteam %s!" % this_team)
         if "flags" in blueteam:
-            for flag in blueteam["flags"]:
-                value = blueteam["flags"][flag]
-                blue_obj.add_flag(flag, value)
+            for flag_name in blueteam["flags"]:
+                this_flag = blueteam["flags"][flag_name]
+                self.proc_flags(blue_obj, flag_name, this_flag)
         return blue_obj
 
 
@@ -116,9 +134,9 @@ class JsonConfig(object):
             hostname = hosts["hostname"]
         else:
             raise Exception("No hostname for a host in blueteam %s" % blueteam)
-        if "score" in hosts:
-            score = hosts["score"]
-            blue_obj.add_host(hostname, score)
+        if "value" in hosts:
+            value = hosts["value"]
+            blue_obj.add_host(hostname, value)
         else:
             raise Exception("No score given for hostname %s in blueteam %s" % (hostname, blueteam))
         if "services" in hosts:
@@ -160,6 +178,7 @@ class JsonConfig(object):
         blue_obj.add_service(hostname, port, proto, value, uri, content, username, password)
 
     def proc_injects(self, inject, injects):
+        set_ticket = False
         if "inject_name" in inject:
             inject_name = inject["inject_name"]
         else:
@@ -172,7 +191,16 @@ class JsonConfig(object):
             inject_duration = inject["inject_duration"]
         else:
             raise Exception("Inject without duration: %s" % ":".join(inject.values()))
-        injects.add_inject(inject_name, inject_value, inject_duration)
+        if "set_ticket" in inject:
+            if "True" in inject["set_ticket"]:
+                set_ticket = True
+            elif "False" in inject["set_ticket"]:
+                set_ticket = False
+            else:
+                raise Exception("Invalid set_ticket value for inject %s" % inject_name)
+        else:
+            set_ticket = False
+        injects.add_inject(inject_name, inject_value, inject_duration, set_ticket)
         if "inject_subject" in inject:
             inject_subject = inject["inject_subject"]
             injects.set_subject(inject_name, inject_subject)
@@ -183,6 +211,22 @@ class JsonConfig(object):
                 injects.add_line(inject_name, line)
         else:
             raise Exception("Inject without body: %s" % ":".join(inject.values()))
+
+
+    def proc_flags(self, blue_obj, flag_name, flag):
+        if "value" in flag:
+            value = flag["value"]
+        else:
+            raise Exception("No value given for flag %s!" % flag_name)
+        if "answer" in flag:
+            this_answer = flag["answer"]
+        else:
+            raise Exception("No answer given for flag %s!" % flag_name)
+        if "score" in flag:
+            this_score = flag["score"]
+            blue_obj.add_flag(flag_name, value, score=this_score, answer=this_answer)
+        else:
+            blue_obj.add_flag(flag_name, value, answer=this_answer)
 
 
 if __name__ == "__main__":
