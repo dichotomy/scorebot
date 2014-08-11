@@ -39,7 +39,7 @@ h3.beacon,
 h4.beacon,
 h5.beacon,
 h5.beacon_title,
-h5.beacon_title,
+h5.thanks_title,
 h1.health,
 h2.health,
 h3.health,
@@ -187,6 +187,36 @@ div.health_header {
     float: left;
     border: 2px solid;
     border-radius: 25px;
+}
+
+.thanks_containerL {
+    margin-left: auto;
+    margin-right: auto;
+    width: 40%;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+}
+.thanks_containerR {
+    margin-left: auto;
+    margin-right: auto;
+    width: 55%;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+.thanks_containerL2 {
+    margin-left: auto;
+    margin-right: auto;
+    width: 30%;
+    float: left;
+}
+.thanks_containerR2 {
+    margin-left: auto;
+    margin-right: auto;
+    width: 65%;
+    float: left;
 }
 
 .score{

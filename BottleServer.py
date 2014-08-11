@@ -65,7 +65,7 @@ class BottleServer(threading.Thread):
         self._app.route('/tickets', callback=self._tickets)
 
     def run(self):
-        self._app.run(host=self._host, port=self._port)
+        self._app.run(host=self._host, port=self._port, server="paste")
 
     def _css(self, filename):
         return static_file(filename, root="css")

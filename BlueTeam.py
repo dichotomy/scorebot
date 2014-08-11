@@ -304,10 +304,10 @@ class BlueTeam(threading.Thread):
             flag_score = self.flag_store.score(self.teamname, self.this_round)
             if flag_score != self.last_flag_score:
                 this_flag_score = flag_score - self.last_flag_score
-                self.last_flag_score = flag_score
+                self.last_flag_score = flag_score * 1000
             else:
                 this_flag_score = 0
-            round_score = (service_score * this_flag_score)
+            round_score = (this_flag_score - service_score )
         else:
             flag_score = self.flag_store.score(self.teamname, self.this_round)
             if flag_score != self.last_flag_score:

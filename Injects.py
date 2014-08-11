@@ -62,7 +62,7 @@ class Injects(threading.Thread):
     def run(self):
         #wait until an hour after gametime
         self.logger.out("Starting inject engine\n")
-        interval = 10 * 60
+        interval = 60 * 30
         for name in self.injects.keys():
             go_time = time.time()
             self.injects[name].schedule(go_time)

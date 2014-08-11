@@ -10,7 +10,7 @@ function sleep(millis, callback) {
 }
 
 function getMovie() {
-    $.getJSON( "http://www.cyberwildcats.net:8090/movie", function(data) {
+    $.getJSON( "http://www.prosversusjoes.net:8090/movie", function(data) {
         $.each( data, function(type, val) {
             if (type == "movie" ) {
                 var name = val["name"];
@@ -40,7 +40,7 @@ function getMovie() {
 }
 
 function getScores() {
-    $.getJSON( "http://www.cyberwildcats.net:8090/scores", function(data) {
+    $.getJSON( "http://www.prosversusjoes.net:8090/scores", function(data) {
         $(".score").remove()
         $(".scoreindent").remove()
         $.each( data, function(key,val) {
@@ -81,7 +81,7 @@ function getScores() {
 }
 
 function getTickets() {
-    $.getJSON( "http://www.cyberwildcats.net:8090/tickets", function(data) {
+    $.getJSON( "http://www.prosversusjoes.net:8090/tickets", function(data) {
         $.each( data, function(team, tickets) {
             var ticket_team = "ticket".concat(team);
             var ticket_team_id = "#".concat(ticket_team);
@@ -131,7 +131,7 @@ function getTickets() {
 }
 
 function getBeacons() {
-    $.getJSON( "http://www.cyberwildcats.net:8090/beacons", function(data) {
+    $.getJSON( "http://www.prosversusjoes.net:8090/beacons", function(data) {
         $.each( data, function(bandit, pwnedset) {
             var bandit_id = "#".concat(bandit);
             $( bandit_id).remove();
@@ -195,7 +195,7 @@ function getBeacons() {
 }
 
 function getHealth(){
-    $.getJSON( "http://www.cyberwildcats.net:8090/health", function(data) {
+    $.getJSON( "http://www.prosversusjoes.net:8090/health", function(data) {
         $.each ( data, function(team, hosts) {
             host_scores= {}
             servicelist = []
@@ -296,7 +296,7 @@ function getHealth(){
 }
 
 function getMarquee() {
-    $.getJSON( "http://www.cyberwildcats.net:8090/marquee", function(data) {
+    $.getJSON( "http://www.prosversusjoes.net:8090/marquee", function(data) {
         $.each (data, function(key, val) {
             if (key == "marquee") {
                 $( ".marquee" ).html(val);
@@ -306,7 +306,7 @@ function getMarquee() {
 }
 
 function getFlags() {
-    $.getJSON( "http://www.cyberwildcats.net:8090/flags", function(data) {
+    $.getJSON( "http://www.prosversusjoes.net:8090/flags", function(data) {
         $.each (data, function(type, flags) {
             if (type == "lost") {
                 $("#flag-lost").remove()

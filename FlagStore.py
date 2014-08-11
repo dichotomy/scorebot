@@ -93,17 +93,17 @@ class FlagStore(threading.Thread):
                                     self.theft[thief] = [name]
                             else:
                                 if thief in self.teams:
-                                    if self.teams[team].has_key(name):
-                                        self.teams[team][name].append(thief)
-                                    else:
-                                        self.teams[team][name] = [thief]
-                                    if self.theft.has_key(thief):
-                                        self.theft[thief].append(name)
-                                    else:
-                                        self.theft[thief] = [name]
+                                    self.answer_queue.put([msg_id, "This ain't Binjisu!!"])
+                                    raise Exception("Bad flag submission")
+                                elif thief in self.bandits:
+                                    self.bandits[thief].append(name)
                                 else:
                                     self.answer_queue.put([msg_id, "bogus idenity %s!" % thief])
                                     raise Exception("Bad flag submission")
+                                if self.teams[team].has_key(name):
+                                    self.teams[team][name].append(thief)
+                                else:
+                                    self.teams[team][name] = [thief]
                         else:
                             msg = "Flag %s has a bad team value:%s\n"
                             self.logger.err(msg % (flag, team))
@@ -116,16 +116,19 @@ class FlagStore(threading.Thread):
                             self.bogus[thief] = [flag]
                 elif msg_type == 1:
                     (label, bandit) = match_obj.groups()
-                    if self.bandits.has_key(bandit):
-                        msg = "\t%s already registered once, ignoring...\n"
+                    if bandit in self.bandits:
+                        msg = "\t%s already registered once, regenerating key...\n"
                         self.logger.out(msg)
+                        key = int(random.random() * 10000000)
+                        self.bandit_keys[key] = bandit
+                        self.answer_queue.put([msg_id, key])
+                        self.logger.out("%s registered with key %s\n" % (bandit, key))
                     else:
                         self.bandits[bandit] = []
                         key = int(random.random() * 10000000)
                         self.bandit_keys[key] = bandit
                         self.answer_queue.put([msg_id, key])
-                        #self.db.bandits.insert({"bandit_name": bandit, "stolen": []})
-                        self.logger.out("%s registered\n" % bandit)
+                        self.logger.out("%s registered with key %s\n" % (bandit, key))
                 elif msg_type == 2:
                     (team, flag) = match_obj.groups()
                     self.logger.out("Got integrity sumbission %s:%s\n" % (team,flag))
