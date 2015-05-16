@@ -1,0 +1,29 @@
+Add Blueteam
+Add Game
+Add Player
+Update Player
+Add Player to Blueteam
+Add Player to Redteam
+Remove Player from Blueteam
+Remove Player from Redteam
+Add Host (to Game)
+Add Service (to Host)
+Add ServiceCredential (to Service)
+Add Content (to Service)
+Add ContentCredential (to Content)
+Add Flag (to Game)
+Flag Stolen
+Flag Found
+Add Ticket (to Game)
+Ticket Submitted
+Ticket Rejected
+Service up
+Service partial
+Service down
+Content good
+Content bad
+Stole ServiceCredential 
+Stole ContentCredential 
+Compromised Host
+Restored Host
+Set Score (round?)
