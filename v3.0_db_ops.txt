@@ -1,29 +1,46 @@
 Add Blueteam
-Add Game
-Add Player
-Update Player
+Get Blueteam
 Add Player to Blueteam
 Add Player to Redteam
 Remove Player from Blueteam
 Remove Player from Redteam
+Add Game
+Get Game
+Add Player
+Get Player
+Update Player
 Add Host (to Game)
+Get Host
+Set HostStatus
+Get HostStatus
 Add Service (to Host)
+Get Service
+Set ServiceStatus
+Get ServiceStatus
 Add ServiceCredential (to Service)
+Get ServiceCredential
 Add Content (to Service)
+Get Content
 Add ContentCredential (to Content)
+Get ContentCredential
 Add Flag (to Game)
-Flag Stolen
-Flag Found
+Get Flag
+Set Flag Stolen
+Get Flags Stolen
+Set Flag Found
+Get Flags Found
 Add Ticket (to Game)
-Ticket Submitted
-Ticket Rejected
-Service up
-Service partial
-Service down
-Content good
-Content bad
-Stole ServiceCredential 
+Get Ticket
+Set Ticket Submitted
+Get Tckets Submitted
+Set Ticket Rejected
+Get Tickets Rejected
+Set ContentStatus
+Get ContentStatus
+Stole ServiceCredential
 Stole ContentCredential 
-Compromised Host
-Restored Host
-Set Score (round?)
+Set Host Compromised
+Set Host Restored
+Get Hosts Compromised
+Set Scores (round?)
+Get Scores

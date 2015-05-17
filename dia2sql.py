@@ -481,7 +481,7 @@ class AlchemyMaker(object):
         """
         self.tables = tables
         self.sql_create = ''
-        self.sql_header = """#!/usr/bin/env python
+        self.sqla_header = """#!/usr/bin/env python
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -490,6 +490,17 @@ engine = create_engine("postgresql://scorebot:password@localhost/scorebot", echo
 Base = declarative_base()
 
 """
+        self.sqlaf_header = """
+       from flask import Flask
+from flask.ext.sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://scorebot:password@localhost/scorebot"
+db = SQLAlchemy(app)
+
+
+"""
+        self.sql_header = self.sqlaf_header
 
         self.sql_tables = {}
         self.sql_references = {}
@@ -512,7 +523,8 @@ Base = declarative_base()
         self.sql_tables[table_id] = ["", ""]
         if operation == "CREATE":
             self.sql_tables[table_id][0] = table_name
-            self.sql_tables[table_id][1] += "class %s(Base):\n" % table_name
+            #self.sql_tables[table_id][1] += "class %s(Base):\n" % table_name
+            self.sql_tables[table_id][1] += "class %s(db.Model):\n" % table_name
             self.sql_tables[table_id][1] += "    __tablename__ = '%s'\n" % table_name.lower()
         else:
             raise NameError, 'Invalid SQL command %s' % operation
@@ -553,13 +565,17 @@ Base = declarative_base()
         Stub to be over-ridden by the sub class.
         """
         if "varchar" in coltype:
-            return coltype.replace("varchar", "String")
+            #return coltype.replace("varchar", "String")
+            return coltype.replace("varchar", "db.String")
         elif "int" in coltype:
-            return "Integer"
+            #return "Integer"
+            return "db.Integer"
         elif "datetime" in coltype:
-            return "DateTime"
+            #return "DateTime"
+            return "db.DateTime"
         elif "boolean" in coltype:
-            return "Boolean"
+            #return "Boolean"
+            return "db.Boolean"
         else:
             return coltype
 
@@ -590,6 +606,8 @@ Base = declarative_base()
                                 (self.indent, colname, coltype, foreign_key)
             else:
                 col_statement = "%s%s = Column(%s, nullable=False)\n" % (self.indent, colname, coltype)
+        elif colvalue == 'unique':
+            col_statement = "%s%s = Column(%s, unique=True)\n" % (self.indent, colname, coltype)
         else:
             if foreign_key:
                 col_statement = "%s%s = Column(%s, %s)\n" % (self.indent, colname, coltype, foreign_key)
