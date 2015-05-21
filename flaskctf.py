@@ -70,6 +70,22 @@ def game_put():
     db.session.commit()
     return jsonify({}), 201
 
+@app.route("%s/hosts/" % prefix, methods=['GET'])
+# Test with
+# curl -i http://10.150.100.155:5000/scorebot/api/v1.0/game/1
+def hosts_get():
+    entries = [dict(name=row[0], date=row[1]) \
+               for row in db.session.query(Hosts.blueteamID, Hosts.gameID, Hosts.hostname, Hosts.value).order_by(Hosts.hostname)]
+    return dumps(entries)
+
+@app.route("%s/host/<int:hostID>" % prefix, methods=['GET'])
+# Test with
+# curl -i http://10.150.100.155:5000/scorebot/api/v1.0/game/1
+def host_get(hostID):
+    entries = [dict(name=row[0], date=row[1]) \
+               for row in db.session.query(Hosts.blueteamID, Hosts.gameID, Hosts.hostname, Hosts.value).filter(Hosts.hostID.in_([hostID])).order_by(Hosts.hostname)]
+    return dumps(entries)
+
 @app.route("%s/host/" % prefix, methods=['POST'])
 # Test with
 # curl -i -H "Content-Type: application/json" -X POST -d '{"blueteam":"EPSILON", "game":"Game1", "hostname":"domain.epsilon.net", "value":"100"}' http://localhost:5000/scorebot/api/v1.0/host/
