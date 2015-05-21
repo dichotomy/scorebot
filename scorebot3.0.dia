@@ -1562,13 +1562,13 @@
         <dia:point val="45.803,44.9781"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="45.753,44.9281;55.978,51.8281"/>
+        <dia:rectangle val="45.753,44.9281;58.288,51.8281"/>
       </dia:attribute>
       <dia:attribute name="elem_corner">
         <dia:point val="45.803,44.9781"/>
       </dia:attribute>
       <dia:attribute name="elem_width">
-        <dia:real val="10.125"/>
+        <dia:real val="12.434999999999999"/>
       </dia:attribute>
       <dia:attribute name="elem_height">
         <dia:real val="6.8000000000000007"/>
@@ -1738,7 +1738,7 @@
             <dia:string>#varchar(50)#</dia:string>
           </dia:attribute>
           <dia:attribute name="value">
-            <dia:string>##</dia:string>
+            <dia:string>#unique#</dia:string>
           </dia:attribute>
           <dia:attribute name="comment">
             <dia:string>##</dia:string>
@@ -3844,20 +3844,20 @@
         <dia:point val="94.7567,11.7322"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="55.6225,11.6616;94.8273,47.2082"/>
+        <dia:rectangle val="57.9246,11.6615;94.8274,47.201"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="94.7567,11.7322"/>
-        <dia:point val="55.928,46.8781"/>
+        <dia:point val="58.238,46.8781"/>
       </dia:attribute>
       <dia:attribute name="constraint">
         <dia:string>#Players_HostCompromises_playerID#</dia:string>
       </dia:attribute>
       <dia:attribute name="text_pos">
-        <dia:point val="75.3424,29.1051"/>
+        <dia:point val="76.4974,29.1051"/>
       </dia:attribute>
       <dia:attribute name="text_colour">
         <dia:color val="#000000"/>
@@ -3875,20 +3875,20 @@
         <dia:point val="85.8046,46.8728"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="55.8779,46.0754;85.8546,47.2781"/>
+        <dia:rectangle val="58.1879,46.0754;85.8546,47.2781"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="85.8046,46.8728"/>
-        <dia:point val="55.928,46.8781"/>
+        <dia:point val="58.238,46.8781"/>
       </dia:attribute>
       <dia:attribute name="constraint">
         <dia:string>#Players_FlagsFound_playerID#</dia:string>
       </dia:attribute>
       <dia:attribute name="text_pos">
-        <dia:point val="70.8663,46.6754"/>
+        <dia:point val="72.0213,46.6754"/>
       </dia:attribute>
       <dia:attribute name="text_colour">
         <dia:color val="#000000"/>
@@ -4310,20 +4310,20 @@
         <dia:point val="77.9917,-1.78433"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="55.543,-1.85051;80.4347,47.0888"/>
+        <dia:rectangle val="57.8486,-1.84946;81.5897,47.0749"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="77.9917,-1.78433"/>
-        <dia:point val="55.928,46.8781"/>
+        <dia:point val="58.238,46.8781"/>
       </dia:attribute>
       <dia:attribute name="constraint">
         <dia:string>#Players_CredentialStatus_playerID#</dia:string>
       </dia:attribute>
       <dia:attribute name="text_pos">
-        <dia:point val="66.9597,22.3468"/>
+        <dia:point val="68.1147,22.3468"/>
       </dia:attribute>
       <dia:attribute name="text_colour">
         <dia:color val="#000000"/>
@@ -4809,20 +4809,20 @@
         <dia:point val="100.196,29.5911"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="55.7359,29.5263;100.261,47.2689"/>
+        <dia:rectangle val="58.0394,29.5258;100.261,47.267"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="100.196,29.5911"/>
-        <dia:point val="55.928,46.8781"/>
+        <dia:point val="58.238,46.8781"/>
       </dia:attribute>
       <dia:attribute name="constraint">
         <dia:string>#Players_FlagsStolen_playerID#</dia:string>
       </dia:attribute>
       <dia:attribute name="text_pos">
-        <dia:point val="78.0621,38.0346"/>
+        <dia:point val="79.2171,38.0346"/>
       </dia:attribute>
       <dia:attribute name="text_colour">
         <dia:color val="#000000"/>
@@ -6085,20 +6085,20 @@
         <dia:point val="101.337,-3.54148"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="55.5973,-3.61209;101.408,47.1829"/>
+        <dia:rectangle val="57.9015,-3.61198;101.407,47.176"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="101.337,-3.54148"/>
-        <dia:point val="55.928,46.8781"/>
+        <dia:point val="58.238,46.8781"/>
       </dia:attribute>
       <dia:attribute name="constraint">
         <dia:string>#Players_CredentialStatus_playerID#</dia:string>
       </dia:attribute>
       <dia:attribute name="text_pos">
-        <dia:point val="78.6324,21.4682"/>
+        <dia:point val="79.7874,21.4682"/>
       </dia:attribute>
       <dia:attribute name="text_colour">
         <dia:color val="#000000"/>

@@ -190,7 +190,7 @@ class ContentStatus(db.Model):
     datetime = Column(db.DateTime)
 
 
-if __name__=="__main__":
+if __name__== "__main__":
     db.drop_all()
     db.create_all()
     bt1 = Blueteams(name="ALPHA", dns="10.100.101.100", email="alpha@alpha.net")
