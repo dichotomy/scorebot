@@ -4025,7 +4025,7 @@
         <dia:connection handle="1" to="O0" connection="9"/>
       </dia:connections>
     </dia:object>
-    <dia:object type="UML - Class" version="0" id="O36">
+    <dia:object type="UML - Class" version="0" id="O29">
       <dia:attribute name="obj_pos">
         <dia:point val="20.8833,31.659"/>
       </dia:attribute>
@@ -4274,7 +4274,7 @@
       </dia:attribute>
       <dia:attribute name="templates"/>
     </dia:object>
-    <dia:object type="UML - Constraint" version="0" id="O29">
+    <dia:object type="UML - Constraint" version="0" id="O30">
       <dia:attribute name="obj_pos">
         <dia:point val="45.803,46.8781"/>
       </dia:attribute>
@@ -4302,10 +4302,10 @@
       </dia:attribute>
       <dia:connections>
         <dia:connection handle="0" to="O6" connection="8"/>
-        <dia:connection handle="1" to="O36" connection="9"/>
+        <dia:connection handle="1" to="O29" connection="9"/>
       </dia:connections>
     </dia:object>
-    <dia:object type="UML - Constraint" version="0" id="O30">
+    <dia:object type="UML - Constraint" version="0" id="O31">
       <dia:attribute name="obj_pos">
         <dia:point val="77.9917,-1.78433"/>
       </dia:attribute>
@@ -4336,7 +4336,7 @@
         <dia:connection handle="1" to="O6" connection="9"/>
       </dia:connections>
     </dia:object>
-    <dia:object type="UML - Constraint" version="0" id="O31">
+    <dia:object type="UML - Constraint" version="0" id="O32">
       <dia:attribute name="obj_pos">
         <dia:point val="-39.6591,17.3457"/>
       </dia:attribute>
@@ -4367,18 +4367,18 @@
         <dia:connection handle="1" to="O0" connection="8"/>
       </dia:connections>
     </dia:object>
-    <dia:object type="UML - Class" version="0" id="O32">
+    <dia:object type="UML - Class" version="0" id="O33">
       <dia:attribute name="obj_pos">
         <dia:point val="-8.75728,16.1243"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="-8.80728,16.0743;0.64772,20.5743"/>
+        <dia:rectangle val="-8.80728,16.0743;2.18772,20.5743"/>
       </dia:attribute>
       <dia:attribute name="elem_corner">
         <dia:point val="-8.75728,16.1243"/>
       </dia:attribute>
       <dia:attribute name="elem_width">
-        <dia:real val="9.3550000000000004"/>
+        <dia:real val="10.895"/>
       </dia:attribute>
       <dia:attribute name="elem_height">
         <dia:real val="4.4000000000000004"/>
@@ -4502,7 +4502,7 @@
             <dia:string>#varchar(30)#</dia:string>
           </dia:attribute>
           <dia:attribute name="value">
-            <dia:string>##</dia:string>
+            <dia:string>#unique#</dia:string>
           </dia:attribute>
           <dia:attribute name="comment">
             <dia:string>##</dia:string>
@@ -4547,7 +4547,7 @@
       </dia:attribute>
       <dia:attribute name="templates"/>
     </dia:object>
-    <dia:object type="UML - Class" version="0" id="O33">
+    <dia:object type="UML - Class" version="0" id="O34">
       <dia:attribute name="obj_pos">
         <dia:point val="100.196,26.8911"/>
       </dia:attribute>
@@ -4773,7 +4773,7 @@
       </dia:attribute>
       <dia:attribute name="templates"/>
     </dia:object>
-    <dia:object type="UML - Constraint" version="0" id="O34">
+    <dia:object type="UML - Constraint" version="0" id="O35">
       <dia:attribute name="obj_pos">
         <dia:point val="100.196,28.7911"/>
       </dia:attribute>
@@ -4800,11 +4800,11 @@
         <dia:color val="#000000"/>
       </dia:attribute>
       <dia:connections>
-        <dia:connection handle="0" to="O33" connection="8"/>
+        <dia:connection handle="0" to="O34" connection="8"/>
         <dia:connection handle="1" to="O4" connection="9"/>
       </dia:connections>
     </dia:object>
-    <dia:object type="UML - Constraint" version="0" id="O35">
+    <dia:object type="UML - Constraint" version="0" id="O36">
       <dia:attribute name="obj_pos">
         <dia:point val="100.196,29.5911"/>
       </dia:attribute>
@@ -4831,7 +4831,7 @@
         <dia:color val="#000000"/>
       </dia:attribute>
       <dia:connections>
-        <dia:connection handle="0" to="O33" connection="10"/>
+        <dia:connection handle="0" to="O34" connection="10"/>
         <dia:connection handle="1" to="O6" connection="9"/>
       </dia:connections>
     </dia:object>
@@ -4862,7 +4862,7 @@
         <dia:color val="#000000"/>
       </dia:attribute>
       <dia:connections>
-        <dia:connection handle="0" to="O36" connection="10"/>
+        <dia:connection handle="0" to="O29" connection="10"/>
         <dia:connection handle="1" to="O0" connection="9"/>
       </dia:connections>
     </dia:object>
@@ -4871,20 +4871,20 @@
         <dia:point val="20.8833,35.159"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="0.30141,17.6865;20.9538,35.2295"/>
+        <dia:rectangle val="1.83094,17.6953;21.5205,35.2296"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="20.8833,35.159"/>
-        <dia:point val="0.59772,18.0243"/>
+        <dia:point val="2.13772,18.0243"/>
       </dia:attribute>
       <dia:attribute name="constraint">
         <dia:string>#Games_BluePlayers_gameID#</dia:string>
       </dia:attribute>
       <dia:attribute name="text_pos">
-        <dia:point val="10.7405,26.3917"/>
+        <dia:point val="11.5105,26.3917"/>
       </dia:attribute>
       <dia:attribute name="text_colour">
         <dia:color val="#000000"/>
@@ -4893,8 +4893,8 @@
         <dia:color val="#000000"/>
       </dia:attribute>
       <dia:connections>
-        <dia:connection handle="0" to="O36" connection="12"/>
-        <dia:connection handle="1" to="O32" connection="9"/>
+        <dia:connection handle="0" to="O29" connection="12"/>
+        <dia:connection handle="1" to="O33" connection="9"/>
       </dia:connections>
     </dia:object>
     <dia:object type="UML - Constraint" version="0" id="O39">
@@ -4902,20 +4902,20 @@
         <dia:point val="35.6696,22.596"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="0.496436,17.6212;35.7256,22.652"/>
+        <dia:rectangle val="2.03414,17.6212;35.7259,22.6523"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="35.6696,22.596"/>
-        <dia:point val="0.59772,18.0243"/>
+        <dia:point val="2.13772,18.0243"/>
       </dia:attribute>
       <dia:attribute name="constraint">
         <dia:string>#Games_Flags_gameID#</dia:string>
       </dia:attribute>
       <dia:attribute name="text_pos">
-        <dia:point val="18.1337,20.1102"/>
+        <dia:point val="18.9037,20.1102"/>
       </dia:attribute>
       <dia:attribute name="text_colour">
         <dia:color val="#000000"/>
@@ -4925,7 +4925,7 @@
       </dia:attribute>
       <dia:connections>
         <dia:connection handle="0" to="O4" connection="12"/>
-        <dia:connection handle="1" to="O32" connection="9"/>
+        <dia:connection handle="1" to="O33" connection="9"/>
       </dia:connections>
     </dia:object>
     <dia:object type="UML - Constraint" version="0" id="O40">
@@ -4933,20 +4933,20 @@
         <dia:point val="20.7105,-4.09211"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="0.26815,-4.16274;20.7811,18.3304"/>
+        <dia:rectangle val="1.79925,-4.16255;20.7809,18.3198"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="20.7105,-4.09211"/>
-        <dia:point val="0.59772,18.0243"/>
+        <dia:point val="2.13772,18.0243"/>
       </dia:attribute>
       <dia:attribute name="constraint">
         <dia:string>#Games_Hosts_gameID#</dia:string>
       </dia:attribute>
       <dia:attribute name="text_pos">
-        <dia:point val="10.6541,6.76607"/>
+        <dia:point val="11.4241,6.76607"/>
       </dia:attribute>
       <dia:attribute name="text_colour">
         <dia:color val="#000000"/>
@@ -4956,7 +4956,7 @@
       </dia:attribute>
       <dia:connections>
         <dia:connection handle="0" to="O1" connection="12"/>
-        <dia:connection handle="1" to="O32" connection="9"/>
+        <dia:connection handle="1" to="O33" connection="9"/>
       </dia:connections>
     </dia:object>
     <dia:object type="UML - Constraint" version="0" id="O41">
@@ -4987,7 +4987,7 @@
       </dia:attribute>
       <dia:connections>
         <dia:connection handle="0" to="O5" connection="11"/>
-        <dia:connection handle="1" to="O32" connection="8"/>
+        <dia:connection handle="1" to="O33" connection="8"/>
       </dia:connections>
     </dia:object>
     <dia:object type="UML - Class" version="0" id="O42">
@@ -5275,7 +5275,7 @@
       </dia:attribute>
       <dia:connections>
         <dia:connection handle="0" to="O42" connection="11"/>
-        <dia:connection handle="1" to="O32" connection="8"/>
+        <dia:connection handle="1" to="O33" connection="8"/>
       </dia:connections>
     </dia:object>
     <dia:object type="UML - Class" version="0" id="O45">
@@ -5463,20 +5463,20 @@
         <dia:point val="10.2626,47.1577"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="0.202323,17.8509;13.9002,47.2209"/>
+        <dia:rectangle val="1.73899,17.8687;14.6702,47.2193"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="10.2626,47.1577"/>
-        <dia:point val="0.59772,18.0243"/>
+        <dia:point val="2.13772,18.0243"/>
       </dia:attribute>
       <dia:attribute name="constraint">
         <dia:string>#Games_RedTeam_gameID#</dia:string>
       </dia:attribute>
       <dia:attribute name="text_pos">
-        <dia:point val="5.43017,32.391"/>
+        <dia:point val="6.20017,32.391"/>
       </dia:attribute>
       <dia:attribute name="text_colour">
         <dia:color val="#000000"/>
@@ -5486,7 +5486,7 @@
       </dia:attribute>
       <dia:connections>
         <dia:connection handle="0" to="O45" connection="10"/>
-        <dia:connection handle="1" to="O32" connection="9"/>
+        <dia:connection handle="1" to="O33" connection="9"/>
       </dia:connections>
     </dia:object>
     <dia:object type="UML - Constraint" version="0" id="O47">

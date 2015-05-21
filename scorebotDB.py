@@ -189,3 +189,17 @@ class ContentStatus(db.Model):
     contentStatusID = Column(db.Integer, Sequence('contentStatusID_seq'), primary_key=True)
     datetime = Column(db.DateTime)
 
+
+if __name__=="__main__":
+    db.drop_all()
+    db.create_all()
+    bt1 = Blueteams(name="ALPHA", dns="10.100.101.100", email="alpha@alpha.net")
+    bt2 = Blueteams(name="BETA", dns="10.100.102.100", email="beta@beta.net")
+    bt3 = Blueteams(name="GAMMA", dns="10.100.102.100", email="gamma@gamma.net")
+    #bt4 = Blueteams(name="ALPHA", dns="10.100.101.100", email="alpha@alpha.net")
+    db.session.add(bt1)
+    db.session.add(bt2)
+    db.session.add(bt3)
+    #db.session.add(bt4)
+    db.session.commit()
+

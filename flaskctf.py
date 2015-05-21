@@ -14,7 +14,7 @@ def blueteams_getall():
         for row in db.session.query(Blueteams.name, Blueteams.dns, Blueteams.email).order_by(Blueteams.name)]
     return dumps(entries)
 
-@app.route("/scorebot/api/v1.0/blueteams/<int:blueteamID>", methods=['GET'])
+@app.route("/scorebot/api/v1.0/blueteam/<int:blueteamID>", methods=['GET'])
 # Test with
 # curl -i http://10.150.100.155:5000/scorebot/api/v1.0/blueteams/2
 def blueteams_get(blueteamID):
@@ -24,10 +24,24 @@ def blueteams_get(blueteamID):
     return dumps(entries)
 
 
-@app.route("/scorebot/api/v1.0/blueteams/", methods=['POST'])
+@app.route("/scorebot/api/v1.0/blueteam/", methods=['POST'])
 # Test with
 # curl -i -H "Content-Type: application/json" -X POST -d '{"name":"EPSILON", "dns":"10.100.105.100", "email":"epsilon@epsilon.net"}' http://localhost:5000/scorebot/api/v1.0/blueteams/
 def blueteams_put():
+    if not request.json or not 'name' in request.json:
+        abort(400)
+    name = request.json['name']
+    dns = request.json['dns']
+    email = request.json['email']
+    bt = Blueteams(name=name, dns=dns, email=email)
+    db.session.add(bt)
+    db.session.commit()
+    return jsonify({}), 201
+
+@app.route("/scorebot/api/v1.0/host/", methods=['POST'])
+# Test with
+# curl -i -H "Content-Type: application/json" -X POST -d '{"bluename":"EPSILON", "gamename":"Game1", "hostname":"domain.epsilon.net", "value":"100"}' http://localhost:5000/scorebot/api/v1.0/host/
+def host_put():
     if not request.json or not 'name' in request.json:
         abort(400)
     name = request.json['name']
