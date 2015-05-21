@@ -1,189 +1,191 @@
 #!/usr/bin/env python
-from sqlalchemy import *
-from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine("postgresql://scorebot:password@localhost/scorebot", echo=True)
+from flask import Flask
+from flask.ext.sqlalchemy import SQLAlchemy
 
-Base = declarative_base()
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://scorebot:password@localhost/scorebot"
+db = SQLAlchemy(app)
 
-class Blueteams(Base):
+
+class Blueteams(db.Model):
     __tablename__ = 'blueteams'
-    blueteamID = Column(Integer, Sequence('blueteamID_seq'), primary_key=True)
-    name = Column(String(20))
-    dns = Column(String(16))
-    email = Column(String(50))
+    blueteamID = Column(db.Integer, Sequence('blueteamID_seq'), primary_key=True)
+    name = Column(db.String(20), unique=True)
+    dns = Column(db.String(16))
+    email = Column(db.String(50))
 
-class Games(Base):
+class Games(db.Model):
     __tablename__ = 'games'
-    date = Column(DateTime)
-    gameID = Column(Integer, Sequence('gameID_seq'), primary_key=True)
-    name = Column(String(30))
+    date = Column(db.DateTime)
+    gameID = Column(db.Integer, Sequence('gameID_seq'), primary_key=True)
+    name = Column(db.String(30))
 
-class BluePlayers(Base):
+class BluePlayers(db.Model):
     __tablename__ = 'blueplayers'
-    gameID = Column(Integer, ForeignKey("games.gameID"), nullable=False)
-    blueplayersID = Column(Integer, Sequence('blueplayersID_seq'), primary_key=True)
-    playerID = Column(Integer, nullable=False)
-    blueteamID = Column(Integer, ForeignKey("blueteams.blueteamID"), nullable=False)
-    score = Column(Integer, nullable=False)
-    captain = Column(Boolean, nullable=False)
+    gameID = Column(db.Integer, ForeignKey("games.gameID"), nullable=False)
+    blueplayersID = Column(db.Integer, Sequence('blueplayersID_seq'), primary_key=True)
+    playerID = Column(db.Integer, nullable=False)
+    blueteamID = Column(db.Integer, ForeignKey("blueteams.blueteamID"), nullable=False)
+    score = Column(db.Integer, nullable=False)
+    captain = Column(db.Boolean, nullable=False)
 
-class Tickets(Base):
+class Tickets(db.Model):
     __tablename__ = 'tickets'
-    gameID = Column(Integer, ForeignKey("games.gameID"), nullable=False)
-    name = Column(String(200))
-    value = Column(Integer)
-    blueteamID = Column(Integer, ForeignKey("blueteams.blueteamID"), nullable=False)
-    duration = Column(Integer)
-    message = Column(String(2000))
-    TIcketID = Column(Integer, Sequence('TIcketID_seq'), primary_key=True)
-    subject = Column(String(500))
+    gameID = Column(db.Integer, ForeignKey("games.gameID"), nullable=False)
+    name = Column(db.String(200))
+    value = Column(db.Integer)
+    blueteamID = Column(db.Integer, ForeignKey("blueteams.blueteamID"), nullable=False)
+    duration = Column(db.Integer)
+    message = Column(db.String(2000))
+    TIcketID = Column(db.Integer, Sequence('TIcketID_seq'), primary_key=True)
+    subject = Column(db.String(500))
 
-class Flags(Base):
+class Flags(db.Model):
     __tablename__ = 'flags'
-    flagID = Column(Integer, Sequence('flagID_seq'), primary_key=True)
-    name = Column(String(200))
-    value = Column(String(200))
-    blueteamID = Column(Integer, ForeignKey("blueteams.blueteamID"), nullable=False)
-    gameID = Column(Integer, ForeignKey("games.gameID"), nullable=False)
-    answer = Column(String(2000))
-    points = Column(Integer)
+    flagID = Column(db.Integer, Sequence('flagID_seq'), primary_key=True)
+    name = Column(db.String(200))
+    value = Column(db.String(200))
+    blueteamID = Column(db.Integer, ForeignKey("blueteams.blueteamID"), nullable=False)
+    gameID = Column(db.Integer, ForeignKey("games.gameID"), nullable=False)
+    answer = Column(db.String(2000))
+    points = Column(db.Integer)
 
-class Hosts(Base):
+class Hosts(db.Model):
     __tablename__ = 'hosts'
-    value = Column(Integer)
-    blueteamID = Column(Integer, ForeignKey("blueteams.blueteamID"), nullable=False)
-    hostID = Column(Integer, Sequence('hostID_seq'), primary_key=True)
-    gameID = Column(Integer, ForeignKey("games.gameID"), nullable=False)
-    hostname = Column(String(30))
+    value = Column(db.Integer)
+    blueteamID = Column(db.Integer, ForeignKey("blueteams.blueteamID"), nullable=False)
+    hostID = Column(db.Integer, Sequence('hostID_seq'), primary_key=True)
+    gameID = Column(db.Integer, ForeignKey("games.gameID"), nullable=False)
+    hostname = Column(db.String(30))
 
-class Scores(Base):
+class Scores(db.Model):
     __tablename__ = 'scores'
-    date = Column(DateTime, nullable=False)
-    blueteamID = Column(Integer, ForeignKey("games.gameID"), nullable=False)
-    gameID = Column(Integer, ForeignKey("blueteams.blueteamID"), nullable=False)
-    score = Column(Integer, nullable=False)
-    scoresID = Column(Integer, Sequence('scoresID_seq'), primary_key=True)
+    date = Column(db.DateTime, nullable=False)
+    blueteamID = Column(db.Integer, ForeignKey("games.gameID"), nullable=False)
+    gameID = Column(db.Integer, ForeignKey("blueteams.blueteamID"), nullable=False)
+    score = Column(db.Integer, nullable=False)
+    scoresID = Column(db.Integer, Sequence('scoresID_seq'), primary_key=True)
 
-class RedTeam(Base):
+class RedTeam(db.Model):
     __tablename__ = 'redteam'
-    playerID = Column(Integer, Sequence('playerID_seq'), primary_key=True)
-    RedTeamID = Column(Integer, Sequence('RedTeamID_seq'), primary_key=True)
-    gameID = Column(Integer, ForeignKey("games.gameID"), nullable=False)
+    playerID = Column(db.Integer, Sequence('playerID_seq'), primary_key=True)
+    RedTeamID = Column(db.Integer, Sequence('RedTeamID_seq'), primary_key=True)
+    gameID = Column(db.Integer, ForeignKey("games.gameID"), nullable=False)
 
-class HostStatus(Base):
+class HostStatus(db.Model):
     __tablename__ = 'hoststatus'
-    status = Column(String(50))
-    hostStatusID = Column(Integer, Sequence('hostStatusID_seq'), primary_key=True)
-    hostID = Column(Integer, ForeignKey("hosts.hostID"), nullable=False)
-    datetime = Column(DateTime)
+    status = Column(db.String(50))
+    hostStatusID = Column(db.Integer, Sequence('hostStatusID_seq'), primary_key=True)
+    hostID = Column(db.Integer, ForeignKey("hosts.hostID"), nullable=False)
+    datetime = Column(db.DateTime)
 
-class TicketActivity(Base):
+class TicketActivity(db.Model):
     __tablename__ = 'ticketactivity'
-    ticketActivityID = Column(Integer, Sequence('ticketActivityID_seq'), primary_key=True)
-    datetime = Column(DateTime)
-    injectID = Column(Integer, ForeignKey("tickets.TIcketID"), nullable=False)
-    activity = Column(String(50))
+    ticketActivityID = Column(db.Integer, Sequence('ticketActivityID_seq'), primary_key=True)
+    datetime = Column(db.DateTime)
+    injectID = Column(db.Integer, ForeignKey("tickets.TIcketID"), nullable=False)
+    activity = Column(db.String(50))
 
-class Players(Base):
+class Players(db.Model):
     __tablename__ = 'players'
-    username = Column(String(50))
-    firstName = Column(String(50))
-    playerID = Column(Integer, Sequence('playerID_seq'), primary_key=True)
-    lastName = Column(String(50))
-    score = Column(Integer, nullable=False)
-    password = Column(String(50))
+    username = Column(db.String(50))
+    firstName = Column(db.String(50))
+    playerID = Column(db.Integer, Sequence('playerID_seq'), primary_key=True)
+    lastName = Column(db.String(50))
+    score = Column(db.Integer, nullable=False)
+    password = Column(db.String(50))
 
-class Services(Base):
+class Services(db.Model):
     __tablename__ = 'services'
-    hostID = Column(Integer, ForeignKey("hosts.hostID"), nullable=False)
-    protocol = Column(String(20))
-    name = Column(String(20))
-    value = Column(Integer)
-    serviceID = Column(Integer, Sequence('serviceID_seq'), primary_key=True)
-    port = Column(Integer)
+    hostID = Column(db.Integer, ForeignKey("hosts.hostID"), nullable=False)
+    protocol = Column(db.String(20))
+    name = Column(db.String(20))
+    value = Column(db.Integer)
+    serviceID = Column(db.Integer, Sequence('serviceID_seq'), primary_key=True)
+    port = Column(db.Integer)
 
-class HostCompromises(Base):
+class HostCompromises(db.Model):
     __tablename__ = 'hostcompromises'
-    hostID = Column(Integer, ForeignKey("hosts.hostID"), nullable=False)
-    playerID = Column(Integer, ForeignKey("players.playerID"), nullable=False)
-    score = Column(Integer, nullable=False)
-    starttime = Column(DateTime)
-    endtime = Column(DateTime)
-    hostCompromisesID = Column(Integer, Sequence('hostCompromisesID_seq'), primary_key=True)
+    hostID = Column(db.Integer, ForeignKey("hosts.hostID"), nullable=False)
+    playerID = Column(db.Integer, ForeignKey("players.playerID"), nullable=False)
+    score = Column(db.Integer, nullable=False)
+    starttime = Column(db.DateTime)
+    endtime = Column(db.DateTime)
+    hostCompromisesID = Column(db.Integer, Sequence('hostCompromisesID_seq'), primary_key=True)
 
-class ServiceStatus(Base):
+class ServiceStatus(db.Model):
     __tablename__ = 'servicestatus'
-    status = Column(String(50))
-    serviceID = Column(Integer, ForeignKey("services.serviceID"), nullable=False)
-    serviceStatusID = Column(Integer, Sequence('serviceStatusID_seq'), primary_key=True)
-    datetime = Column(DateTime)
+    status = Column(db.String(50))
+    serviceID = Column(db.Integer, ForeignKey("services.serviceID"), nullable=False)
+    serviceStatusID = Column(db.Integer, Sequence('serviceStatusID_seq'), primary_key=True)
+    datetime = Column(db.DateTime)
 
-class FlagsStolen(Base):
+class FlagsStolen(db.Model):
     __tablename__ = 'flagsstolen'
-    playerID = Column(Integer, ForeignKey("players.playerID"), nullable=False)
-    flagID = Column(Integer, ForeignKey("flags.flagID"), nullable=False)
-    flagStolenID = Column(Integer, Sequence('flagStolenID_seq'), primary_key=True)
-    activity = Column(String(50))
-    datetime = Column(DateTime)
+    playerID = Column(db.Integer, ForeignKey("players.playerID"), nullable=False)
+    flagID = Column(db.Integer, ForeignKey("flags.flagID"), nullable=False)
+    flagStolenID = Column(db.Integer, Sequence('flagStolenID_seq'), primary_key=True)
+    activity = Column(db.String(50))
+    datetime = Column(db.DateTime)
 
-class ServiceCredentials(Base):
+class ServiceCredentials(db.Model):
     __tablename__ = 'servicecredentials'
-    username = Column(String(50))
-    created = Column(DateTime)
-    credentialID = Column(Integer, Sequence('credentialID_seq'), primary_key=True)
-    serviceID = Column(Integer, ForeignKey("services.serviceID"), nullable=False)
-    password = Column(String(50))
-    valid = Column(Boolean)
+    username = Column(db.String(50))
+    created = Column(db.DateTime)
+    credentialID = Column(db.Integer, Sequence('credentialID_seq'), primary_key=True)
+    serviceID = Column(db.Integer, ForeignKey("services.serviceID"), nullable=False)
+    password = Column(db.String(50))
+    valid = Column(db.Boolean)
 
-class FlagsFound(Base):
+class FlagsFound(db.Model):
     __tablename__ = 'flagsfound'
-    playerID = Column(Integer, ForeignKey("players.playerID"), nullable=False)
-    flagFoundID = Column(Integer, Sequence('flagFoundID_seq'), primary_key=True)
-    flagID = Column(Integer, ForeignKey("flags.flagID"), nullable=False)
-    activity = Column(String(50))
-    datetime = Column(DateTime)
+    playerID = Column(db.Integer, ForeignKey("players.playerID"), nullable=False)
+    flagFoundID = Column(db.Integer, Sequence('flagFoundID_seq'), primary_key=True)
+    flagID = Column(db.Integer, ForeignKey("flags.flagID"), nullable=False)
+    activity = Column(db.String(50))
+    datetime = Column(db.DateTime)
 
-class Content(Base):
+class Content(db.Model):
     __tablename__ = 'content'
-    name = Column(String(50))
-    contentID = Column(Integer, Sequence('contentID_seq'), primary_key=True)
-    uri = Column(String(2000))
-    value = Column(String(1000))
-    content = Column(String(2000))
-    serviceID = Column(Integer, ForeignKey("services.serviceID"), nullable=False)
+    name = Column(db.String(50))
+    contentID = Column(db.Integer, Sequence('contentID_seq'), primary_key=True)
+    uri = Column(db.String(2000))
+    value = Column(db.String(1000))
+    content = Column(db.String(2000))
+    serviceID = Column(db.Integer, ForeignKey("services.serviceID"), nullable=False)
 
-class ContentCredentials(Base):
+class ContentCredentials(db.Model):
     __tablename__ = 'contentcredentials'
-    username = Column(String(50))
-    created = Column(DateTime)
-    contentID = Column(Integer, ForeignKey("content.contentID"), nullable=False)
-    credentialID = Column(Integer, Sequence('credentialID_seq'), primary_key=True)
-    valid = Column(Boolean)
-    password = Column(String(50))
+    username = Column(db.String(50))
+    created = Column(db.DateTime)
+    contentID = Column(db.Integer, ForeignKey("content.contentID"), nullable=False)
+    credentialID = Column(db.Integer, Sequence('credentialID_seq'), primary_key=True)
+    valid = Column(db.Boolean)
+    password = Column(db.String(50))
 
-class ContentCredentialStatus(Base):
+class ContentCredentialStatus(db.Model):
     __tablename__ = 'contentcredentialstatus'
-    status = Column(String(50))
-    contentCredentialStatusID = Column(Integer, Sequence('contentCredentialStatusID_seq'), primary_key=True)
-    playerID = Column(Integer, ForeignKey("players.playerID"), nullable=False)
-    datetime = Column(DateTime)
-    credentialID = Column(Integer, ForeignKey("contentcredentials.credentialID"), nullable=False)
-    score = Column(Integer, nullable=False)
+    status = Column(db.String(50))
+    contentCredentialStatusID = Column(db.Integer, Sequence('contentCredentialStatusID_seq'), primary_key=True)
+    playerID = Column(db.Integer, ForeignKey("players.playerID"), nullable=False)
+    datetime = Column(db.DateTime)
+    credentialID = Column(db.Integer, ForeignKey("contentcredentials.credentialID"), nullable=False)
+    score = Column(db.Integer, nullable=False)
 
-class ServiceCredentialStatus(Base):
+class ServiceCredentialStatus(db.Model):
     __tablename__ = 'servicecredentialstatus'
-    status = Column(String(50))
-    servicesCredentialStatusID = Column(Integer, Sequence('servicesCredentialStatusID_seq'), primary_key=True)
-    playerID = Column(Integer, ForeignKey("players.playerID"), nullable=False)
-    datetime = Column(DateTime)
-    credentialID = Column(Integer, ForeignKey("servicecredentials.credentialID"), nullable=False)
-    score = Column(Integer, nullable=False)
+    status = Column(db.String(50))
+    servicesCredentialStatusID = Column(db.Integer, Sequence('servicesCredentialStatusID_seq'), primary_key=True)
+    playerID = Column(db.Integer, ForeignKey("players.playerID"), nullable=False)
+    datetime = Column(db.DateTime)
+    credentialID = Column(db.Integer, ForeignKey("servicecredentials.credentialID"), nullable=False)
+    score = Column(db.Integer, nullable=False)
 
-class ContentStatus(Base):
+class ContentStatus(db.Model):
     __tablename__ = 'contentstatus'
-    status = Column(String(50))
-    contentID = Column(Integer, ForeignKey("content.contentID"), nullable=False)
-    contentStatusID = Column(Integer, Sequence('contentStatusID_seq'), primary_key=True)
-    datetime = Column(DateTime)
+    status = Column(db.String(50))
+    contentID = Column(db.Integer, ForeignKey("content.contentID"), nullable=False)
+    contentStatusID = Column(db.Integer, Sequence('contentStatusID_seq'), primary_key=True)
+    datetime = Column(db.DateTime)
 
