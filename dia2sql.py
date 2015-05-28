@@ -490,8 +490,8 @@ engine = create_engine("postgresql://scorebot:password@localhost/scorebot", echo
 Base = declarative_base()
 
 """
-        self.sqlaf_header = """
-       from flask import Flask
+        self.sqlaf_header = """#!/usr/bin/env python
+from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -589,30 +589,31 @@ db = SQLAlchemy(app)
             relation = self.tables[table_id].get_ref_relations(ref)
             if relation:
                 (local_col, foreign_table_id, foreign_col) = relation
+                print "%s:%s:%s" % (local_col, foreign_table_id, foreign_col)
                 if local_col == colname:
                     foreign_table = self.tables[foreign_table_id].name.lower()
-                    foreign_key = "ForeignKey(\"%s.%s\")" % (foreign_table, foreign_col)
+                    foreign_key = "db.ForeignKey(\"%s.%s\")" % (foreign_table, foreign_col)
                     if table_id in self.sql_references:
                         self.sql_references[table_id].append([foreign_table_id, foreign_col])
                     else:
                         self.sql_references[table_id] = [[foreign_table_id, foreign_col]]
         if colvalue == 'identity':
             seq_name = "%s_seq" % colname
-            col_statement = "%s%s = Column(%s, Sequence('%s'), primary_key=True)\n" % \
+            col_statement = "%s%s = db.Column(%s, db.Sequence('%s'), primary_key=True)\n" % \
                             (self.indent, colname, coltype, seq_name)
         elif colvalue == 'not null':
             if foreign_key:
-                col_statement = "%s%s = Column(%s, %s, nullable=False)\n" % \
+                col_statement = "%s%s = db.Column(%s, %s, nullable=False)\n" % \
                                 (self.indent, colname, coltype, foreign_key)
             else:
-                col_statement = "%s%s = Column(%s, nullable=False)\n" % (self.indent, colname, coltype)
+                col_statement = "%s%s = db.Column(%s, nullable=False)\n" % (self.indent, colname, coltype)
         elif colvalue == 'unique':
-            col_statement = "%s%s = Column(%s, unique=True)\n" % (self.indent, colname, coltype)
+            col_statement = "%s%s = db.Column(%s, unique=True)\n" % (self.indent, colname, coltype)
         else:
             if foreign_key:
-                col_statement = "%s%s = Column(%s, %s)\n" % (self.indent, colname, coltype, foreign_key)
+                col_statement = "%s%s = db.Column(%s, %s)\n" % (self.indent, colname, coltype, foreign_key)
             else:
-                col_statement = "%s%s = Column(%s)\n" % (self.indent, colname, coltype)
+                col_statement = "%s%s = db.Column(%s)\n" % (self.indent, colname, coltype)
         return col_statement
 
     def create_references(self, table_id):
@@ -640,7 +641,7 @@ db = SQLAlchemy(app)
         sequence = {}
         seqno = 0
         while sorted(sequence.values()) != sorted(self.sql_tables.keys()):
-            sys.stdout.write("Sequence:  ")
+            sys.stdout.write("db.Sequence:  ")
             print sorted(sequence.values())
             sys.stdout.write("SQLtables: ")
             print sorted(self.sql_tables.keys())

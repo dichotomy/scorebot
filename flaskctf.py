@@ -47,7 +47,15 @@ def blueteams_put():
 # curl -i http://10.150.100.155:5000/scorebot/api/v1.0/games/
 def games_getall():
     entries = [dict(name=row[0], date=row[1]) \
-               for row in db.session.query(Games.name, Games.date).order_by(Games.date)]
+               for row in db.session.query(Games.name, Games.start, Games.finish).order_by(Games.date)]
+    return dumps(entries)
+
+@app.route("%s/games/current/" % prefix, methods=['GET'])
+# Test with
+# curl -i http://10.150.100.155:5000/scorebot/api/v1.0/games/current
+def games_get_current():
+    entries = [dict(id=row[0], name=row[1], start=row[2], finish=row[3]) \
+               for row in db.session.query(Games.gameID, Games.name, Games.start, Games.finish).order_by(Games.start).limit(1)]
     return dumps(entries)
 
 @app.route("%s/game/<int:gameID>" % prefix, methods=['GET'])
@@ -55,7 +63,7 @@ def games_getall():
 # curl -i http://10.150.100.155:5000/scorebot/api/v1.0/game/1
 def games_get(gameID):
     entries = [dict(name=row[0], date=row[1]) \
-               for row in db.session.query(Games.name, Games.date).filter(Games.gameID.in_([gameID])).order_by(Games.date)]
+               for row in db.session.query(Games.name, Games.start, Games.finish).filter(Games.gameID.in_([gameID])).order_by(Games.date)]
     return dumps(entries)
 
 @app.route("%s/game/" % prefix, methods=['POST'])
@@ -65,25 +73,29 @@ def game_put():
     if not request.json or (not 'name' in request.json and not 'date' in request.json) :
         abort(400)
     name = request.json['name']
-    date = request.json['date']
-    game = Games(name=name, date=date)
+    start = request.json['start']
+    if 'finish' in request.json:
+        finish = request.json['finish']
+        game = Games(name=name, start=start, finish=finish)
+    else:
+        game = Games(name=name, start=start)
     db.session.add(game)
     db.session.commit()
     return jsonify({}), 201
 
 @app.route("%s/hosts/" % prefix, methods=['GET'])
 # Test with
-# curl -i http://10.150.100.155:5000/scorebot/api/v1.0/game/1
+# curl -i http://10.150.100.155:5000/scorebot/api/v1.0/hosts/
 def hosts_get():
-    entries = [dict(name=row[0], date=row[1]) \
+    entries = [dict(blueteamID=row[0], gameID=row[1], hostname=row[2], value=row[3]) \
                for row in db.session.query(Hosts.blueteamID, Hosts.gameID, Hosts.hostname, Hosts.value).order_by(Hosts.hostname)]
     return dumps(entries)
 
 @app.route("%s/host/<int:hostID>" % prefix, methods=['GET'])
 # Test with
-# curl -i http://10.150.100.155:5000/scorebot/api/v1.0/game/1
+# curl -i http://10.150.100.155:5000/scorebot/api/v1.0/host/1
 def host_get(hostID):
-    entries = [dict(name=row[0], date=row[1]) \
+    entries = [dict(blueteamID=row[0], gameID=row[1], hostname=row[2], value=row[3]) \
                for row in db.session.query(Hosts.blueteamID, Hosts.gameID, Hosts.hostname, Hosts.value).filter(Hosts.hostID.in_([hostID])).order_by(Hosts.hostname)]
     return dumps(entries)
 

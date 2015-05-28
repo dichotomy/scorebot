@@ -1,4 +1,4 @@
-scorebot
+scorebot 3.0
 ========
 
 Scoring Engine for CTF competitions
@@ -9,12 +9,18 @@ Scorebot is a scoring engine for CTF competitions.  It is built upon a Blue Team
 
 DEPENDENCIES
 Scorebot depends upon dnspython (http://www.dnspython.org/).
-Scorebot runs best in Linux, but should work in Windows.
+Scorebot runs best in Linux, but should work in Windows (never tested, no promises).
 Python 2.7 or greater is recommended.
 
 To install all dependencies on Ubuntu, run:
    apt-get install python-dnspython python-rrdtool apache2 python-pymongo python-dns python-setuptools
    easy_install jaraco.modb
+
+    easy_install sqlalchemy
+    easy_install flask
+    easy_install flask-sqlalchemy
+    easy_install twisted
+
 
 
 BUGS
