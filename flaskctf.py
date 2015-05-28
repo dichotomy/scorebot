@@ -375,6 +375,199 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"name":"EPdns", "bluete
     db.session.add(flag)
     db.session.commit()
     return jsonify({}), 201
+@app.route("%sgame/all" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/game/all
+def get_game_all():
+    a = [dict(id=row[0]) \
+        for row in db.session.query(Games.gameID).order_by(Games.date)]
+    b = []
+    if a and len(a) > 0:
+        for c in range(0, len(a)):
+            if c > 0:
+                b.append(', ')
+            b.append(scorebot_objects.toJSON(scorebot_objects.getGame(a[c]["id"])))
+    return "[%s]" % ''.join(b)
+@app.route("%sgame/<int:GameID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/game/(gid)
+def get_game(GameID):
+    a = scorebot_objects.getGame(GameID)
+    if not a:
+        raise BadRequest("Not a valid GameID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%splayer/all" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/player/all
+def get_player_all():
+    a = [dict(id=row[0]) \
+         for row in db.session.query(BluePlayers.blueplayersID).order_by(BluePlayers.blueplayersID)]
+    b = []
+    if a and len(a) > 0:
+        for c in range(0, len(a)):
+            if c > 0:
+                b.append(', ')
+            b.append(scorebot_objects.toJSON(scorebot_objects.getPlayer(a[c]["id"])))
+    return "[%s]" % ''.join(b)
+@app.route("%splayer/<int:PlayerID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/player/(pid)
+def get_player(PlayerID):
+    a = scorebot_objects.getPlayer(PlayerID)
+    if not a:
+        raise BadRequest("Not a valid PlayerID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%shost/all" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/host/all
+def get_hosts_all():
+    a = [dict(id=row[0]) \
+        for row in db.session.query(Hosts.hostID)]
+    b = []
+    if a and len(a) > 0:
+        for c in range(0, len(a)):
+            if c > 0:
+                b.append(', ')
+            b.append(scorebot_objects.toJSON(scorebot_objects.getHost(a[c]["id"])))
+    return "[%s]" % ''.join(b)
+@app.route("%shost/<int:HostID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/host/all
+def get_host(HostID):
+    a = scorebot_objects.getHost(HostID)
+    if not a:
+        raise BadRequest("Not a valid HostID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%sgame/<int:GameID>/host" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/host/all
+def get_hosts_game_all(GameID):
+    a = [dict(id=row[0]) \
+        for row in db.session.query(Hosts.hostID).filter(Hosts.gameID.in_([GameID]))]
+    b = []
+    if a and len(a) > 0:
+        for c in range(0, len(a)):
+            if c > 0:
+                b.append(', ')
+            b.append(scorebot_objects.toJSON(scorebot_objects.getHost(a[c]["id"])))
+    return "[%s]" % ''.join(b)
+@app.route("%shost/<int:HostID>/status" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/host/(hostid)/status
+def get_host_status(HostID):
+    a = scorebot_objects.getHostStatus(HostID)
+    if not a:
+        raise BadRequest("Not a valid HostID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%shost/<int:HostID>/service" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/host/(hostid)/service
+def get_host_service(HostID):
+    a = [dict(id=row[0]) \
+        for row in db.session.query(Services.serviceID).filter(Services.hostID.in_([HostID]))]
+    b = []
+    if a and len(a) > 0:
+        for c in range(0, len(a)):
+            if c > 0:
+                b.append(', ')
+            b.append(scorebot_objects.toJSON(scorebot_objects.getService(a[c]["id"])))
+    return "[%s]" % ''.join(b)
+@app.route("%sservice/<int:ServiceID>" %prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/service/(serviceid)
+def get_service(ServiceID):
+    a = scorebot_objects.getService(ServiceID)
+    if not a:
+        raise BadRequest("Not a valid ServiceID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%sservice/<int:ServiceID>/status" %prefix, methods=['GET'])
+def get_service_status(ServiceID):
+    a = scorebot_objects.getServiceStatus(ServiceID)
+    if not a:
+        raise BadRequest("Not a valid ServiceID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%sservice/<int:ServiceID>/credentials" %prefix, methods=['GET'])
+def get_service_creds(ServiceID):
+    a = scorebot_objects.getServiceCreds(ServiceID)
+    if not a:
+        raise BadRequest("Not a valid ServiceID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%sservice/<int:ServiceID>/content" % prefix, methods=['GET'])
+def get_service_content(ServiceID):
+    a = [dict(id=row[0]) \
+        for row in db.session.query(Content.contentID).filter(Content.serviceID.in_([ServiceID]))]
+    b = []
+    if a and len(a) > 0:
+        for c in range(0, len(a)):
+            if c > 0:
+                b.append(', ')
+            b.append(scorebot_objects.toJSON(scorebot_objects.getContent(a[c]["id"])))
+    return "[%s]" % ''.join(b)
+@app.route("%scontent/<int:ContentID>" %prefix, methods=['GET'])
+def get_content(ContentID):
+    a = scorebot_objects.getContent(ContentID)
+    if not a:
+        raise BadRequest("Not a valid ContentID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%scontent/<int:ContentID>/status" %prefix, methods=['GET'])
+def get_content_status(ContentID):
+    a = scorebot_objects.getContentStatus(ContentID)
+    if not a:
+        raise BadRequest("Not a valid ContentID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%scontent/<int:ContentID>/credentials" %prefix, methods=['GET'])
+def get_content_creds(ContentID):
+    a = scorebot_objects.getContentCreds(ContentID)
+    if not a:
+        raise BadRequest("Not a valid ContentID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%shost/<int:HostID>/compromised" % prefix, methods=['GET'])
+def get_host_compromised(HostID):
+    a = scorebot_objects.getHostCompromised(HostID)
+    if not a:
+        raise BadRequest("Not a valid HostID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%sflag/<int:FlagID>" % prefix, methods=['GET'])
+def get_flag(FlagID):
+    a = scorebot_objects.getFlag(FlagID)
+    if not a:
+        raise BadRequest("Not a valid FlagID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%sflag/<int:FlagID>/stolen" % prefix, methods=['GET'])
+def get_flag_stolen(FlagID):
+    a = scorebot_objects.getFlagStolen(FlagID)
+    if not a:
+        raise BadRequest("Not a valid FlagID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%sflag/<int:FlagID>/found" % prefix, methods=['GET'])
+def get_flag_found(FlagID):
+    a = scorebot_objects.getFlagFound(FlagID)
+    if not a:
+        raise BadRequest("Not a valid FlagID!")
+    return scorebot_objects.toJSON(a)
+@app.route("%sblueteam/<int:BlueteamID>/flag" % prefix, methods=['GET'])
+def get_flag_team(BlueteamID):
+    a = [dict(id=row[0]) \
+        for row in db.session.query(Flags.flagID).filter(Flags.blueteamID.in_([BlueteamID]))]
+    b = []
+    if a and len(a) > 0:
+        for c in range(0, len(a)):
+            if c > 0:
+                b.append(', ')
+            b.append(scorebot_objects.toJSON(scorebot_objects.getFlag(a[c]["id"])))
+    return "[%s]" % ''.join(b)
+@app.route("%splayer/<int:PlayerID>/flag/stolen" % prefix, methods=['GET'])
+def get_flag_player_stolen(PlayerID):
+    a = [dict(id=row[0]) \
+        for row in db.session.query(FlagsStolen.flagID).filter(FlagsStolen.playerID.in_([PlayerID]))]
+    b = []
+    if a and len(a) > 0:
+        for c in range(0, len(a)):
+            if c > 0:
+                b.append(', ')
+            b.append(scorebot_objects.toJSON(scorebot_objects.getFlag(a[c]["id"])))
+    return "[%s]" % ''.join(b)
+@app.route("%splayer/<int:PlayerID>/flag/found" % prefix, methods=['GET'])
+def get_flag_player_found(PlayerID):
+    a = [dict(id=row[0]) \
+        for row in db.session.query(FlagsFound.flagID).filter(FlagsFound.playerID.in_([PlayerID]))]
+    b = []
+    if a and len(a) > 0:
+        for c in range(0, len(a)):
+            if c > 0:
+                b.append(', ')
+            b.append(scorebot_objects.toJSON(scorebot_objects.getFlag(a[c]["id"])))
+    return "[%s]" % ''.join(b)
 
 
 if __name__ == "__main__":
