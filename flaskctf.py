@@ -388,6 +388,107 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"name":"EPdns", "bluete
     db.session.commit()
     return jsonify({}), 201
 
+@app.route("%s/hostcompromised/<int:hostID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/hostcompromised/<hostID>
+def host_compromised_get(hostID):
+    a = db.session.query(HostCompromises.hostCompromisesID, HostCompromises.score, HostCompromises.playerID, HostCompromises.starttime, HostCompromises.endtime).filter(HostCompromises.hostID.in_([hostID])).order_by(HostCompromises.starttime).first()
+    if not a:
+        raise BadRequest("Invalid HostID!")
+    return dumps(a)
+@app.route("%s/player/<int:playerID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/player/<playerID>
+def player_get(playerID):
+    a = [dict(playerID=row[0], blueteamID=row[1], playerScore=row[2], playerCaptain=row[3]) \
+		for row in db.session.query(BluePlayers.playerID, BluePlayers.blueteamID, BluePlayers.score, BluePlayers.captain).filter(BluePlayers.blueplayersID.in_([playerID]))]
+    if not a:
+        raise BadRequest("Invalid PlayerID!")
+    return dumps(a)
+@app.route("%s/players/" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/players/
+def player_get_all():
+    a = [dict(playerID=row[0], blueteamID=row[1], playerScore=row[2], playerCaptain=row[3]) \
+		for row in db.session.query(BluePlayers.playerID, BluePlayers.blueteamID, BluePlayers.score, BluePlayers.captain).order_by(BluePlayers.blueplayersID)]
+    return dumps(a)
+@app.route("%s/hoststatus/<int:hostID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/hoststatus/<hostID>
+def host_status_get(hostID):
+    a = db.session.query(HostStatus.hostStatusID, HostStatus.datetime, HostStatus.status).filter(HostStatus.hostID.in_([hostID])).order_by(HostStatus.datetime).first()
+    if not a:
+        raise BadRequest("Invalid HostID!")
+    return dumps(a);
+@app.route("%s/hostservices/<int:hostID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/hostservices/<hostID>
+def host_service_get(hostID):
+    a = [dict(serviceID=row[0], serviceProtocol=row[1], serviceName=row[2], serviceValue=row[3], servicePort=row[4]) \
+		for row in db.session.query(Services.serviceID, Services.protocol, Services.name, Services.value, Services.port).filter(Services.hostID.in_([hostID]))]
+    return dumps(a)
+@app.route("%s/service/<int:serviceID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/service/<serviceID>
+def service_get(serviceID):
+    a = [dict(serviceID=row[0], hostID=row[1], serviceProtocol=row[2], serviceName=row[3], serviceValue=row[4], servicePort=row[5]) \
+		for row in db.session.query(Services.serviceID, Services.hostID, Services.protocol, Services.name, Services.value, Services.port).filter(Services.serviceID.in_([serviceID]))]
+    if not a:
+        raise BadRequest("Invalid ServiceID!")
+    return dumps(a)
+@app.route("%s/servicestatus/<int:serviceID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/servicestatus/<serviceID>
+def service_status_get(serviceID):
+    a = db.session.query(ServiceStatus.serviceStatusID, ServiceStatus.datetime, ServiceStatus.status).filter(ServiceStatus.serviceID.in_([serviceID])).order_by(ServiceStatus.datetime).first()
+    if not a:
+        raise BadRequest("Invalid ServiceID!")
+    return dumps(a)
+@app.route("%s/servicecreds/<int:serviceID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/servicecreds/<serviceID>
+def service_creds_get(serviceID):
+    a = db.session.query(ServiceCredentials.credentialID, ServiceCredentials.username, ServiceCredentials.password, ServiceCredentials.created, ServiceCredentials.valid).filter(ServiceCredentials.serviceID.in_([serviceID])).order_by(ServiceCredentials.created).first()
+    if not a:
+        raise BadRequest("Invalid ServiceID!")
+    return dumps(a)
+@app.route("%s/servicecontent/<int:serviceID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/servicecontent/<serviceID>
+def service_content_get(serviceID):
+    a = [dict(contentID=row[0], contentName=row[1], content=row[2], contentValue=row[3], contentURI=row[4]) \
+		for row in db.session.query(Content.contentID, Content.name, Content.content, Content.value, Content.uri).filter(Content.serviceID.in_([serviceID]))]
+    if not a:
+        raise BadRequest("Invalid ServiceID!")
+    return dumps(a)
+@app.route("%s/content/<int:contentID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/content/<contentID>
+def content_get(contentID):
+    a = [dict(serviceID=row[0], contentName=row[1], content=row[2], contentValue=row[3], contentURI=row[4]) \
+		for row in db.session.query(Content.serviceID, Content.name, Content.content, Content.value, Content.uri).filter(Content.contentID.in_([contentID]))]
+    if not a:
+        raise BadRequest("Invalid ContentID!")
+    return dumps(a)
+@app.route("%s/contentstatus/<int:contentID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/contentstatus/<contentID>
+def content_status_get(contentID):
+    a = db.session.query(ContentStatus.contentStatusID, ContentStatus.datetime, ContentStatus.status).filter(ContentStatus.contentID.in_([contentID])).order_by(ContentStatus.datetime).first()
+    if not a:
+        raise BadRequest("Invalid ContentID!")
+    return dumps(a)
+@app.route("%s/contentcreds/<int:contentID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/contentcreds/<contentID>
+def content_creds_get(contentID):
+    a = db.session.query(ContentCredentials.credentialID, ContentCredentials.username, ContentCredentials.password, ContentCredentials.created, ContentCredentials.valid).filter(ContentCredentials.contentID.in_([contentID])).order_by(ContentCredentials.created).first()
+    if not a:
+        raise BadRequest("Invalid ContentID!")
+    return dumps(a)
+@app.route("%s/flags/" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/flags/
+def flag_get_all():
+    a = [dict(flagID=row[0], blueteamID=row[1], gameID=row[2], flagName=row[3], flagValue=row[4], flanAnswer=row[5], flagPoints=row[6]) \
+		for row in db.session.query(Flags.flagID, Flags.blueteamID, Flags.gameID, Flags.name, Flags.value, Flags.answer, Flags.points)]
+    return dumps(a)
+@app.route("%s/flag/<int:flagID>" % prefix, methods=['GET'])
+# curl -i http://<ip>:5000/scorebot/api/v1.0/flag/<flagID>
+def flag_get(flagID):
+    a = [dict(blueteamID=row[0], gameID=row[1], flagName=row[2], flagValue=row[3], flanAnswer=row[4], flagPoints=row[5]) \
+		for row in db.session.query(Flags.blueteamID, Flags.gameID, Flags.name, Flags.value, Flags.answer, Flags.points).filter(Flags.flagID.in_([flagID]))]
+    if not a:
+        raise BadRequest("Invalid FlagID!")
+    return dumps(a)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
