@@ -23,9 +23,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 import re
 import sys
+import time
 import ftplib
 import socket
 import traceback
+import threading
 import globalvars
 from Logger import Logger
 from Scores import Scores
@@ -41,16 +43,18 @@ tcp_21_re = re.compile("21/tcp")
 tcp_25_re = re.compile("25/tcp")
 udp_53_re = re.compile("53/udp")
 
-class Service(object):
+class Service(threading.Thread):
     '''
     classdocs
     '''
 
-    def __init__(self, port, protocol, value, logger, uri="index.html", \
+    def __init__(self, port, protocol, value, logger, queue, hostname, uri="index.html", \
                             content=None, username=None, password=None):
         '''
         Constructor
         '''
+        threading.Thread.__init__(self)
+        self.hostname = hostname
         self.logger = logger
         self.port = int(port)
         self.protocol = protocol
@@ -73,6 +77,22 @@ class Service(object):
         else:
             self.username = "blueteam"
         self.mail_re = re.compile("220")
+        self.msg_queue = queue
+
+    def run(self):
+        while True:
+            item = self.msg_queue.get()
+            if len(item) == 3:
+                this_round = item[0]
+                ipaddress = item[1]
+                timeout = item[2]
+                self.check(this_round, ipaddress, timeout)
+                print "Putting done for %s:%s/%s" % (self.hostname, self.port, self.protocol)
+                self.msg_queue.put("Done")
+            else:
+                self.msg_queue.put(item)
+            time.sleep(0.1)
+
 
     def check(self, this_round, ipaddress, timeout):
         service_name = "%s/%s" % (self.port, self.protocol)
@@ -94,7 +114,6 @@ class Service(object):
                 myscore = self.value * 1
                 traceback.print_exc(file=self.logger)
                 self.set_score(this_round, myscore)
-                return myscore
             ############################################
             try:
                 if globalvars.verbose:
@@ -108,7 +127,6 @@ class Service(object):
                 myscore = self.value * .75
                 traceback.print_exc(file=self.logger)
                 self.set_score(this_round, myscore)
-                return myscore
             ############################################
             try:
                 if globalvars.verbose:
@@ -122,7 +140,6 @@ class Service(object):
                 myscore = self.value * .50
                 traceback.print_exc(file=self.logger)
                 self.set_score(this_round, myscore)
-                return myscore
             ############################################
             if globalvars.verbose:
                 self.logger.err("\t\t\tChecking data...")
@@ -131,42 +148,34 @@ class Service(object):
                     if globalvars.verbose:
                         self.logger.err("good\n")
                     self.set_score(this_round, self.value * 0)
-                    return myscore
                 else:
                     if globalvars.verbose:
                         self.logger.err("bad: %s\n" % data)
                     self.set_score(this_round, self.value * .25)
-                    return myscore
             elif score_str_re.search(data):
                 if globalvars.verbose:
                     self.logger.err("good\n")
                 self.set_score(this_round, self.value * 0)
-                return myscore
             elif html1_str_re.search(data):
                 if globalvars.verbose:
                     self.logger.err("good\n")
                 self.set_score(this_round, self.value * 0)
-                return myscore
             elif html2_str_re.search(data):
                 if globalvars.verbose:
                     self.logger.err("good\n")
                 self.set_score(this_round, self.value * 0)
-                return myscore
             elif html3_str_re.search(data):
                 if globalvars.verbose:
                     self.logger.err("good\n")
                 self.set_score(this_round, self.value * 0)
-                return myscore
             elif html4_str_re.search(data):
                 if globalvars.verbose:
                     self.logger.err("good\n")
                 self.set_score(this_round, self.value * 0)
-                return myscore
             else:
                 if globalvars.verbose:
                     self.logger.err("bad: %s\n" % data)
                 self.set_score(this_round, self.value * .25)
-                return myscore
         elif tcp_21_re.match(service_name):
             ############################################
             try:
@@ -183,7 +192,6 @@ class Service(object):
                 myscore = self.value * 1
                 traceback.print_exc(file=self.logger)
                 self.set_score(this_round, myscore)
-                return myscore
             ############################################
             try:
                 if globalvars.verbose:
@@ -198,7 +206,6 @@ class Service(object):
                 myscore = self.value * 0.75
                 traceback.print_exc(file=self.logger)
                 self.set_score(this_round, myscore)
-                return myscore
             ############################################
             try:
                 if globalvars.verbose:
@@ -215,7 +222,6 @@ class Service(object):
                 myscore = self.value * 0.50
                 traceback.print_exc(file=self.logger)
                 self.set_score(this_round, myscore)
-                return myscore
             ############################################
             try:
                 if globalvars.verbose:
@@ -229,14 +235,12 @@ class Service(object):
                     else:
                         myscore = self.value * 0.25
                     self.set_score(this_round, myscore)
-                    return myscore
             except:
                 if globalvars.verbose:
                     self.logger.err("bad: %s\n" % data)
                 myscore = self.value * 0.333
                 traceback.print_exc(file=self.logger)
                 self.set_score(this_round, myscore)
-                return myscore
         elif tcp_25_re.match(service_name):
             #self.set_score(this_round, 0)
             #self.logger.err("NEED TO IMPLEMENT 25/TCP SCORE CHECKING!!\n")
@@ -256,7 +260,6 @@ class Service(object):
                 myscore = self.value * 1
                 traceback.print_exc(file=self.logger)
                 self.set_score(this_round, myscore)
-                return myscore
             ############################################
             try:
                 if globalvars.verbose:
@@ -270,7 +273,6 @@ class Service(object):
                 myscore = self.value * .75
                 traceback.print_exc(file=self.logger)
                 self.set_score(this_round, myscore)
-                return myscore
             ############################################
             try:
                 if globalvars.verbose:
@@ -284,7 +286,6 @@ class Service(object):
                 myscore = self.value * .50
                 traceback.print_exc(file=self.logger)
                 self.set_score(this_round, myscore)
-                return myscore
             ############################################
             if globalvars.verbose:
                 self.logger.err("\t\t\tChecking data...")
@@ -292,12 +293,10 @@ class Service(object):
                 if globalvars.verbose:
                     self.logger.err("good\n")
                 self.set_score(this_round, self.value * 0)
-                return myscore
             else:
                 if globalvars.verbose:
                     self.logger.err("bad: %s\n" % data)
                 self.set_score(this_round, self.value * .25)
-                return myscore
             ############################################
         else:
             try:
@@ -311,14 +310,12 @@ class Service(object):
                     self.logger.err("connected!\n")
                 myscore = self.value * 0
                 self.set_score(this_round, myscore)
-                return myscore
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem...\n")
                 myscore = self.value * 1
                 traceback.print_exc(file=self.logger)
                 self.set_score(this_round, myscore)
-                return myscore
             service_name = "%s/%s" % (str(self.port), str(self.protocol))
             self.set_score(this_round, myscore)
 
@@ -343,8 +340,8 @@ class Service(object):
             this_value = self.value - value
         else:
             this_value = value
-        self.logger.out("Round %s service %s score %s\n" % \
-                    (this_round, service_name, this_value))
+        self.logger.out("Round %s host %s service %s score %s\n" % \
+                    (this_round, self.hostname, service_name, this_value))
         self.logger.err("Round %s service %s score %s\n" % \
                     (this_round, service_name, this_value))
         self.scores.set_score(this_round, this_value)

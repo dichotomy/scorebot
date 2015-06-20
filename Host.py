@@ -23,7 +23,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 import re
 import sys
+import time
+import Queue
 import traceback
+import threading
 import DNS
 import Ping
 import globalvars
@@ -36,24 +39,28 @@ ctfnet_re = re.compile("^10")
 score_str = "Round %s host %s scored %s\n"
 DNS.ParseResolvConf()
 
-class Host(object):
+class Host(threading.Thread):
     '''
     classdocs
     '''
 
-    def __init__(self, hostname, value, logger, dns_servers, timeout=300):
+    def __init__(self, hostname, value, logger, dns_servers, msgqueue, timeout=300):
         '''
         Constructor
         '''
+        threading.Thread.__init__(self)
         self.hostname = hostname
         self.dns_servers = dns_servers
         self.logger = logger
         self.ipaddress = None
         self.compromised = False
         self.services = {}
+        self.service_queues = {}
+        self.service_rounds = {}
         self.value = value
         self.scores = Scores()
         self.timeout = timeout
+        self.msgqueue = msgqueue
 
     def add_dns(self, dnssvr):
         if dnssvr in self.dns_servers:
@@ -99,49 +106,100 @@ class Host(object):
         service_name = "%s/%s" % (port, proto)
         if self.services.has_key(service_name):
             pass
+        this_queue = Queue.Queue()
         self.services[service_name] = Service(port, proto, value, \
-                    self.logger, uri, content, username, password)
+                    self.logger, this_queue, self.hostname, content, username, password)
+        self.service_rounds[service_name] = False
+        self.service_queues[service_name] = this_queue
 
-    def check(self, this_round):
-        score = int(self.value)
-        try:
-            if self.lookup():
-                if globalvars.verbose:
-                    self.logger.err("Checking for %s(%s) with ping...\n" \
-                            % (self.hostname, self.ipaddress))
-                myping = Ping.Ping()
-                results = myping.quiet_ping(self.ipaddress)
-                percent_failed = int(results[0])
-                if percent_failed < 100:
-                    self.check_services(this_round)
-                else:
-                    self.fail_services(this_round)
-                if globalvars.binjitsu:
-                    score = int(self.value) - (int(self.value)*percent_failed/100)
-                else:
-                    score = int(self.value) * percent_failed / 100
-                if globalvars.verbose:
-                    if score:
-                        self.logger.err("%s failed: %s\n" % (self.hostname,score))
+    def run(self):
+        for service in self.services:
+            self.services[service].start()
+        while True:
+            # Check to see if we have any messages from our services
+            for service in self.service_queues:
+                try:
+                    item = self.service_queues[service].get(False)
+                    if len(item) == 1 and item == "Done":
+                        # process the service message
+                        if service in self.service_rounds:
+                            self.service_rounds[service] = True
+                        else:
+                            raise Exception("Unknown service %s" % service)
                     else:
-                        self.logger.err("%s scored: %s\n" % (self.hostname,score))
+                        self.service_queues[service].put(item)
+                except Queue.Empty:
                     pass
+                except:
+                    traceback.print_exc(file=self.logger)
+            score_round = True
+            # Check to see if all our services have finished the last round
+            for service in self.service_rounds:
+                if self.service_rounds[service]:
+                    continue
+                else:
+                    score_round = False
+                    break
+            if score_round:
+                for service in self.service_rounds:
+                    self.service_rounds[service] = False
+                self.msgqueue.put("score")
+            # Check to see if we have any messages from our team object
+            item = None
+            try:
+                item = self.msgqueue.get(False)
+            except Queue.Empty:
+                continue
+            # Evaluate the result
+            if len(item) == 2:
+                # The round has begun!
+                if item[0] == "Go":
+                    this_round = item[1]
+                else:
+                    raise Exception("Unknown queue message %s!" % item[0])
+                score = int(self.value)
+                try:
+                    if self.lookup():
+                        if globalvars.verbose:
+                            self.logger.err("Checking for %s(%s) with ping...\n" \
+                                    % (self.hostname, self.ipaddress))
+                        myping = Ping.Ping()
+                        results = myping.quiet_ping(self.ipaddress)
+                        percent_failed = int(results[0])
+                        if percent_failed < 100:
+                            # The host seems up, check the services
+                            self.check_services(this_round)
+                        else:
+                            self.fail_services(this_round)
+                        if globalvars.binjitsu:
+                            score = int(self.value) - (int(self.value)*percent_failed/100)
+                        else:
+                            score = int(self.value) * percent_failed / 100
+                        if globalvars.verbose:
+                            if score:
+                                self.logger.err("%s failed: %s\n" % (self.hostname,score))
+                            else:
+                                self.logger.err("%s scored: %s\n" % (self.hostname,score))
+                            pass
+                    else:
+                        self.fail_services(this_round)
+                except:
+                    traceback.print_exc(file=self.logger)
+                self.set_score(this_round, score)
+            elif item:
+                # This isn't for me...
+                self.msgqueue.put(item)
             else:
-                self.fail_services(this_round)
-        except:
-            traceback.print_exc(file=self.logger)
-        self.set_score(this_round, score)
-        return score
+                # Didn't get back anything!  Naptime...
+                time.sleep(0.1)
 
     def check_services(self, this_round):
         if globalvars.verbose:
             self.logger.err("Checking services for %s:\n" % self.hostname)
-        services = self.services.keys()
-        for service in services:
+        for service_name in self.service_queues:
             if globalvars.verbose:
-                self.logger.err("\tChecking %s\n" % service)
-            self.services[service].check(this_round, \
-                    self.ipaddress, self.timeout)
+                self.logger.err("\tHost %s queueing Service Check %s\n" % (self.name, service_name))
+            self.service_queues[service_name].put([this_round, self.ipaddress, self.timeout])
 
     def set_score(self, this_round, value=None):
         if value == None:

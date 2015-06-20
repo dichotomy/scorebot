@@ -69,6 +69,8 @@ class BlueTeam(threading.Thread):
         self.logger.out("| Starting run for Blueteam %s\n" % self.teamname)
         self.logger.out("| Start time: %s\n" % now)
         self.hosts = {}
+        self.hosts_rounds = {}
+        self.host_queues = {}
         self.scores = Scores()
         self.start_time = start_time
         self.go_time = self.start_time
@@ -84,6 +86,7 @@ class BlueTeam(threading.Thread):
         self.pp = pprint.PrettyPrinter(indent=2)
         self.email = ""
         self.ticket_obj = None
+        self.inround = False
 
     def set_ticket_interface(self, ticket_obj):
         self.ticket_obj = ticket_obj
@@ -118,50 +121,62 @@ class BlueTeam(threading.Thread):
                         (self.teamname, self.go_time)
         if globalvars.quick:
             self.go_time = time.time() + 5
+        for host in self.hosts:
+            self.hosts[host].start()
+        self.inround = False
         while True:
-            go_time_lt = time.localtime(self.go_time)
-            if self.did_time:
-                did_time_lt = time.localtime(self.did_time)
-                if go_time_lt.tm_min == did_time_lt.tm_min:
+            # Check to see if we have any messages from our hosts
+            for host in self.host_queues:
+                try:
+                    item = self.host_queues[host].get(False)
+                    if item == "score":
+                        #process the host message
+                        if host in self.hosts_rounds:
+                            print "Found message from host %s" % host
+                            self.hosts_rounds[host] = True
+                        else:
+                            raise Exception("Unknown host %s\n" % host)
+                    else:
+                        self.host_queues[host].put(item)
+                except Queue.Empty:
+                    pass
+                except:
+                    traceback.print_exc(file=self.logger)
+            score_round = True
+            # Check to see if all hosts have finished the last round
+            for host in self.hosts_rounds:
+                if self.hosts_rounds[host]:
+                    print "Host %s is ready" % host
                     continue
                 else:
-                    pass
-            else:
-                pass
-            rightnow = time.time()
-            rightnow_lt = time.localtime(rightnow)
-            if go_time_lt.tm_mday == rightnow_lt.tm_mday:
-                if go_time_lt.tm_hour == rightnow_lt.tm_hour:
-                    if go_time_lt.tm_min == rightnow_lt.tm_min:
-                        try:
-                            print "Now is %s" % rightnow
-                            self.did_time = self.go_time
-                            self.check()
-                            queue_str = self.teamname+"|"+str(self.this_round)
-                            self.queue_obj.put(queue_str)
-                            now = time.time()
-                            new_go = self.go_time + self.interval
-                            if new_go < now:
-                                self.go_time = now + 60
-                            else:
-                                self.go_time = new_go
-                            self.set_score()
-                        except:
-                            traceback.print_exc(file=self.logger)
-                    elif go_time_lt.tm_min == (rightnow_lt.tm_min + 1):
-                        print "Counting down for %s: %s to %s..." % \
-                                (self.teamname, self.go_time, rightnow)
-                        time.sleep(1)
+                    score_round = False
+                    break
+            if score_round:
+                self.inround = False
+                for host in self.hosts_rounds:
+                    self.hosts_rounds[host] = False
+                self.set_score()
+                self.this_round += 1
+            now = time.time()
+            # Check to see if it's tme to start the new round, but only if the last is done
+            if self.go_time <= now and not self.inround:
+                try:
+                    # Report times so that we know whether or not the last round ran too long
+                    print "Starting Service check for Blueteam %s.  Go time was %s, now is %s." % \
+                          (self.teamname, self.go_time, now)
+                    for host in self.host_queues:
+                        self.host_queues[host].put(["Go", self.this_round], 1)
+                    new_go = self.go_time + self.interval
+                    if new_go < now:
+                        self.go_time = now + 60
                     else:
-                        print "Counting down for %s: %s to %s..." % \
-                                (self.teamname, self.go_time, rightnow)
-                        time.sleep(60)
-                else:
-                    print "Counting down for %s: %s to %s..." % \
-                            (self.teamname, self.go_time, rightnow)
-                    time.sleep(60)
+                        self.go_time = new_go
+                    print "New go time is %s" % self.go_time
+                    self.inround = True
+                except:
+                    traceback.print_exc(file=self.logger)
             else:
-                time.sleep(60)
+                time.sleep(0.1)
 
     def add_dns(self, dnssvr):
         if dnssvr in self.dns_servers:
@@ -184,11 +199,6 @@ class BlueTeam(threading.Thread):
     def add_queue(self, queue):
         self.queue_obj = queue
 
-    def check(self):
-        hostlist = self.hosts.keys()
-        for host in hostlist:
-            hostscore = self.hosts[host].check(self.this_round)
-
     def add_host(self, hostname, value):
         # Have to strip "." because MongoDB doesn't like them for key names
         clean_hostname = hostname.replace(".", "___")
@@ -196,7 +206,10 @@ class BlueTeam(threading.Thread):
             self.logger.err(clobber_host_blue_str % (self.teamname, hostname))
         else:
             self.logger.err(add_host_blue_str % (self.teamname, hostname))
-        self.hosts[clean_hostname] = Host(hostname, value, self.logger, self.dns_servers)
+        this_queue = Queue.Queue()
+        self.hosts[clean_hostname] = Host(hostname, value, self.logger, self.dns_servers, this_queue)
+        self.hosts_rounds[clean_hostname] = False
+        self.host_queues[clean_hostname] = this_queue
 
     def del_host(self, hostname):
         # Have to strip "." because MongoDB doesn't like them for key names
