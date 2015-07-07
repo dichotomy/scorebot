@@ -87,6 +87,7 @@ class BlueTeam(threading.Thread):
         self.email = ""
         self.ticket_obj = None
         self.inround = False
+        self.game_queue = None
 
     def set_ticket_interface(self, ticket_obj):
         self.ticket_obj = ticket_obj
@@ -132,7 +133,7 @@ class BlueTeam(threading.Thread):
                     if item == "score":
                         #process the host message
                         if host in self.hosts_rounds:
-                            print "Found message from host %s" % host
+                            #print "Found message from host %s" % host
                             self.hosts_rounds[host] = True
                         else:
                             raise Exception("Unknown host %s\n" % host)
@@ -144,37 +145,53 @@ class BlueTeam(threading.Thread):
                     traceback.print_exc(file=self.logger)
             score_round = True
             # Check to see if all hosts have finished the last round
+            donemsg = ""
             for host in self.hosts_rounds:
                 if self.hosts_rounds[host]:
-                    print "Host %s is ready" % host
+                    donemsg += "%s, " % host
                     continue
                 else:
                     score_round = False
                     break
+            if donemsg:
+                failmsg = "Failed: "
+                for host in self.hosts_rounds:
+                    if not self.hosts_rounds[host]:
+                        failmsg += host
+                #sys.stdout.write("Done: %s\n" % donemsg)
+                #sys.stdout.write(failmsg)
             if score_round:
+                #print "Scoring round for %s" % self.teamname
                 self.inround = False
                 for host in self.hosts_rounds:
                     self.hosts_rounds[host] = False
                 self.set_score()
-                self.this_round += 1
+                self.game_queue.put("Done")
             now = time.time()
             # Check to see if it's tme to start the new round, but only if the last is done
-            if self.go_time <= now and not self.inround:
-                try:
-                    # Report times so that we know whether or not the last round ran too long
-                    print "Starting Service check for Blueteam %s.  Go time was %s, now is %s." % \
-                          (self.teamname, self.go_time, now)
-                    for host in self.host_queues:
-                        self.host_queues[host].put(["Go", self.this_round], 1)
-                    new_go = self.go_time + self.interval
-                    if new_go < now:
-                        self.go_time = now + 60
+            item = ""
+            try:
+                item = self.game_queue.get(False)
+                if item:
+                    #sys.stdout.write("\nGot item for team %s " % self.teamname)
+                    #print item
+                    if len(item) == 2:
+                        if item[0] == "Go":
+                            self.this_round = item[1]
+                            # Report times so that we know whether or not the last round ran too long
+                            print "Starting Service check for Blueteam %s.  Go time was %s, now is %s." % \
+                                  (self.teamname, self.go_time, now)
+                            for host in self.host_queues:
+                                self.host_queues[host].put(["Go", self.this_round], 1)
+                        else:
+                            raise Exception("Unknown queue message %s!" % item[0])
                     else:
-                        self.go_time = new_go
-                    print "New go time is %s" % self.go_time
-                    self.inround = True
-                except:
-                    traceback.print_exc(file=self.logger)
+                        self.game_queue.put(item)
+                        item = False
+            except Queue.Empty:
+                pass
+            except:
+                traceback.print_exc(file=self.logger)
             else:
                 time.sleep(0.1)
 
@@ -199,6 +216,9 @@ class BlueTeam(threading.Thread):
     def add_queue(self, queue):
         self.queue_obj = queue
 
+    def set_queue(self, queue):
+        self.game_queue = queue
+
     def add_host(self, hostname, value):
         # Have to strip "." because MongoDB doesn't like them for key names
         clean_hostname = hostname.replace(".", "___")
@@ -217,6 +237,7 @@ class BlueTeam(threading.Thread):
         if self.hosts.has_key(clean_hostname):
             self.logger.err(del_host_blue_str % (self.teamname, hostname))
             del(self.hosts[clean_hostname])
+            del(self.host_queues[clean_hostname])
         else:
             self.logger.err(del_host_blue_err_str % (self.teamname, hostname))
 
@@ -335,7 +356,6 @@ class BlueTeam(threading.Thread):
         print "Blueteam %s round %s scored %s for a new total of %s\n" % \
                   (self.teamname, self.this_round, round_score, total)
         print "Blueteam %s tally: %s\n" % (self.teamname, self.get_score())
-        self.this_round += 1
 
     def get_health(self):
         host_hash = {}

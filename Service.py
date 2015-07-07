@@ -87,7 +87,7 @@ class Service(threading.Thread):
                 ipaddress = item[1]
                 timeout = item[2]
                 self.check(this_round, ipaddress, timeout)
-                print "Putting done for %s:%s/%s" % (self.hostname, self.port, self.protocol)
+                #print "Putting done for %s:%s/%s" % (self.hostname, self.port, self.protocol)
                 self.msg_queue.put("Done")
             else:
                 self.msg_queue.put(item)
@@ -340,8 +340,9 @@ class Service(threading.Thread):
             this_value = self.value - value
         else:
             this_value = value
-        self.logger.out("Round %s host %s service %s score %s\n" % \
-                    (this_round, self.hostname, service_name, this_value))
+        this_time = time.strftime('%X %x %Z')
+        self.logger.out("%s Round %s host %s service %s score %s\n" % \
+                    (this_time, this_round, self.hostname, service_name, this_value))
         self.logger.err("Round %s service %s score %s\n" % \
                     (this_round, service_name, this_value))
         self.scores.set_score(this_round, this_value)

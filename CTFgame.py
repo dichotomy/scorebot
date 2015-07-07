@@ -25,10 +25,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 __author__ = 'dichotomy'
 
+import sys
 import time
 import Queue
 import pprint
 import threading
+import traceback
 import jaraco.modb
 import globalvars
 from bson.objectid import ObjectId
@@ -53,6 +55,14 @@ class CTFgame(threading.Thread):
         self.msg_queue = Queue.Queue()
         self.logger_obj = Logger("scorebot")
         self.pp = pprint.PrettyPrinter(indent=2)
+        self.blues_queues = {}
+        self.teams_rounds = {}
+        self.this_round = 0
+        self.interval = 120
+        self.inround = False
+        self.go_time = 0
+        self.save_time = 0
+        self.save_interval = 10
         if obj_id:
             bson_id = ObjectId(obj_id)
             self.obj_id = bson_id
@@ -97,22 +107,81 @@ class CTFgame(threading.Thread):
             #self.myscoreboard = Scoreboard(self.blue_teams, self.flag_store, self.message_store)
             for team in self.blue_teams.keys():
                 self.blue_teams[team].add_queue(self.flag_queue)
+                blue_queue = Queue.Queue()
+                self.blues_queues[team] = blue_queue
+                self.blue_teams[team].set_queue(blue_queue)
+                self.teams_rounds[team] = True
         self.movies = Movies(self.logger_obj)
         #self.movies.set_movie()
         self.bottle_server = BottleServer(self.blue_teams, self.flag_store, self.message_store, self.movies, '0.0.0.0', 8090)
 
     def run(self):
         pp = pprint.PrettyPrinter(indent=2)
-        runtime = 0
+        self.inround = False
         while True:
-            json_obj = self.build_json()
-            if self.obj_id:
-                json_obj["_id"] = self.obj_id
-            if globalvars.debug:
-                pp.pprint(json_obj)
-            self.obj_id = self.col.save(json_obj)
-            print "Saved Game ID %s" % self.obj_id
-            time.sleep(10)
+            now = time.time()
+            if self.save_time <= now:
+                json_obj = self.build_json()
+                if self.obj_id:
+                    json_obj["_id"] = self.obj_id
+                if globalvars.debug:
+                    pp.pprint(json_obj)
+                self.obj_id = self.col.save(json_obj)
+                print "Saved Game ID %s" % self.obj_id
+                self.save_time += self.save_interval
+            for team in self.blues_queues:
+                try:
+                    item = self.blues_queues[team].get(False)
+                    if item == "Done":
+                        #process the host message
+                        if team in self.teams_rounds:
+                            #print "Found message from team %s" % team
+                            self.teams_rounds[team] = True
+                        else:
+                            raise Exception("Unknown team %s\n" % team)
+                    else:
+                        self.blues_queues[team].put(item)
+                except Queue.Empty:
+                    pass
+                except:
+                    traceback.print_exc(file=self.logger_obj)
+            score_round = True
+            # Check to see if all hosts have finished the last round
+            donemsg = ""
+            for team in self.teams_rounds:
+                if self.teams_rounds[team]:
+                    donemsg += "%s, " % team
+                    continue
+                else:
+                    score_round = False
+                    break
+            if donemsg:
+                failmsg = "Failed: "
+                for team in self.teams_rounds:
+                    if not self.teams_rounds[team]:
+                        failmsg += team
+                #sys.stdout.write("Done: %s\n" % donemsg)
+                #sys.stdout.write(failmsg)
+            if score_round:
+                self.inround = False
+                for team in self.teams_rounds:
+                    self.teams_rounds[team] = False
+            now = time.time()
+            if self.go_time <= now and not self.inround:
+                try:
+                    # Report times so that we know whether or not the last round ran too long
+                    self.this_round += 1
+                    for team in self.blues_queues:
+                        print "Starting Service check for Blueteam %s.  Go time was %s, now is %s." % \
+                              (team, self.go_time, now)
+                        self.blues_queues[team].put(["Go", self.this_round], 1)
+                    self.go_time += self.interval
+                    print "New go time is %s" % self.go_time
+                    self.inround = True
+                except:
+                    traceback.print_exc(file=self.logger_obj)
+            else:
+                time.sleep(0.1)
 
     def build_json(self):
         # master hash for the whole thing

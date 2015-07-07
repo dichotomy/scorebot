@@ -120,7 +120,7 @@ class Host(threading.Thread):
             for service in self.service_queues:
                 try:
                     item = self.service_queues[service].get(False)
-                    if len(item) == 1 and item == "Done":
+                    if item == "Done":
                         # process the service message
                         if service in self.service_rounds:
                             self.service_rounds[service] = True
@@ -136,6 +136,7 @@ class Host(threading.Thread):
             # Check to see if all our services have finished the last round
             for service in self.service_rounds:
                 if self.service_rounds[service]:
+                    sys.stdout.write("Host %s service %s done\n" % (self.hostname, service))
                     continue
                 else:
                     score_round = False
@@ -152,6 +153,7 @@ class Host(threading.Thread):
                 continue
             # Evaluate the result
             if len(item) == 2:
+                #print "Found ", item
                 # The round has begun!
                 if item[0] == "Go":
                     this_round = item[1]
@@ -180,6 +182,7 @@ class Host(threading.Thread):
                                 self.logger.err("%s failed: %s\n" % (self.hostname,score))
                             else:
                                 self.logger.err("%s scored: %s\n" % (self.hostname,score))
+                        else:
                             pass
                     else:
                         self.fail_services(this_round)
@@ -206,8 +209,9 @@ class Host(threading.Thread):
             this_value = self.value
         else:
             this_value = value
-        self.logger.out("Round %s host %s score %s\n" % \
-                    (this_round, self.hostname, this_value))
+        this_time = time.strftime('%X %x %Z')
+        self.logger.out("%s Round %s host %s score %s\n" % \
+                    (this_time, this_round, self.hostname, this_value))
         self.logger.err("Round %s host %s score %s\n" % \
                     (this_round, self.hostname, this_value))
         self.scores.set_score(this_round, this_value)
@@ -220,6 +224,7 @@ class Host(threading.Thread):
             if globalvars.verbose:
                 self.logger.err("\tFailing for %s:" % service)
             self.services[service].set_score(this_round)
+            self.service_rounds[service] = True
 
     def get_score(self, this_round):
         try:

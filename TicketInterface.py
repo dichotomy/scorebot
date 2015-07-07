@@ -39,9 +39,11 @@ class TicketInterface(object):
         self.categories = {}
         self.all_tickets = {}
         self.closed_tickets = {}
+        self.sqlhost = host
+        self.sqluser = user
+        self.sqlpass = passwd
+        self.dbname = db
         # Database stuff
-        # Database connection
-        self.db = _mysql.connect(host=host, user=user, passwd=passwd,db=db);
         # Insert a ticket
         self.insert_ticket_query = """INSERT INTO tickets (
                                       subject,  issue,  preview,
@@ -80,8 +82,10 @@ class TicketInterface(object):
         #a_uid = assigned_uid
         eu_uid = user_id
         a_uid = user_id
-        self.db.query(self.insert_ticket_query %
+        db = _mysql.connect(host=self.sqlhost, user=self.sqluser, passwd=self.sqlpass,db=self.dbname);
+        db.query(self.insert_ticket_query %
                        (subject, issue, preview, c_id, cdate, ctime, loc_id, s_id, eu_uid, cat_id, a_uid))
+        db.close()
 
     def get_categories(self):
         results = self.query(self.get_categories_query)
@@ -147,12 +151,14 @@ class TicketInterface(object):
 
     def query(self, query):
         results = []
-        self.db.query(query)
-        r = self.db.store_result()
+        db = _mysql.connect(host=self.sqlhost, user=self.sqluser, passwd=self.sqlpass,db=self.dbname);
+        db.query(query)
+        r = db.store_result()
         new_row = r.fetch_row()
         while new_row:
             results.append(new_row[0])
             new_row = r.fetch_row()
+        db.close()
         return results
 
 if __name__=="__main__":
