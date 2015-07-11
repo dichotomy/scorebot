@@ -22,14 +22,21 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
+import os
+import os.path
+
 class Logger(object):
 
 
-   def __init__(self, basename):
+   def __init__(self, basename, path="logs"):
 
       self.basename = basename
-      self.outfilename = self.basename + ".out"
-      self.errfilename = self.basename + ".err"
+      if os.path.exists(path):
+          pass
+      else:
+          os.mkdir(path)
+      self.outfilename = "%s/%s.out" % (path, self.basename)
+      self.errfilename = "%s/%s.err" % (path, self.basename)
       self.outfile = open(self.outfilename, "a")
       self.errfile = open(self.errfilename, "a")
 

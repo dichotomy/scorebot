@@ -44,14 +44,15 @@ class Host(threading.Thread):
     classdocs
     '''
 
-    def __init__(self, hostname, value, logger, dns_servers, msgqueue, timeout=300):
+    def __init__(self, teamname, hostname, value, logger, dns_servers, msgqueue, timeout=300):
         '''
         Constructor
         '''
         threading.Thread.__init__(self)
         self.hostname = hostname
         self.dns_servers = dns_servers
-        self.logger = logger
+        basename = "%s-%s" % (teamname, hostname)
+        self.logger = Logger(basename)
         self.ipaddress = None
         self.compromised = False
         self.services = {}
@@ -82,12 +83,14 @@ class Host(threading.Thread):
         try:
             for svr in self.dns_servers:
                 # We set a short timeout because life moves too fast...so does the game!
-                r = DNS.DnsRequest(self.hostname, qtype="A", server=[svr], protocol='udp', timeout=30)
+                r = DNS.DnsRequest(self.hostname, qtype="A", server=[svr], protocol='udp', timeout=60)
                 res = r.req()
                 for answer in res.answers:
                     if answer["data"]:
                         ipaddress = answer["data"]
                         break
+                    else:
+                        self.logger.err("Failed to get DNS!")
             if ctfnet_re.search(ipaddress):
                 if globalvars.verbose:
                     self.logger.err("got %s\n" % self.ipaddress)
@@ -101,14 +104,14 @@ class Host(threading.Thread):
             self.ipaddress = None
             return False
 
-    def add_service(self, port, proto, value, uri=None, content=None, \
+    def add_service(self, teamname, port, proto, value, uri=None, content=None, \
                                 username=None, password=None):
         service_name = "%s/%s" % (port, proto)
         if self.services.has_key(service_name):
             pass
         this_queue = Queue.Queue()
         self.services[service_name] = Service(port, proto, value, \
-                    self.logger, this_queue, self.hostname, content, username, password)
+                    teamname , this_queue, self.hostname, uri, content, username, password)
         self.service_rounds[service_name] = False
         self.service_queues[service_name] = this_queue
 
@@ -136,7 +139,7 @@ class Host(threading.Thread):
             # Check to see if all our services have finished the last round
             for service in self.service_rounds:
                 if self.service_rounds[service]:
-                    sys.stdout.write("Host %s service %s done\n" % (self.hostname, service))
+                    #sys.stdout.write("Host %s service %s done\n" % (self.hostname, service))
                     continue
                 else:
                     score_round = False

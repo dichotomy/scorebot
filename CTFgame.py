@@ -60,8 +60,8 @@ class CTFgame(threading.Thread):
         self.this_round = 0
         self.interval = 120
         self.inround = False
-        self.go_time = 0
-        self.save_time = 0
+        self.go_time = time.time()
+        self.save_time = time.time()
         self.save_interval = 10
         if obj_id:
             bson_id = ObjectId(obj_id)
@@ -166,11 +166,11 @@ class CTFgame(threading.Thread):
                 self.inround = False
                 for team in self.teams_rounds:
                     self.teams_rounds[team] = False
+                self.this_round += 1
             now = time.time()
             if self.go_time <= now and not self.inround:
                 try:
                     # Report times so that we know whether or not the last round ran too long
-                    self.this_round += 1
                     for team in self.blues_queues:
                         print "Starting Service check for Blueteam %s.  Go time was %s, now is %s." % \
                               (team, self.go_time, now)

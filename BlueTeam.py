@@ -227,7 +227,7 @@ class BlueTeam(threading.Thread):
         else:
             self.logger.err(add_host_blue_str % (self.teamname, hostname))
         this_queue = Queue.Queue()
-        self.hosts[clean_hostname] = Host(hostname, value, self.logger, self.dns_servers, this_queue)
+        self.hosts[clean_hostname] = Host(self.teamname, hostname, value, self.logger, self.dns_servers, this_queue)
         self.hosts_rounds[clean_hostname] = False
         self.host_queues[clean_hostname] = this_queue
 
@@ -248,7 +248,7 @@ class BlueTeam(threading.Thread):
         if self.hosts.has_key(clean_hostname):
             self.logger.err(add_srvc_blue_str % \
                     (self.teamname, port, proto, value, hostname))
-            self.hosts[clean_hostname].add_service(port, proto, value, uri, content, \
+            self.hosts[clean_hostname].add_service(self.teamname, port, proto, value, uri, content, \
                                 username, password)
         else:
             self.logger.err(add_srvc_blue_err_str % \

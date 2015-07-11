@@ -79,7 +79,7 @@ class FlagHandler(SocketServer.BaseRequestHandler):
         if globalvars.binjitsu:
             self.banner += "\t\tflag:<your_team>,<flag>\n"
         self.banner += "\nPlease send your request\n\nREQ> "
-        self.max_tries = 3
+        self.max_tries = 10
         SocketServer.BaseRequestHandler.__init__(self, request, client_address, server)
 
     def handle(self):

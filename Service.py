@@ -48,14 +48,15 @@ class Service(threading.Thread):
     classdocs
     '''
 
-    def __init__(self, port, protocol, value, logger, queue, hostname, uri="index.html", \
+    def __init__(self, port, protocol, value, teamname, queue, hostname, uri="index.html", \
                             content=None, username=None, password=None):
         '''
         Constructor
         '''
         threading.Thread.__init__(self)
         self.hostname = hostname
-        self.logger = logger
+        basename = "%s-%s:%s_%s" % (teamname, hostname, port, protocol)
+        self.logger = Logger(basename)
         self.port = int(port)
         self.protocol = protocol
         self.value = float(value)
@@ -97,6 +98,7 @@ class Service(threading.Thread):
     def check(self, this_round, ipaddress, timeout):
         service_name = "%s/%s" % (self.port, self.protocol)
         myscore = self.value
+        data = ""
         if tcp_80_re.match(service_name):
             ############################################
             try:
