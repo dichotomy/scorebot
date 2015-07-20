@@ -213,9 +213,9 @@ class FlagStore(threading.Thread):
             integrity_score = 0
         # do the math...
         if globalvars.binjitsu:
-            flag_score = stolen - (lost * .5) + integrity_score
+            flag_score = stolen + integrity_score - lost
         else:
-            flag_score = lost - integrity_score
+            flag_score = integrity_score - lost
         return flag_score
 
     def add(self, team, name, value, score=None, answer=""):

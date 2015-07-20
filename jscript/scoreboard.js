@@ -30,7 +30,6 @@ function getMovie() {
                 });
                 function remove_movie(){
                     $("#main_wrapper").remove()
-
                     console.log("Movie done");
                 }
                 sleep(length, remove_movie);
@@ -43,6 +42,7 @@ function getScores() {
     $.getJSON( "http://www.prosversusjoes.net:8090/scores", function(data) {
         $(".score").remove()
         $(".scoreindent").remove()
+        $(".scoreclear").remove()
         $.each( data, function(key,val) {
             var round = val[0];
             var score = val[1];
@@ -69,7 +69,7 @@ function getScores() {
                 html: h5_team_score
             });
             var div_clear = $( "<div>", {
-                "class": "clear"
+                "class": "scoreclear"
             });
             /* Apply the HTML to the page */
             div_indent.appendTo( "#scorelist" );
@@ -125,7 +125,6 @@ function getTickets() {
                 html: h5_closed_tickets
             });
             div_closed_tickets.appendTo(ticket_team_id);
-
         })
     })
 }
@@ -332,22 +331,37 @@ function getFlags() {
                 $.each (flags, function(team, flags) {
                     var team_label = "lost-".concat(team);
                     var team_lost = team.concat(": ");
-                    var flaglist = flags.join(", ");
-                    team_lost = team_lost.concat(flaglist);
                     var div_indent = $( "<div>", {
                         "class": "indent",
                         html: "."
-                    })
+                    });
                     div_indent.appendTo("#flag-lost");
                     var h5_team = $( "<h5>", {
                         "class": "flag_label",
                         html: team_lost
                     });
-                    var div_team = $( "<div>", {
+                    var div_h5_team = $( "<div>", {
                         "class": "flag_label",
-                        "id": team_label,
                         html: h5_team
                     });
+                    var flagcount = flags.length;
+                    var div_team = $( "<div>", {
+                        "class": "flag_set",
+                        "id": team_label,
+                    });
+                    div_indent.appendTo(div_team);
+                    div_h5_team.appendTo(div_team);
+                    for (i=0; i< flagcount; i++) {
+                        var flag_img = $( "<img>", {
+                            "src": "/images/stolenflag2.png",
+                            "height": "30px"
+                        });
+                        var flag_div = $( "<div>", {
+                            "class": "flag",
+                            html: flag_img
+                        })
+                        flag_div.appendTo(div_team);
+                    }
                     div_team.appendTo("#flag-lost");
                 });
             } else if (type == "stolen") {

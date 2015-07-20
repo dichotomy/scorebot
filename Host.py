@@ -44,7 +44,7 @@ class Host(threading.Thread):
     classdocs
     '''
 
-    def __init__(self, teamname, hostname, value, logger, dns_servers, msgqueue, timeout=300):
+    def __init__(self, teamname, hostname, value, logger, dns_servers, msgqueue, timeout=180):
         '''
         Constructor
         '''
@@ -176,10 +176,7 @@ class Host(threading.Thread):
                             self.check_services(this_round)
                         else:
                             self.fail_services(this_round)
-                        if globalvars.binjitsu:
-                            score = int(self.value) - (int(self.value)*percent_failed/100)
-                        else:
-                            score = int(self.value) * percent_failed / 100
+                        score = int(self.value) - (int(self.value)*percent_failed/100)
                         if globalvars.verbose:
                             if score:
                                 self.logger.err("%s failed: %s\n" % (self.hostname,score))

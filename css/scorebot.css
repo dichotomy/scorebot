@@ -28,11 +28,6 @@ h2.flag,
 h3.flag,
 h4.flag,
 h5.flag,
-h1.flag_label,
-h2.flag_label,
-h3.flag_label,
-h4.flag_label,
-h5.flag_label,
 h1.beacon,
 h2.beacon,
 h3.beacon,
@@ -61,8 +56,8 @@ h5.ticket_title {
     color:#00AA00;
     text-align: left;
 }
-
 p {
+
     color: #00AA00;
 }
 
@@ -136,6 +131,12 @@ div.beacon {
     float: left;
 }
 
+div.flag {
+    margin-left: auto;
+    margin-right: auto;
+    float: left;
+}
+
 div.beacon_fill {
     margin-left: auto;
     margin-right: auto;
@@ -154,7 +155,7 @@ div.health_title {
 div.health_header {
     margin-left: auto;
     margin-right: auto;
-    width: 100%;
+    width: 96.5%;
     float: left;
     height: 20px;
     border: 2px solid;
@@ -170,7 +171,13 @@ div.health_header {
     height: 20px;
 }
 
-.flag_label {
+div.flag_label {
+    margin-left: auto;
+    margin-right: auto;
+    float: left;
+}
+
+div.flag_set {
     margin-left: auto;
     margin-right: auto;
     width: 95%;

@@ -71,7 +71,6 @@ class BlueTeam(threading.Thread):
         self.hosts = {}
         self.hosts_rounds = {}
         self.host_queues = {}
-        self.scores = Scores()
         self.start_time = start_time
         self.go_time = self.start_time
         self.interval = interval
@@ -88,6 +87,12 @@ class BlueTeam(threading.Thread):
         self.ticket_obj = None
         self.inround = False
         self.game_queue = None
+        # Score variables
+        self.scores = Scores()
+        self.ticket_scores = {}
+        self.flag_scores = {}
+        self.beacon_scores = {}
+        self.service_scores = {}
 
     def set_ticket_interface(self, ticket_obj):
         self.ticket_obj = ticket_obj
@@ -272,6 +277,26 @@ class BlueTeam(threading.Thread):
         this_score = self.scores.total()
         return [this_round, this_score]
 
+    def get_score_detail(self):
+        scores = {}
+        if self.inround:
+            current_round = self.this_round - 2
+        else:
+            current_round = self.this_round - 1
+        scores["round"] = current_round
+        scores["services"] = 0
+        scores["tickets"] = 0
+        scores["flags"] = 0
+        scores["beacons"] = 0
+        scores["total"] = 0
+        for round in range(1,current_round+1):
+            scores["services"] += self.service_scores[round]
+            scores["tickets"]  += self.ticket_scores[round]
+            scores["flags"]    += self.flag_scores[round]
+            scores["beacons"]  += self.beacon_scores[round]
+            scores["total"]     = self.scores.total()
+        return scores
+
     def get_all_rounds(self):
         scores = {}
         for round, score in self.scores:
@@ -323,34 +348,44 @@ class BlueTeam(threading.Thread):
             this_round = self.this_round
             self.scores.set_score(this_round, value)
             return
+        # Service scoring
         service_score = 0
         for host in self.hosts:
             service_score += self.hosts[host].get_score(self.this_round)
+        self.service_scores[self.this_round] = service_score
+        # Ticket scoring
         (all_tickets, closed_tickets) = self.get_tickets()
-        ticket_score = int(closed_tickets) * 1000
+        open_tickets = int(all_tickets) - int(closed_tickets)
+        ticket_score = (int(closed_tickets) - int(open_tickets)) * 1000
         if ticket_score == self.last_ticket_score:
             ticket_score = 0
         else:
             self.last_ticket_score = ticket_score
         if int(all_tickets) < int(closed_tickets):
             self.logger.err("There are more closed tickets than all for %s!" % self.teamname)
-        if globalvars.binjitsu:
-            flag_score = self.flag_store.score(self.teamname, self.this_round)
-            if flag_score != self.last_flag_score:
-                this_flag_score = flag_score - self.last_flag_score
-                self.last_flag_score = flag_score * 1000
-            else:
-                this_flag_score = 0
-            round_score = (this_flag_score - service_score )
+        self.ticket_scores[self.this_round] = ticket_score
+        # Flag scoring
+        flag_score = self.flag_store.score(self.teamname, self.this_round) * 1000
+        if flag_score != self.last_flag_score:
+            this_flag_score = flag_score - self.last_flag_score
+            self.last_flag_score = flag_score
         else:
-            flag_score = self.flag_store.score(self.teamname, self.this_round)
-            if flag_score != self.last_flag_score:
-                this_flag_score = flag_score - self.last_flag_score
-                round_score = (service_score + (this_flag_score * 1000))
-                self.last_flag_score = flag_score
-            else:
-                round_score = service_score
-        round_score += ticket_score
+            this_flag_score = 0
+        self.flag_scores[self.this_round] = this_flag_score
+        # Beacon scoring
+        beacons = self.flag_store.get_beacons()
+        beacon_count = 0
+        for bandit in beacons:
+            for ip_addr in beacons[bandit]:
+                if self.has_ip(ip_addr):
+                    beacon_count += 1
+                else:
+                    pass
+        beacon_score = 0 - (beacon_count * 1000)
+        self.beacon_scores[self.this_round] = beacon_score
+        print self.beacon_scores
+        # Final tally
+        round_score = service_score + ticket_score + this_flag_score + beacon_score
         self.scores.set_score(self.this_round, round_score)
         total = self.scores.total()
         print "Blueteam %s round %s scored %s for a new total of %s\n" % \
@@ -372,7 +407,8 @@ class BlueTeam(threading.Thread):
     def get_tickets(self):
         all_tickets = self.ticket_obj.get_team_tickets(self.teamname)
         closed_tickets = self.ticket_obj.get_team_closed(self.teamname)
-        return all_tickets, closed_tickets
+        open_tickets = int(all_tickets) - int(closed_tickets)
+        return str(open_tickets), closed_tickets
 
 
 

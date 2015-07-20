@@ -1,0 +1,380 @@
+body {
+    background: #000;
+    color: #333;
+    height: auto;
+    padding-bottom: 20px;
+    font: 13px/1.5 "Helvetica Neue", Arial, "Liberation Sans", FreeSans, sans-serif;
+}
+
+p {
+    color: #00AA00;
+}
+
+.green {
+    background-color: #00AA00;
+    width: 60px;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+    height: 20px;
+}
+
+.yellow {
+    background-color: #FFFF00;
+    width: 60px;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+    height: 20px;
+}
+
+.red {
+    background-color: #FF0000;
+    width: 60px;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+    height: 20px;
+}
+
+.empty {
+    width: 60px;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+    height: 20px;
+    color:#000000;
+}
+
+.scoreindent,
+.indent {
+    width: 5%;
+    float: left;
+    height: 20px;
+}
+
+h1.marquee {
+    overflow: hidden;
+    padding: 10px 0;
+    color: #00AA00;
+    text-align: center;
+}
+
+.main {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    height: 100%;
+    float: left;
+}
+
+.top {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    height: 25%;
+    float: left;
+}
+
+.bottom {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    height: 75%;
+    float: left;
+}
+
+.halfsides {
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+    float: left;
+}
+
+.halftop {
+    margin-left: auto;
+    margin-right: auto;
+    height: 50%;
+}
+
+.quarter {
+    margin-left: auto;
+    margin-right: auto;
+    width: 25%;
+    float: left;
+}
+
+.threequarter {
+    margin-left: auto;
+    margin-right: auto;
+    width: 75%;
+    float: right;
+}
+
+.flag,
+.health{
+    margin-left: auto;
+    margin-right: auto;
+    width: 50px;
+    float: left;
+}
+
+.beacon_label {
+    margin-left: auto;
+    margin-right: auto;
+    width: 80px;
+    height: 40px;
+    float: left;
+    text-align: right;
+}
+
+.beacon_block {
+    margin-left: auto;
+    margin-right: auto;
+    height: 40px;
+    float: left;
+    text-align: right;
+}
+
+.health_service {
+    margin-left: auto;
+    margin-right: auto;
+    width: 65px;
+    height: 20px;
+    float: left;
+    text-align: right;
+}
+
+.credits_label {
+    margin-left: auto;
+    margin-right: auto;
+    width: 10%;
+    float: left;
+    height: 20px;
+}
+
+.red_label {
+    margin-left: auto;
+    margin-right: auto;
+    width: 95%;
+    float: left;
+    height: 20px;
+}
+
+.health_label {
+    margin-left: auto;
+    margin-right: auto;
+    width: 80px;
+    height: 20px;
+    float: left;
+}
+
+.services {
+    margin-left: auto;
+    margin-right: auto;
+    width: 1000px;
+    float: left;
+}
+
+.flag_block,
+.ticket_block,
+.service_block {
+    margin-left: auto;
+    margin-right: auto;
+    /*width: 500px;*/
+    width: 48%;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+.service_host {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100px;
+    float: left;
+    height: 20px;
+}
+
+h1.score,
+h2.score,
+h3.score,
+h4.score,
+h5.score,
+h1.ticket,
+h2.ticket,
+h3.ticket,
+h4.ticket,
+h5.ticket,
+h5.red_label,
+h5.credits_label,
+h1.score_label,
+h2.score_label,
+h3.score_label,
+h4.score_label,
+h5.score_label,
+h1.flag,
+h2.flag,
+h3.flag,
+h4.flag,
+h5.flag,
+h1.beacon,
+h2.beacon,
+h3.beacon,
+h4.beacon,
+h5.beacon,
+h5.redcell,
+h5.beacon_title,
+h5.thanks_title,
+h1.health,
+h2.health,
+h3.health,
+h4.health,
+h5.health,
+h5.health_title,
+h5.beacon_title {
+    color:#00AA00;
+    text-align: left;
+}
+
+h1.flag_item,
+h2.flag_item,
+h3.flag_item,
+h4.flag_item,
+h5.flag_item,
+h1.score_item,
+h2.score_item,
+h3.score_item,
+h4.score_item,
+h5.score_item,
+h1.ticket_item,
+h2.ticket_item,
+h3.ticket_item,
+h4.ticket_item,
+h5.ticket_item {
+    color:#00AA00;
+    text-align: center;
+}
+
+h1.flag_label,
+h2.flag_label,
+h3.flag_label,
+h4.flag_label,
+h5.flag_label,
+h5.credit,
+h5.skulllabel,
+h1.ticket_label,
+h2.ticket_label,
+h3.ticket_label,
+h4.ticket_label,
+h5.ticket_label {
+    color:#00AA00;
+}
+
+div.health_header {
+    margin-left: auto;
+    margin-right: auto;
+    width: 96.5%;
+    float: left;
+    height: 20px;
+    border: 2px solid;
+    border-radius: 25px;
+}
+.red_container,
+.scores_container,
+.beacon_container,
+.flag_container,
+.ticket_container,
+.credits_container,
+.flag_container {
+    margin-left: auto;
+    margin-right: auto;
+    width: 95%;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+.score_type,
+.ticket_type,
+.flag_type{
+    margin-left: auto;
+    margin-right: auto;
+    width: 100px;
+    float: left;
+    height: 20px;
+}
+
+.score,
+.ticket,
+.flag,
+.breach {
+    margin-left: auto;
+    margin-right: auto;
+    width: 80px;
+    float: left;
+    height: 20px;
+}
+
+.score_label,
+.ticket_label{
+    margin-left: auto;
+    margin-right: auto;
+    width: 100px;
+    float: left;
+    height: 20px;
+}
+
+.credit{
+    margin-left: auto;
+    margin-right: auto;
+    float: left;
+}
+
+.flag_label{
+    margin-left: auto;
+    margin-right: auto;
+    width: 100px;
+    float: left;
+    height: 20px;
+}
+
+.creditclear,
+.redclear,
+.flagclear,
+.ticketclear,
+.scoreclear {
+    clear: both;
+    display: block;
+    overflow: hidden;
+    visibility: hidden;
+    width: 0;
+    height: 0;
+}
+
+.flagindent,
+.redindent,
+.ticketindent,
+.scoreindent,
+.indent {
+    width: 5%;
+    float: left;
+    height: 20px;
+}
+
+img.ticket,
+img.flag {
+    width: 20px;
+    height: auto;
+    float: left;
+}
+
+img.redflag {
+    height: 30px;
+}
+
+img.credit,
+img.healthredskull,
+img.redskull {
+    height: 40px;
+}

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<html>
+<title>Scorebot v2.5</title>
+<meta charset="utf-8" />
+<title>Scorebot</title>
+<link rel="stylesheet" href="css/reset.css" type="text/css"/>
+<link rel="stylesheet" href="css/text.css" type="text/css"/>
+<link rel="stylesheet" href="css/960.css" type="text/css"/>
+<link rel="stylesheet" href="css/scorebot2.css" type="text/css"/>
+<head>
+    <script src="jscript/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="jwplayer/jwplayer.js"></script>
+    <script>
+        $( document ).ready(function() {
+            console.log( "document loaded" );
+        });
+        $( window ).load(function() {
+            console.log( "window loaded" );
+        });
+    </script>
+</head>
+<body>
+<div id="main">
+    <div class="top" id="TopBlock">
+        <marquee height="50px" behavior=\"scroll\" direction=\"left\" scrollamount=\"20\">
+            <h1 class="marquee">THIS IS SCOREBOT v2.5</h1>
+        </marquee>
+        <script type="text/javascript" src="jscript/scoreboard2.js"></script>
+        <div class="halfsides" id="LeftTop">
+            <div class="scores_container" id="scorelist">
+                <div class="indent"></div>
+                <div class="score_label">
+                    <h5 class="score_label">
+                        Scores
+                    </h5>
+                </div>
+                <div class="scoreclear"></div>
+            </div>
+        </div>
+        <div class="halfsides" id="RightTop">
+            <div class="halftop" id="RightTopHalf">
+                <div class="flag_container" id="flaglist">
+                    <div class="indent"></div>
+                    <div class="flag_label">
+                        <h5 class="flag_label">
+                            Flags
+                        </h5>
+                    </div>
+                </div>
+                <div class="flagclear"></div>
+            </div>
+            <div class="halftop" id="RightBottomHalf">
+                <div class="ticket_container" id="ticketlist">
+                    <div class="indent"></div>
+                    <div class="ticket_label">
+                        <h5 class="ticket_label">
+                            Tickets
+                        </h5>
+                    </div>
+                </div>
+                <div class="ticketclear"></div>
+            </div>
+        </div>
+    </div>
+    <div class="bottom" id="BottomBlock">
+        <div class="quarter" id="LeftBottom">
+            <div class="red_container" id="redlist">
+                <div class="indent"></div>
+                <div class="red_label">
+                    <h5 class="red_label">
+                        Red Cell
+                    </h5>
+                </div>
+                <div class="clear"></div>
+            </div>
+        </div>
+        <div class="threequarter" id="RightBottom">
+            <div class="health_header" >
+                <div class="indent"></div>
+                <div class="health_title">
+                    <h5  class="health_title">
+                        System Health
+                    </h5>
+                </div>
+            </div>
+            <div id="ServiceBlock">
+            </div>
+            <div class="bottom">
+                <div class="beacon_container" id="BeaconBlock">
+                    <div class="indent"></div>
+                    <div class="beacon_title">
+                        <h5  class="beacon_title">
+                            Compromised hosts
+                        </h5>
+                    </div>
+                </div>
+            </div>
+            <div class="credits_container" id="creditslist">
+                <div class="indent"></div>
+                <div class="credits_label">
+                    <h5 class="credits_label">
+                        Credits
+                    </h5>
+                </div>
+                <div class="creditclear"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

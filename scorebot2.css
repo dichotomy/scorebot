@@ -1,0 +1,66 @@
+body {
+  background: #000;
+  color: #333;
+  font-size: 11px;
+  height: auto;
+  padding-bottom: 20px;
+}
+
+h1.marquee {
+    overflow: hidden;
+    padding: 10px 0;
+    color: #00AA00;
+    text-align: center;
+}
+
+.main {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    height: 100%;
+    float: left;
+}
+
+.top {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    height: 25%;
+    float: left;
+}
+
+.bottom {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    height: 75%;
+    float: left;
+}
+
+.halfsides {
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+    float: left;
+}
+
+.halftop {
+    margin-left: auto;
+    margin-right: auto;
+    height: 50%;
+    float: left;
+}
+
+.quarter {
+    margin-left: auto;
+    margin-right: auto;
+    width: 25%;
+    float: left;
+}
+
+.threequarter {
+    margin-left: auto;
+    margin-right: auto;
+    width: 75%;
+    float: left;
+}

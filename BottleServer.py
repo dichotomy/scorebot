@@ -46,7 +46,7 @@ class BottleServer(threading.Thread):
         self.movies = movies
         self.flag_store = flag_store
         self.message_store = message_store
-        self.whitelist = ["scoreboard.html", "movie.html"]
+        self.whitelist = ["scoreboard.html", "movie.html", "scoreboard2.html"]
         self.all_flags_found = []
 
     def _route(self):
@@ -57,12 +57,15 @@ class BottleServer(threading.Thread):
         self._app.route('/movies/<filename>', method="GET", callback=self._movies)
         self._app.route('/images/<filename>', method="GET", callback=self._images)
         self._app.route('/scores', callback=self._scores)
+        self._app.route('/scores2', callback=self._scores2)
         self._app.route('/health', callback=self._health)
         self._app.route('/marquee', callback=self._marquee)
         self._app.route('/movie', callback=self._movie)
         self._app.route('/flags', callback=self._flags)
+        self._app.route('/flags2', callback=self._flags2)
         self._app.route('/beacons', callback=self._beacons)
         self._app.route('/tickets', callback=self._tickets)
+        self._app.route('/redcell', callback=self._redcell)
 
     def run(self):
         self._app.run(host=self._host, port=self._port, server="paste")
@@ -88,6 +91,27 @@ class BottleServer(threading.Thread):
         else:
             return template("Forbidden!")
 
+    def _redcell(self):
+        bandits = self.flag_store.get_bandits()
+        redcell = {}
+        for bandit in bandits:
+            redcell[bandit] = {"flags": bandits[bandit]}
+        beaconlist = self.flag_store.get_beacons()
+        for bandit in beaconlist:
+            if bandit in redcell:
+                redcell[bandit]["beacons"] = {}
+            else:
+                redcell[bandit] = {"beacons"}
+                redcell[bandit]["beacons"] = {}
+            for pwned in beaconlist[bandit]:
+                for team in self.teams:
+                    if self.teams[team].has_ip(pwned):
+                        if team in redcell[bandit]:
+                            redcell[bandit]["beacons"][team] += 1
+                        else:
+                            redcell[bandit]["beacons"][team] = 1
+        return redcell
+
     def _beacons(self):
         beaconlist = self.flag_store.get_beacons()
         beacons = {}
@@ -112,6 +136,12 @@ class BottleServer(threading.Thread):
         team_scores = {}
         for team in self.teams.keys():
             team_scores[team] = self.teams[team].get_score()
+        return team_scores
+
+    def _scores2(self):
+        team_scores = {}
+        for team in self.teams.keys():
+            team_scores[team] = self.teams[team].get_score_detail()
         return team_scores
 
     def _health(self):
@@ -148,6 +178,30 @@ class BottleServer(threading.Thread):
                     flags["newflag"] = 1
         for team in self.teams.keys():
             flags["integrity"][team] = self.flag_store.get_integrity(team)
+        return flags
+
+    def _flags2(self):
+        flags = {}
+        flags["teams"] = {}
+        flags["bandits"] = self.flag_store.get_bandits()
+        if globalvars.binjitsu:
+            flags["binjitsu"] = {}
+            for team in self.teams.keys():
+                stolen_flags = self.flag_store.get_stolen(team)
+                flags["binjitsu"][team] = stolen_flags
+        # Lost flags
+        for team in self.teams.keys():
+            flags["teams"][team] = {}
+            lost_flags = self.flag_store.get_lost(team)
+            flags["teams"][team]["lost"] = lost_flags
+            for flag in lost_flags:
+                if flag in self.all_flags_found:
+                    continue
+                else:
+                    self.all_flags_found.append(flag)
+                    flags["newflag"] = 1
+        for team in self.teams.keys():
+            flags["teams"][team]["integrity"] = self.flag_store.get_integrity(team)
         return flags
 
 if __name__=="__main__":

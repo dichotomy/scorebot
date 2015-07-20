@@ -97,7 +97,7 @@ class Service(threading.Thread):
 
     def check(self, this_round, ipaddress, timeout):
         service_name = "%s/%s" % (self.port, self.protocol)
-        myscore = self.value
+        penalty = self.value
         data = ""
         if tcp_80_re.match(service_name):
             ############################################
@@ -113,9 +113,9 @@ class Service(threading.Thread):
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem...\n")
-                myscore = self.value * 1
+                penalty = self.value * 1
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+                self.set_score(this_round, penalty)
             ############################################
             try:
                 if globalvars.verbose:
@@ -126,9 +126,9 @@ class Service(threading.Thread):
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem:\n")
-                myscore = self.value * .75
+                penalty = self.value * .75
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+                self.set_score(this_round, penalty)
             ############################################
             try:
                 if globalvars.verbose:
@@ -139,9 +139,9 @@ class Service(threading.Thread):
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem...\n")
-                myscore = self.value * .50
+                penalty = self.value * .50
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+                self.set_score(this_round, penalty)
             ############################################
             if globalvars.verbose:
                 self.logger.err("\t\t\tChecking data...")
@@ -191,9 +191,9 @@ class Service(threading.Thread):
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem...\n")
-                myscore = self.value * 1
+                penalty = self.value * 1
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+                self.set_score(this_round, penalty)
             ############################################
             try:
                 if globalvars.verbose:
@@ -205,9 +205,9 @@ class Service(threading.Thread):
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem...\n")
-                myscore = self.value * 0.75
+                penalty = self.value * 0.75
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+                self.set_score(this_round, penalty)
             ############################################
             try:
                 if globalvars.verbose:
@@ -221,9 +221,9 @@ class Service(threading.Thread):
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem...\n")
-                myscore = self.value * 0.50
+                penalty = self.value * 0.50
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+                self.set_score(this_round, penalty)
             ############################################
             try:
                 if globalvars.verbose:
@@ -231,18 +231,18 @@ class Service(threading.Thread):
                 file_obj = open(filename)
                 for line in file_obj:
                     if score_str_re.match(line):
-                        myscore = self.value * 0
+                        penalty = self.value * 0
                         if globalvars.verbose:
                             self.logger.err("good\n")
                     else:
-                        myscore = self.value * 0.25
-                    self.set_score(this_round, myscore)
+                        penalty = self.value * 0.25
+                    self.set_score(this_round, penalty)
             except:
                 if globalvars.verbose:
                     self.logger.err("bad: %s\n" % data)
-                myscore = self.value * 0.333
+                penalty = self.value * 0.333
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+                self.set_score(this_round, penalty)
         elif tcp_25_re.match(service_name):
             #self.set_score(this_round, 0)
             #self.logger.err("NEED TO IMPLEMENT 25/TCP SCORE CHECKING!!\n")
@@ -259,9 +259,9 @@ class Service(threading.Thread):
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem...\n")
-                myscore = self.value * 1
+                penalty = self.value * 1
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+                self.set_score(this_round, penalty)
             ############################################
             try:
                 if globalvars.verbose:
@@ -272,9 +272,9 @@ class Service(threading.Thread):
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem:\n")
-                myscore = self.value * .75
+                penalty = self.value * .75
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+                self.set_score(this_round, penalty)
             ############################################
             try:
                 if globalvars.verbose:
@@ -285,9 +285,9 @@ class Service(threading.Thread):
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem...\n")
-                myscore = self.value * .50
+                penalty = self.value * .50
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+                self.set_score(this_round, penalty)
             ############################################
             if globalvars.verbose:
                 self.logger.err("\t\t\tChecking data...")
@@ -310,38 +310,36 @@ class Service(threading.Thread):
                 mysock.settimeout(timeout)
                 if globalvars.verbose:
                     self.logger.err("connected!\n")
-                myscore = self.value * 0
-                self.set_score(this_round, myscore)
+                penalty = self.value * 0
+                self.set_score(this_round, penalty)
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem...\n")
-                myscore = self.value * 1
+                penalty = self.value * 1
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+                self.set_score(this_round, penalty)
             service_name = "%s/%s" % (str(self.port), str(self.protocol))
-            self.set_score(this_round, myscore)
+            self.set_score(this_round, penalty)
 
 
     def get_score(self, this_round):
         return self.scores.get_score(this_round)
 
-    def set_score(self, this_round, value=None):
-        if value == None:
-            value = self.value
+    def set_score(self, this_round, penalty=None):
+        if penalty == None:
+            penalty = self.value
         service_name = "%s/%s" % (str(self.port), str(self.protocol))
-        if (value == self.value):
+        if (penalty == self.value):
             self.up = False
             self.functional = False
-        elif (value > 0):
+        elif (penalty > 0):
             self.up = True
             self.functional = False
         else:
             self.up = True
             self.functional = True
-        if globalvars.binjitsu:
-            this_value = self.value - value
-        else:
-            this_value = value
+        this_penalty = penalty
+        this_value = self.value - this_penalty
         this_time = time.strftime('%X %x %Z')
         self.logger.out("%s Round %s host %s service %s score %s\n" % \
                     (this_time, this_round, self.hostname, service_name, this_value))
