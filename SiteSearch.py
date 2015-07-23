@@ -147,7 +147,8 @@ class SForm:
 
 class SiteSearch(threading.Thread):
     def __init__(self, siteurl, dns=None, loginpage=None, username=None, usernamefm=None,
-                 password=None, passwordfm=None, debug=False, forms=True, timeout=6, keywords=10, maxpages=0, fullpath=False):
+                 password=None, passwordfm=None, debug=False, forms=True, timeout=6, keywords=10,
+                 maxpages=0, fullpath=False):
         threading.Thread.__init__(self)
         if not siteurl.startswith("http"):
             raise Exception("Site URL is badly formatted!")
@@ -590,7 +591,8 @@ class JSONLoader(threading.Thread):
             if self.__svcval["port"] == "443":
                 self.__host = ("https://%s" % self.__host)
         # Init search
-        ssearch = SiteSearch(self.__host, self.__dns, uloginpage, uname, unamefm, upass, upassfm, forms=False, debug=False, keywords=6, maxpages=10)
+        ssearch = SiteSearch(self.__host, self.__dns, uloginpage, uname, unamefm, upass, upassfm, forms=False,
+                             debug=False, keywords=6, maxpages=10)
         ssearch.start()
         # Wit for completion
         while ssearch.isAlive():
@@ -728,4 +730,3 @@ if __name__ == "__main__":
         print("Usage SiteSearch.py <jsonfile.json>")
         print("Scans and appends results to specified json file")
         sys.exit(-1)
-    
