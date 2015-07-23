@@ -650,7 +650,7 @@ def loadfromjson(jsonpath):
     #while wait:
     #    for thread in searchlist:
     #        wait = thread.isAlive()
-    while (not arethresddone(searchlist)):
+    while not arethresddone(searchlist):
         var = None
     # Once complete, re add the data to the json
     print("Search done, saving results")
