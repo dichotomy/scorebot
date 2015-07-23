@@ -693,9 +693,6 @@ if __name__ == "__main__":
         None
     print("Data: %s" % json.dumps(aaa.json()))
     """
-
-    loadfromjson("V:\\bsidesde2014.json")
-
     if len(sys.argv) > 1:
         loadfromjson(sys.argv[1])
         sys.exit(0)
