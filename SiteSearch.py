@@ -35,6 +35,7 @@ __author__ = 'iDigitalFlame'
         timeout= (Default:6; The Cnnection and read timeouts used by Requests)
         keywords= (Default:10; The amount of keywords to gather)
         maxpages= (Default:0; The max amount of pages to gather (Login page does not count). 0 is no limit)
+        fullpath= (Default:False;) Changes the way that urls are stored in the JSON.  Defaults to false (no lead url)
 
     Notes:
         maxpages will only stop the scan if the count of scanned pages equals this number.
@@ -146,7 +147,7 @@ class SForm:
 
 class SiteSearch(threading.Thread):
     def __init__(self, siteurl, dns=None, loginpage=None, username=None, usernamefm=None,
-                 password=None, passwordfm=None, debug=False, forms=True, timeout=6, keywords=10, maxpages=0):
+                 password=None, passwordfm=None, debug=False, forms=True, timeout=6, keywords=10, maxpages=0, fullpath=False):
         threading.Thread.__init__(self)
         if not siteurl.startswith("http"):
             raise Exception("Site URL is badly formatted!")
@@ -162,6 +163,7 @@ class SiteSearch(threading.Thread):
         self.__sessiond = None
         self.__timeout = timeout
         self.__loginparams = None
+        self.__fullpath = fullpath
         self.__keywords = keywords
         self.__maxpages = maxpages
         self.__loginpage = loginpage
@@ -203,8 +205,9 @@ class SiteSearch(threading.Thread):
             self.__loginintopage()
         # Loop while we have things to search
         while len(self.__search) > 0 and (self.__maxpages == 0 or len(self.pages) < self.__maxpages):
-            if self.__debug:
-                print("Pages[%s] %d is max %d pages got!" %(self.baseurl, self.__maxpages, len(self.pages)))
+            # Too uch console spam
+            # if self.__debug:
+            #    print("Pages[%s] %d is max %d pages got!" %(self.baseurl, self.__maxpages, len(self.pages)))
             searchpage = self.__search.pop()
             if self.__debug:
                 print("Search[%s] Popped out page '%s', '%d' left." % (self.baseurl, searchpage, len(self.__search)))
@@ -245,7 +248,7 @@ class SiteSearch(threading.Thread):
         if self.__ipaddr:
             lurl = lurl.replace(self.__basehost, self.__ipaddr)
         try:
-            loginpage = requests.post(lurl, data=self.__loginparams, timeout=self.__timeout)
+            loginpage = requests.post(lurl, data=self.__loginparams, timeout=self.__timeout, stream=True)
         # Timeout
         except requests.exceptions.ReadTimeout:
             if self.__ipaddr:
@@ -264,6 +267,24 @@ class SiteSearch(threading.Thread):
             return
         if self.__ipaddr:
             lurl = lurl.replace(self.__ipaddr, self.__basehost)
+        # No Data?
+        if not loginpage:
+            if self.__debug:
+                print("Search[%s] [ERROR] Page '%s' failed to download!." % (self.baseurl, lurl))
+            self.__failed.append(lurl)
+            return
+        # Check for error codes
+        if loginpage.status_code != 200:
+            if self.__debug:
+                print("Search[%s] [ERROR] Page '%s' failed by status code." % (self.baseurl, lurl))
+            self.__failed.append(lurl)
+            return
+        # Text only
+        if not ("text" in loginpage.headers['content-type']):
+            if self.__debug:
+                print("Search[%s] [ERROR] Page '%s' is not a text file." % (self.baseurl, lurl))
+            self.__failed.append(lurl)
+            return
         # Did teh request work?
         if loginpage and loginpage.request.headers:
             if self.__debug:
@@ -285,15 +306,17 @@ class SiteSearch(threading.Thread):
                 print("Search[%s] Page '%s' passed.." % (self.baseurl, lurl))
             # Does page exist?
             if lurl in self.pages:
-                self.pages[lurl].size = len(loginpage.text)
+                self.pages[lurl].size = len(loginpage.content)
                 # Update the current one if so
                 pageobject = self.pages[lurl]
             else:
                 # If not create a new reference
-                pageobject = SSite(lurl, len(loginpage.text))
+                pageobject = SSite(lurl, len(loginpage.content))
+                if not self.__fullpath:
+                    pageobject.url = lurl.replace(self.baseurl, "")
                 self.pages[lurl] = pageobject
             # Create bs4 reference to look to objects
-            bs4pagedata = BeautifulSoup(loginpage.text)
+            bs4pagedata = BeautifulSoup(loginpage.content)
             # Send to be scanned
             self.__scanpage(bs4pagedata, pageobject)
             if self.__forms:
@@ -319,7 +342,7 @@ class SiteSearch(threading.Thread):
             geturl = geturl.replace(self.__basehost, self.__ipaddr)
         # Try to get the page (using login cookie also)
         try:
-            pagedata = requests.get(geturl, headers=self.__sessiond, timeout=self.__timeout)
+            pagedata = requests.get(geturl, headers=self.__sessiond, timeout=self.__timeout, stream=True)
         # Timeout
         except requests.exceptions.ReadTimeout:
             if self.__ipaddr:
@@ -363,14 +386,16 @@ class SiteSearch(threading.Thread):
         # Check if we have a page object
         if geturl in self.pages:
             # If so update the current one
-            self.pages[geturl].size = len(pagedata.text)
+            self.pages[geturl].size = len(pagedata.content)
             pageobject = self.pages[geturl]
         else:
             # If not create one
-            pageobject = SSite(geturl, len(pagedata.text))
+            pageobject = SSite(geturl, len(pagedata.content))
+            if not self.__fullpath:
+                pageobject.url = geturl.replace(self.baseurl, "")
             self.pages[geturl] = pageobject
         # convert to bs4 for searching
-        bs4pagedata = BeautifulSoup(pagedata.text)
+        bs4pagedata = BeautifulSoup(pagedata.content)
         # Scan page for links
         self.__scanpage(bs4pagedata, pageobject)
         if self.__forms:
@@ -515,6 +540,8 @@ class SiteSearch(threading.Thread):
                         else:
                             # Target page has not been scanned yet, add a hollow reference for now (0 len)
                             pageobjn = SSite(act, 0)
+                            if not self.__fullpath:
+                                pageobj.url = act.replace(self.baseurl, "")
                             pageobjn.form.append(formv)
                             self.pages[act] = pageobj
 
@@ -687,12 +714,13 @@ if __name__ == "__main__":
                          debug=True, forms=False)
 
     Google Chrome
-    aaa = SiteSearch("http://google.com/chrome/", dns="8.8.8.8", debug=True)
+    aaa = SiteSearch("http://cyberwildcats.net/ctf/", dns="8.8.8.8", debug=True, maxpages=0)
     aaa.start()
     while aaa.isAlive():
         None
     print("Data: %s" % json.dumps(aaa.json()))
     """
+
     if len(sys.argv) > 1:
         loadfromjson(sys.argv[1])
         sys.exit(0)
@@ -700,3 +728,4 @@ if __name__ == "__main__":
         print("Usage SiteSearch.py <jsonfile.json>")
         print("Scans and appends results to specified json file")
         sys.exit(-1)
+    
