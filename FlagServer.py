@@ -73,7 +73,7 @@ class FlagHandler(SocketServer.BaseRequestHandler):
         self.beacon_re = re.compile("(\d+)")
         #########################################################
         self.responses = Responses()
-        self.banner = "This is Scorebot v2.0, I accept the following commands:\n\n"
+        self.banner = "This is Scorebot v2.5, I accept the following commands:\n\n"
         self.banner += "\tRED CELL:\n\t\tregister:<your_nick>\n\t\tflag:<your_nick>,<flag>\n"
         self.banner += "\tBLUE CELL:\n\t\tintegrity:<your_team>,<flag>\n"
         if globalvars.binjitsu:

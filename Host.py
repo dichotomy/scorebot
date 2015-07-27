@@ -209,9 +209,8 @@ class Host(threading.Thread):
             this_value = self.value
         else:
             this_value = value
-        this_time = time.strftime('%X %x %Z')
-        self.logger.out("%s Round %s host %s score %s\n" % \
-                    (this_time, this_round, self.hostname, this_value))
+        self.logger.out("Round %s host %s score %s\n" % \
+                    (this_round, self.hostname, this_value))
         self.logger.err("Round %s host %s score %s\n" % \
                     (this_round, self.hostname, this_value))
         self.scores.set_score(this_round, this_value)

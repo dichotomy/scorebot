@@ -29,7 +29,7 @@ import time
 import json
 from Injects import Injects
 from BlueTeam import BlueTeam
-from TicketInterface import TicketInterface
+from TicketInterface import *
 
 class JsonConfig(object):
 
@@ -83,12 +83,16 @@ class JsonConfig(object):
         else:
             raise Exception("No bluteams given!")
         if "injects" in self.config:
-            ticket_obj = TicketInterface()
             injects = Injects()
             for team in blue_teams:
+                teamname = blue_teams[team].get_teamname()
+                email = blue_teams[team].get_email()
+                location = email.split("@")[1]
+                ticket_obj = TeamTicket(teamname, location)
                 blue_teams[team].set_ticket_interface(ticket_obj)
                 email = blue_teams[team].get_email()
                 injects.add_email(team, email)
+                injects.add_ticketobj(team, ticket_obj)
             for inject in self.config["injects"]:
                 self.proc_injects(inject, injects)
         else:
@@ -187,6 +191,10 @@ class JsonConfig(object):
             inject_value = inject["inject_value"]
         else:
             raise Exception("Inject without value: %s" % ":".join(inject.values()))
+        if "category" in inject:
+            category = inject["category"]
+        else:
+            raise Exception("Inject without category: %s" % join(inject.values()))
         if "inject_duration" in inject:
             inject_duration = inject["inject_duration"]
         else:
@@ -200,7 +208,7 @@ class JsonConfig(object):
                 raise Exception("Invalid set_ticket value for inject %s" % inject_name)
         else:
             set_ticket = False
-        injects.add_inject(inject_name, inject_value, inject_duration, set_ticket)
+        injects.add_inject(inject_name, inject_value, inject_duration, category, set_ticket)
         if "inject_subject" in inject:
             inject_subject = inject["inject_subject"]
             injects.set_subject(inject_name, inject_subject)

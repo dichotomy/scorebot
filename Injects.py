@@ -51,6 +51,7 @@ class Injects(threading.Thread):
         self.from_address = '"Gold Team" <admin@goldteam.net>'
         self.teams = []
         self.did_time = None
+        self.ticket_objs = {}
 
     def add_email(self, name, email):
         full_email = '"%s" <%s>' % (name, email)
@@ -58,6 +59,11 @@ class Injects(threading.Thread):
             pass
         else:
             self.to_addresses[name] = full_email
+
+    def add_ticketobj(self, name, ticketobj):
+        if name in self.ticket_objs:
+            sys.stderr.write("Warning, overwriting ticket obj for %s" % name)
+        self.ticket_objs[name] = ticketobj
 
     def run(self):
         #wait until an hour after gametime
@@ -69,12 +75,12 @@ class Injects(threading.Thread):
             self.inject(name)
             time.sleep(interval)
 
-    def add_inject(self, name, value, duration, set_ticket=False):
+    def add_inject(self, name, value, duration, category, set_ticket=False):
         if self.injects.has_key(name):
             self.logger.err("warning, clobbering inject %s" % name)
         else:
             self.logger.out("Adding inject %s\n" % name)
-        self.injects[name] = Inject(name, value, duration, set_ticket)
+        self.injects[name] = Inject(name, value, duration, category, set_ticket)
         self.durations[duration] = self.injects[name]
 
     def set_subject(self, name, subject):
@@ -91,12 +97,15 @@ class Injects(threading.Thread):
     def inject(self, name):
         message = self.injects[name].get_text()
         subject = self.injects[name].get_subject()
+        category = self.injects[name].get_category()
         if globalvars.verbose:
             self.logger.out("injecting %s...\n" % name)
         for team in self.to_addresses:
             self.logger.out("Sending to team %s" % team)
             to = self.to_addresses[team]
             self.mail(to, self.from_address, subject, message)
+            if team in self.ticket_objs:
+                self.ticket_objs[team].new_ticket(subject, message, category)
 
     def add_team(self, team):
         self.teams.append(team)

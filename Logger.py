@@ -24,36 +24,39 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import os
 import os.path
+import time
 
 class Logger(object):
 
 
-   def __init__(self, basename, path="logs"):
+    def __init__(self, basename, path="logs"):
 
-      self.basename = basename
-      if os.path.exists(path):
-          pass
-      else:
-          os.mkdir(path)
-      self.outfilename = "%s/%s.out" % (path, self.basename)
-      self.errfilename = "%s/%s.err" % (path, self.basename)
-      self.outfile = open(self.outfilename, "a")
-      self.errfile = open(self.errfilename, "a")
+        self.basename = basename
+        if os.path.exists(path):
+             pass
+        else:
+             os.mkdir(path)
+        self.outfilename = "%s/%s.out" % (path, self.basename)
+        self.errfilename = "%s/%s.err" % (path, self.basename)
+        self.outfile = open(self.outfilename, "a")
+        self.errfile = open(self.errfilename, "a")
 
-   def out(self, message):   
-      self.outfile.write(message)
-      self.outfile.flush()
+    def out(self, message):
+        now = time.strftime('%X %x %Z')
+        self.outfile.write("%s|%s" % (now, message))
+        self.outfile.flush()
 
-   def write(self, message):
-      self.err(message)
+    def write(self, message):
+        self.err(message)
 
-   def err(self, message):   
-      self.errfile.write(message)
-      self.errfile.flush()
+    def err(self, message):
+        now = time.strftime('%X %x %Z')
+        self.errfile.write("%s|%s" % (now, message))
+        self.errfile.flush()
 
-   def get_err_file(self):
-      return self.errfile
+    def get_err_file(self):
+        return self.errfile
 
-   def get_out_file(self):
-      return self.outfile
+    def get_out_file(self):
+        return self.outfile
 

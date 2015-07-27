@@ -184,6 +184,7 @@ class BlueTeam(threading.Thread):
                         if item[0] == "Go":
                             self.this_round = item[1]
                             # Report times so that we know whether or not the last round ran too long
+                            self.inround = True
                             print "Starting Service check for Blueteam %s.  Go time was %s, now is %s." % \
                                   (self.teamname, self.go_time, now)
                             for host in self.host_queues:
@@ -272,7 +273,10 @@ class BlueTeam(threading.Thread):
 
     def get_score(self, this_round=None):
         if not this_round:
-            this_round = self.this_round - 1
+            if self.inround:
+                this_round = self.this_round - 1
+            else:
+                this_round = self.this_round
         #this_score = self.scores.get_score(this_round)
         this_score = self.scores.total()
         return [this_round, this_score]
@@ -280,9 +284,9 @@ class BlueTeam(threading.Thread):
     def get_score_detail(self):
         scores = {}
         if self.inround:
-            current_round = self.this_round - 2
-        else:
             current_round = self.this_round - 1
+        else:
+            current_round = self.this_round
         scores["round"] = current_round
         scores["services"] = 0
         scores["tickets"] = 0
@@ -357,10 +361,10 @@ class BlueTeam(threading.Thread):
         (all_tickets, closed_tickets) = self.get_tickets()
         open_tickets = int(all_tickets) - int(closed_tickets)
         ticket_score = (int(closed_tickets) - int(open_tickets)) * 1000
-        if ticket_score == self.last_ticket_score:
-            ticket_score = 0
-        else:
-            self.last_ticket_score = ticket_score
+        #if ticket_score == self.last_ticket_score:
+        #    ticket_score = 0
+        #else:
+        #    self.last_ticket_score = ticket_score
         if int(all_tickets) < int(closed_tickets):
             self.logger.err("There are more closed tickets than all for %s!" % self.teamname)
         self.ticket_scores[self.this_round] = ticket_score
@@ -390,7 +394,8 @@ class BlueTeam(threading.Thread):
         total = self.scores.total()
         print "Blueteam %s round %s scored %s for a new total of %s\n" % \
                   (self.teamname, self.this_round, round_score, total)
-        print "Blueteam %s tally: %s\n" % (self.teamname, self.get_score())
+        print "Blueteam %s: tally: %s services: %s tickets: %s flags: %s beacons: %s\n" % \
+              (self.teamname, self.get_score(), service_score, ticket_score, this_flag_score, beacon_score)
 
     def get_health(self):
         host_hash = {}

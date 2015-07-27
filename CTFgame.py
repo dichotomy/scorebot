@@ -57,7 +57,8 @@ class CTFgame(threading.Thread):
         self.pp = pprint.PrettyPrinter(indent=2)
         self.blues_queues = {}
         self.teams_rounds = {}
-        self.this_round = 0
+        # todo - fix why this isn't actually the first round!
+        self.this_round = 1
         self.interval = 120
         self.inround = False
         self.go_time = time.time()
@@ -166,7 +167,6 @@ class CTFgame(threading.Thread):
                 self.inround = False
                 for team in self.teams_rounds:
                     self.teams_rounds[team] = False
-                self.this_round += 1
             now = time.time()
             if self.go_time <= now and not self.inround:
                 try:
@@ -175,6 +175,7 @@ class CTFgame(threading.Thread):
                         print "Starting Service check for Blueteam %s.  Go time was %s, now is %s." % \
                               (team, self.go_time, now)
                         self.blues_queues[team].put(["Go", self.this_round], 1)
+                    self.this_round += 1
                     self.go_time += self.interval
                     print "New go time is %s" % self.go_time
                     self.inround = True

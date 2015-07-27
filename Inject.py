@@ -32,12 +32,13 @@ class Inject(object):
     '''
 
 
-    def __init__(self, name, value, duration, ticket=False):
+    def __init__(self, name, value, duration, category, ticket=False):
         '''
         Constructor
         '''
         self.name = name
         self.value = int(value)
+        self.category = category
         self.duration = int(duration) * 60
         self.challenge = ""
         self.response = ""
@@ -66,3 +67,6 @@ class Inject(object):
 
     def get_subject(self):
         return self.subject
+
+    def get_category(self):
+        return self.category

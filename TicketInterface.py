@@ -31,7 +31,6 @@ import time
 
 class TicketInterface(object):
 
-
     def __init__(self, host="10.150.100.153", user="scorebot", passwd="password", db="sts"):
         self.locations = {}
         self.users = {}
@@ -52,10 +51,10 @@ class TicketInterface(object):
                                       VALUES ("%s", "%s", "%s", %s, %s, %s, %s, %s, %s, %s, %s);"""
         # Queries
         # count all tickets by owner
-        self.group_tickets_by_owner_query = """select users.id, count(*) from tickets, users where users.id = tickets.eu_uid and tickets.created_uid = 1 group by users.id;"""
-        self.tickets_by_owner_query = """select count(*) from tickets where tickets.created_uid = 1 and tickets.eu_uid = %s;"""
+        self.group_tickets_by_owner_query = """select users.id, count(*) from tickets, users where users.id = tickets.assigned_uid and tickets.created_uid = 1 group by users.id;"""
+        self.tickets_by_owner_query = """select count(*) from tickets where tickets.created_uid = 1 and tickets.assigned_uid = %s;"""
         # count closed tickets by owner
-        self.group_closed_by_owner_query = """select users.id, count(*) from tickets, users where users.id = tickets.eu_uid and tickets.created_uid = 1 and tickets.state_id = 2 group by users.id;"""
+        self.group_closed_by_owner_query = """select users.id, count(*) from tickets, users where users.id = tickets.assigned_uid and tickets.created_uid = 1 and tickets.state_id = 2 group by users.id;"""
         self.closed_by_owner_query = """select count(*) from tickets where  tickets.created_uid = 1 and tickets.state_id = 2 and tickets.eu_uid = %s;"""
         # get users
         self.get_users_query = """select id, ln from users;"""
@@ -160,6 +159,31 @@ class TicketInterface(object):
             new_row = r.fetch_row()
         db.close()
         return results
+
+class TeamTicket(TicketInterface):
+
+    def __init__(self, teamname, locale, \
+                 host="10.150.100.153", user="scorebot", passwd="password", db="sts"):
+        TicketInterface.__init__(self, host, user, passwd, db)
+        self.teamname = teamname
+        if self.teamname in self.users:
+            self.user_id = self.users[self.teamname]
+        else:
+            raise Exception("Unknown user %s!" % self.teamname)
+        self.locale = locale
+        if self.locale in self.locations:
+            self.loc_id = self.locations[self.locale]
+        else:
+            raise Exception("Unknown location %s!" % self.locale)
+
+    def new_ticket(self, subject, description, category):
+        if category in self.categories:
+            cat_id = self.categories[category]
+        else:
+            raise Exception("Unknown category %s!" % category)
+        short_desc = description[:30]
+        self.insert_ticket(subject, description, short_desc, self.loc_id, self.user_id, cat_id)
+
 
 if __name__=="__main__":
     ticket_obj = TicketInterface()

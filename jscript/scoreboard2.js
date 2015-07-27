@@ -98,7 +98,7 @@ function getScores() {
             html: "."
         });
         div_indent1.appendTo("#scorelist")
-        var h5_total = $("<h5>", {
+        var h5_total = $("<h4>", {
             "class": "score",
             html: "Total"
         });
@@ -108,7 +108,7 @@ function getScores() {
         });
         div_total1.appendTo("#scorelist")
         $.each (data, function (team, scores){
-            var h5_total = $("<h5>", {
+            var h5_total = $("<h4>", {
                 "class": "score",
                 html: scores["total"]
             });

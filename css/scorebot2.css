@@ -224,7 +224,6 @@ h3.beacon,
 h4.beacon,
 h5.beacon,
 h5.redcell,
-h5.beacon_title,
 h5.thanks_title,
 h1.health,
 h2.health,
@@ -377,4 +376,20 @@ img.credit,
 img.healthredskull,
 img.redskull {
     height: 40px;
+}
+
+div.health_title {
+    margin-left: auto;
+    margin-right: auto;
+    width: 95%;
+    float: left;
+    height: 20px;
+}
+
+div.beacon_title {
+    margin-left: auto;
+    margin-right: auto;
+    width: 200px;
+    float: left;
+    height: 20px;
 }
