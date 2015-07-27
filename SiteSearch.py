@@ -1,13 +1,13 @@
-#!/bin/python
+#!/usr/bin/python
 
-__author__ = 'DigitalFlame'
+__author__ = 'iDigitalFlame'
 
 """
     SiteSearch.py
-    Written by DigitalFlame for the Scorebot Project
+    Written by iDigitalFlame for the Scorebot Project
 
     Scans through a site looking for <a href=""> (links) internal to the site.
-    Pages that are scaned are added to the 'pages' var.  Pages that have failed or are unreachable are in 'failed_pages'
+    Pages that are sccaned are added to the 'pages' var.  Pages that have failed or are unreachable are in 'failed'
 
     A page is considered 'unreachable' if any of the following conditions occur:
         - A HTTP Response that is NOT 200 is received
@@ -33,6 +33,13 @@ __author__ = 'DigitalFlame'
         debug= (Default:False; Shows Debug/Verbose messages on the console)
         forms= (Default:True; Searches and captures form paths/verbs/inputs with urls)
         timeout= (Default:6; The Cnnection and read timeouts used by Requests)
+        keywords= (Default:10; The amount of keywords to gather)
+        maxpages= (Default:0; The max amount of pages to gather (Login page does not count). 0 is no limit)
+        fullpath= (Default:False;) Changes the way that urls are stored in the JSON.  Defaults to false (no lead url)
+
+    Notes:
+        maxpages will only stop the scan if the count of scanned pages equals this number.
+        Pages with a smaller number will stop when they are done.  Form actions count aganist this value.
 
     Example with login:
         Scan and search a Orange HRM site with login. (Credentials in this example are admin/chiapet1)
@@ -68,8 +75,11 @@ __author__ = 'DigitalFlame'
 """
 
 
+import re
 import sys
+import DNS
 import json
+import random
 import requests
 import threading
 
@@ -86,6 +96,7 @@ class SSite:
     def __init__(self, url, size):
         self.url = url
         self.form = []
+        self.text = []
         self.size = size
     """
         json
@@ -95,6 +106,8 @@ class SSite:
         ret = dict()
         ret["url"] = self.url
         ret["size"] = self.size
+        if len(self.text) > 0:
+            ret["keywords"] = self.text
         if len(self.form) > 0:
             arr = []
             for fv in self.form:
@@ -133,20 +146,27 @@ class SForm:
 
 
 class SiteSearch(threading.Thread):
-    def __init__(self, siteurl, loginpage=None, username=None, usernamefm=None,
-                 password=None, passwordfm=None, debug=False, forms=True, timeout=6):
+    def __init__(self, siteurl, dns=None, loginpage=None, username=None, usernamefm=None,
+                 password=None, passwordfm=None, debug=False, forms=True, timeout=6, keywords=10,
+                 maxpages=0, fullpath=False):
         threading.Thread.__init__(self)
         if not siteurl.startswith("http"):
             raise Exception("Site URL is badly formatted!")
+        self.__dns = dns
         self.__search = []
         self.__failed = []
         self.pages = dict()
+        self.__ipaddr = None
         self.__debug = debug
         self.__forms = forms
+        self.__basehost = None
         self.baseurl = siteurl.rstrip("/")
         self.__sessiond = None
         self.__timeout = timeout
         self.__loginparams = None
+        self.__fullpath = fullpath
+        self.__keywords = keywords
+        self.__maxpages = maxpages
         self.__loginpage = loginpage
         self.__loginusernamefm = usernamefm
         self.__loginpasswordfm = passwordfm
@@ -156,6 +176,21 @@ class SiteSearch(threading.Thread):
             self.__loginparams = dict()
             self.__loginparams[usernamefm] = username
             self.__loginparams[passwordfm] = password
+        if self.__dns:
+            dnshn = self.baseurl
+            if "http" in dnshn:
+                dnshn = dnshn.replace("https:","").replace("http:","").replace("//", "")
+                if "/" in dnshn:
+                    dnsind = dnshn.find("/")
+                    dnshn = dnshn[:dnsind]
+            if self.__debug:
+                print("Search[%s] Using dns server '%s' to find ip address for '%s'" %
+                      (self.baseurl, self.__dns, dnshn))
+            self.__basehost = dnshn
+            self.__ipaddr = dnslookup(dnshn, self.__dns)
+            if self.__debug:
+                print("Search[%s] Found IP '%s' for '%s'" %
+                      (self.baseurl, self.__ipaddr, dnshn))
 
     """
         run
@@ -170,10 +205,13 @@ class SiteSearch(threading.Thread):
                 print("Search[%s] Login page present, attempting to login." % self.baseurl)
             self.__loginintopage()
         # Loop while we have things to search
-        while len(self.__search) > 0:
+        while len(self.__search) > 0 and (self.__maxpages == 0 or len(self.pages) < self.__maxpages):
+            # Too uch console spam
+            # if self.__debug:
+            #    print("Pages[%s] %d is max %d pages got!" %(self.baseurl, self.__maxpages, len(self.pages)))
             searchpage = self.__search.pop()
             if self.__debug:
-                print("Search[%s] Popped out page '%s'." % (self.baseurl, searchpage))
+                print("Search[%s] Popped out page '%s', '%d' left." % (self.baseurl, searchpage, len(self.__search)))
             # Check URL to make sure it is correct
             searchpage = self.__checkpageurl(searchpage)
             # If the URL has not been searched, poll the page
@@ -208,18 +246,44 @@ class SiteSearch(threading.Thread):
         if self.__debug:
             print("Search[%s] Trying login page '%s' with creds provided." % (self.baseurl, lurl))
         # Do login (or try to)
+        if self.__ipaddr:
+            lurl = lurl.replace(self.__basehost, self.__ipaddr)
         try:
-            loginpage = requests.post(lurl, data=self.__loginparams, timeout=self.__timeout)
+            loginpage = requests.post(lurl, data=self.__loginparams, timeout=self.__timeout, stream=True)
         # Timeout
         except requests.exceptions.ReadTimeout:
+            if self.__ipaddr:
+                lurl = lurl.replace(self.__ipaddr, self.__basehost)
             if self.__debug:
                 print("Search[%s] [ERROR] Page '%s' failed to download (time out)!." % (self.baseurl, lurl))
             self.__failed.append(lurl)
             return
         # Failure
         except requests.exceptions.ConnectionError:
+            if self.__ipaddr:
+                lurl = lurl.replace(self.__ipaddr, self.__basehost)
             if self.__debug:
                 print("Search[%s] [ERROR] Page '%s' failed to download (refused)!." % (self.baseurl, lurl))
+            self.__failed.append(lurl)
+            return
+        if self.__ipaddr:
+            lurl = lurl.replace(self.__ipaddr, self.__basehost)
+        # No Data?
+        if not loginpage:
+            if self.__debug:
+                print("Search[%s] [ERROR] Page '%s' failed to download!." % (self.baseurl, lurl))
+            self.__failed.append(lurl)
+            return
+        # Check for error codes
+        if loginpage.status_code != 200:
+            if self.__debug:
+                print("Search[%s] [ERROR] Page '%s' failed by status code." % (self.baseurl, lurl))
+            self.__failed.append(lurl)
+            return
+        # Text only
+        if not ("text" in loginpage.headers['content-type']):
+            if self.__debug:
+                print("Search[%s] [ERROR] Page '%s' is not a text file." % (self.baseurl, lurl))
             self.__failed.append(lurl)
             return
         # Did teh request work?
@@ -229,29 +293,31 @@ class SiteSearch(threading.Thread):
                 if "Cookie" in loginpage.request.headers:
                     cookie = loginpage.request.headers["Cookie"]
                 print("Search[%s] Login went through, cookie '%s' saved." % (self.baseurl, cookie))
-            # Set cookie for subsequent page requests
-            self.__sessiond = loginpage.request.headers
             # Did we get a 200?
             if loginpage.status_code != 200:
                 return
             # We only want text based pages
             if not ("text" in loginpage.headers['content-type']):
                 return
+            # Set cookie for subsequent page requests
+            self.__sessiond = loginpage.request.headers
             # create page object (check if form one exists first)
             pageobject = None
             if self.__debug:
                 print("Search[%s] Page '%s' passed.." % (self.baseurl, lurl))
             # Does page exist?
             if lurl in self.pages:
-                self.pages[lurl].size = len(loginpage.text)
+                self.pages[lurl].size = len(loginpage.content)
                 # Update the current one if so
                 pageobject = self.pages[lurl]
             else:
                 # If not create a new reference
-                pageobject = SSite(lurl, len(loginpage.text))
+                pageobject = SSite(lurl, len(loginpage.content))
+                if not self.__fullpath:
+                    pageobject.url = lurl.replace(self.baseurl, "")
                 self.pages[lurl] = pageobject
             # Create bs4 reference to look to objects
-            bs4pagedata = BeautifulSoup(loginpage.text)
+            bs4pagedata = BeautifulSoup(loginpage.content)
             # Send to be scanned
             self.__scanpage(bs4pagedata, pageobject)
             if self.__forms:
@@ -273,21 +339,29 @@ class SiteSearch(threading.Thread):
                 print("Search[%s] [ERROR] Page '%s' failed scope test." % (self.baseurl, geturl))
             self.__failed.append(geturl)
             return
+        if self.__ipaddr:
+            geturl = geturl.replace(self.__basehost, self.__ipaddr)
         # Try to get the page (using login cookie also)
         try:
-            pagedata = requests.get(geturl, headers=self.__sessiond, timeout=self.__timeout)
+            pagedata = requests.get(geturl, headers=self.__sessiond, timeout=self.__timeout, stream=True)
         # Timeout
         except requests.exceptions.ReadTimeout:
+            if self.__ipaddr:
+                geturl = geturl.replace(self.__ipaddr, self.__basehost)
             if self.__debug:
                 print("Search[%s] [ERROR] Page '%s' failed to download (time out)!." % (self.baseurl, geturl))
             self.__failed.append(geturl)
             return
         # Refused
         except requests.exceptions.ConnectionError:
+            if self.__ipaddr:
+                geturl = geturl.replace(self.__ipaddr, self.__basehost)
             if self.__debug:
                 print("Search[%s] [ERROR] Page '%s' failed to download (refused)!." % (self.baseurl, geturl))
             self.__failed.append(geturl)
             return
+        if self.__ipaddr:
+            geturl = geturl.replace(self.__ipaddr, self.__basehost)
         # No Data?
         if not pagedata:
             if self.__debug:
@@ -313,14 +387,16 @@ class SiteSearch(threading.Thread):
         # Check if we have a page object
         if geturl in self.pages:
             # If so update the current one
-            self.pages[geturl].size = len(pagedata.text)
+            self.pages[geturl].size = len(pagedata.content)
             pageobject = self.pages[geturl]
         else:
             # If not create one
-            pageobject = SSite(geturl, len(pagedata.text))
+            pageobject = SSite(geturl, len(pagedata.content))
+            if not self.__fullpath:
+                pageobject.url = geturl.replace(self.baseurl, "")
             self.pages[geturl] = pageobject
         # convert to bs4 for searching
-        bs4pagedata = BeautifulSoup(pagedata.text)
+        bs4pagedata = BeautifulSoup(pagedata.content)
         # Scan page for links
         self.__scanpage(bs4pagedata, pageobject)
         if self.__forms:
@@ -362,7 +438,7 @@ class SiteSearch(threading.Thread):
         # Out of range?
         if (url.startswith("http") and (not url.startswith(self.baseurl))) or url.startswith("mailto:"):
             return None
-        rurl = url
+        rurl = url.replace("#", "")
         # See if this is absolute
         if not url.startswith(self.baseurl):
             # Sanity check: No starting '/'
@@ -373,7 +449,7 @@ class SiteSearch(threading.Thread):
         return rurl
     """
         scanpage
-        Checks page for links and adds them to the search qeue
+        Checks page for links and adds them to the search qeue, also checks for text keywords
     """
     def __scanpage(self, page, pageobj):
         # check for a hrefs
@@ -384,6 +460,8 @@ class SiteSearch(threading.Thread):
                 # Get raw url
                 href = link.get("href")
                 if href:
+                    if self.__ipaddr:
+                        href = href.replace(self.__ipaddr, self.__basehost)
                     # Check url format
                     href = self.__checkpageurl(href)
                     if not href:
@@ -395,6 +473,33 @@ class SiteSearch(threading.Thread):
                             if self.__debug:
                                 print("Search[%s] Link '%s' added!." % (self.baseurl, href))
                             self.__search.append(href)
+        # Check for divs
+        # Lets keep track of the text count to only grab the max
+        divcount = 0
+        # Look at hs only (Thanks Gionne)
+        for type in ["h1", "h2", "h3"]:
+            dlist = page.find_all(type)
+            if dlist:
+                # Do we got stuff?
+                for divs in dlist:
+                    # Did we hit our limit?
+                    if divcount >= self.__keywords:
+                        break
+                    # Get words, split by space
+                    wrdlst = divs.text.split(" ")
+                    for word in wrdlst:
+                        # Did we hit our limt?
+                        if divcount >= self.__keywords:
+                            break
+                        # Use random to determine words to pick
+                        if divcount < self.__keywords and random.randrange(0, 10 * len(wrdlst)):
+                            # Remove leading and trailing soaces
+                            word = word.strip()
+                            # Only letters and numbers (no special chars)
+                            if re.match("^[A-Za-z0-9_-]*$", word) and len(word) > 0:
+                                divcount += 1
+                                # Append our count and add to array
+                                pageobj.text.append(word)
     """
         checkpage
         Checks page for form values and inputs
@@ -419,6 +524,8 @@ class SiteSearch(threading.Thread):
                 # Get the action or pointing url
                 act = form.get("action")
                 if act:
+                    if self.__ipaddr:
+                        act = act.replace(self.__ipaddr, self.__basehost)
                     # Does the action exist? (Might be a dynamic action)
                     act = self.__checkpageurl(act)
                     if act:
@@ -434,6 +541,8 @@ class SiteSearch(threading.Thread):
                         else:
                             # Target page has not been scanned yet, add a hollow reference for now (0 len)
                             pageobjn = SSite(act, 0)
+                            if not self.__fullpath:
+                                pageobj.url = act.replace(self.baseurl, "")
                             pageobjn.form.append(formv)
                             self.pages[act] = pageobj
 
@@ -444,8 +553,9 @@ class SiteSearch(threading.Thread):
 
 
 class JSONLoader(threading.Thread):
-    def __init__(self, index, host, serviceval, jsonval):
+    def __init__(self, index, host, serviceval, jsonval, dns):
         threading.Thread.__init__(self)
+        self.__dns = dns
         self.index = index
         self.__host = host
         self.result = None
@@ -458,20 +568,22 @@ class JSONLoader(threading.Thread):
     def run(self):
         # Prep values from json
         uname = None
-        unamefm = None
         upass = None
+        unamefm = None
         upassfm = None
         uloginpage = None
-        if "username" in self.__val:
-            uname = self.__val["username"]
-        if "password" in self.__val:
-            upass = self.__val["password"]
-        if "usernameform" in self.__val:
-            unamefm = self.__val["usernameform"]
-        if "passwordform" in self.__val:
-            upassfm = self.__val["passwordform"]
-        if "loginpage" in self.__val:
-            uloginpage = self.__val["loginpage"]
+        if self.__svcval:
+            if "username" in self.__svcval:
+                uname = self.__svcval["username"]
+            if "password" in self.__svcval:
+                upass = self.__svcval["password"]
+        if self.__val:
+            if "usernameform" in self.__val:
+                unamefm = self.__val["usernameform"]
+            if "passwordform" in self.__val:
+                upassfm = self.__val["passwordform"]
+            if "loginpage" in self.__val:
+                uloginpage = self.__val["loginpage"]
         # Check for HTTP or HTTPS
         if not self.__host.startswith("http"):
             if self.__svcval["port"] == "80":
@@ -479,20 +591,51 @@ class JSONLoader(threading.Thread):
             if self.__svcval["port"] == "443":
                 self.__host = ("https://%s" % self.__host)
         # Init search
-        ssearch = SiteSearch(self.__host, uloginpage, uname, unamefm, upass, upassfm, forms=False, debug=False)
+        ssearch = SiteSearch(self.__host, self.__dns, uloginpage, uname, unamefm, upass, upassfm, forms=False,
+                             debug=False, keywords=6, maxpages=10)
         ssearch.start()
         # Wit for completion
         while ssearch.isAlive():
             var = None
         # Post results
+        print("Site '%s' Finished! %d results returned." % (self.__host, len(ssearch.pages)))
         self.result = ssearch.json()
 
+
+"""
+    dnslookup
+    Tries to use specified server to lookup a hostname to an IP
+"""
+def dnslookup(name, dns):
+    # Do we have both
+    if name and dns:
+        try:
+            # Use PyDNS to lookup ip addr
+            dnsr = DNS.DnsRequest(name, qtype="A", server=[dns], protocol='udp', timeout=30)
+            # Process our request
+            request = dnsr.req()
+            # Go through the responses
+            for dnsans in request.answers:
+                if dnsans["data"]:
+                    # Return our IP addr
+                    return dnsans["data"]
+        except:
+            return None
+    return None
+"""
+    arethreaddone
+    Returns true if all the threas are maked as complete
+"""
+def arethresddone(threads):
+    if threads:
+        for thread in threads:
+            if thread.isAlive():
+                return False
+    return True
 """
     loadfromjson
-    Loads a json configuration file and scans services listed and then rewrites the file to include the results
+    Loads a CTF file, backs it up and adds the scanned entries and saves it back into the supplied json
 """
-
-
 def loadfromjson(jsonpath):
     print("Loading json file '%s'" % jsonpath)
     # Open the file
@@ -513,6 +656,7 @@ def loadfromjson(jsonpath):
     searchlist = []
     # Get services lists from hosts
     for blueteam in jsondata["blueteams"]:
+        dnss = blueteam["dns"]
         for host in blueteam["hosts"]:
             # Need hostname to search
             hostname = host["hostname"]
@@ -526,15 +670,17 @@ def loadfromjson(jsonpath):
                     content = None
                     if "content" in service:
                         content = service["content"]
-                    thread = JSONLoader(index, hostname, service, content)
+                    thread = JSONLoader(index, hostname, service, content, dnss)
                     thread.start()
                     searchlist.append(thread)
                     index += 1
-    wait = True
+    #wait = True
     # Wait till done
-    while wait:
-        for thread in searchlist:
-            wait = thread.isAlive()
+    #while wait:
+    #    for thread in searchlist:
+    #        wait = thread.isAlive()
+    while not arethresddone(searchlist):
+        var = None
     # Once complete, re add the data to the json
     print("Search done, saving results")
     for blueteam in jsondata["blueteams"]:
@@ -548,6 +694,8 @@ def loadfromjson(jsonpath):
                             service["content"] = thread.result
                             service.pop("index", None)
                             break
+                    if "uri" in service:
+                        service.pop("uri", None)
     print("Writing data to %s" % jsonpath)
     # Save data
     jsonout = open(jsonpath, "w")
@@ -563,15 +711,18 @@ if __name__ == "__main__":
                              debug=True, forms=False)
 
     Simple Machines Form
-    aaa = Search("", loginpage="index.php?action=login2", username="admin", usernamefm="user", \
+    aaa = SiteSearch("", loginpage="index.php?action=login2", username="admin", usernamefm="user", \
                          password="241ccebca76e8ff221f9b5f15353cdb1af599667", passwordfm="hash_password", \
                          debug=True, forms=False)
 
+    Google Chrome
+    aaa = SiteSearch("http://cyberwildcats.net/ctf/", dns="8.8.8.8", debug=True, maxpages=0)
     aaa.start()
     while aaa.isAlive():
         None
     print("Data: %s" % json.dumps(aaa.json()))
     """
+
     if len(sys.argv) > 1:
         loadfromjson(sys.argv[1])
         sys.exit(0)
