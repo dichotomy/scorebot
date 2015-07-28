@@ -124,9 +124,7 @@ class Service(threading.Thread):
                     self.logger.err("there was a problem...\n")
                 penalty = self.value * 1
                 traceback.print_exc(file=self.logger)
-<<<<<<< HEAD
                 self.set_score(this_round, penalty)
-=======
             try:
                 pageindex = random.randint(0, len(self.pages)-1)
                 current_page = self.pages[pageindex]
@@ -167,9 +165,8 @@ class Service(threading.Thread):
             except Exception as e:
                 if globalvars.verbose:
                     self.logger.err("there was a problem...{}\n".format(e))
-                myscore = self.value * 0.25
+                penalty = self.value * 0.25
                 traceback.print_exc(file=self.logger)
->>>>>>> gionne
             ############################################
             """
             try:
