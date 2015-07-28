@@ -1,0 +1,8 @@
+tables:
+ * blueteams
+ * hosts
+ * services
+ * flags
+ * redcell
+ * scores?
+ * injects?

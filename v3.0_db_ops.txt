@@ -1,0 +1,46 @@
+GC  Add Blueteam
+EG  Get Blueteam
+EA  Add Player to Blueteam
+EA  Add Player to Redteam
+EA  Remove Player from Blueteam
+EA  Remove Player from Redteam
+GC  Add Game
+EG  Get Game
+GC  Add Player
+EG  Get Player
+GC  Update Player
+EA  Add Host (to Game)
+EG  Get Host
+GC  Set HostStatus
+EG  Get HostStatus
+EA  Add Service (to Host)
+EG  Get Service
+GC  Set ServiceStatus
+EG  Get ServiceStatus
+EA  Add ServiceCredential (to Service)
+EG  Get ServiceCredential
+EA  Add Content (to Service)
+EG  Get Content
+EA  Add ContentCredential (to Content)
+EG  Get ContentCredential
+EA  Add Flag (to Game)
+EG  Get Flag
+GC  Set Flag Stolen
+EG  Get Flags Stolen
+GC  Set Flag Found
+EG  Get Flags Found
+EA  Add Ticket (to Game)
+EG  Get Ticket
+GC  Set Ticket Submitted
+EG  Get Tckets Submitted
+GC  Set Ticket Rejected
+EG  Get Tickets Rejected
+GC  Set ContentStatus
+EG  Get ContentStatus
+GC  Stole ServiceCredential
+GC  Stole ContentCredential
+GC  Set Host Compromised
+GC  Set Host Restored
+EG  Get Hosts Compromised
+GC  Set Scores (round?)
+EG  Get Scores

@@ -1,0 +1,10 @@
+# TEAMS NEED TO BE HELPDESK
+# INSERT COMMAND WORKS...
+INSERT INTO tickets (subject, issue, preview, created_uid, created_date, created_time, location_id, state_id, eu_uid, category_id) VALUES ("Next Ticket", "Another ticket", "Another ticket", 1, 1406955610, 1406983159, 1, 1, 2, 2);
+
+insert into tickets ( ) values( );
+
+| id | subject    | issue      | preview    | resolution | created_uid | created_date | created_time | category_id | location_id | assigned_gid | assigned_uid | assigned_date | assigned_time | state_id | resolved_uid | resolved_date | resolved_time | eu_uid |
++----+------------+------------+------------+------------+-------------+--------------+--------------+-------------+-------------+--------------+--------------+---------------+---------------+----------+--------------+---------------+---------------+--------+
+|  1 | New ticket | New ticket | New ticket |            |           1 |   1406955600 |   1406983159 |           2 |           1 |            0 |            0 |             0 |             0 |        1 |            0 |             0 |             0 |      2 |
+
