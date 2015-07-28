@@ -29,6 +29,8 @@ import socket
 import traceback
 import threading
 import globalvars
+import random
+import requests
 from Logger import Logger
 from Scores import Scores
 
@@ -66,7 +68,8 @@ class Service(threading.Thread):
         self.functional = False
         self.content = content
         if self.content:
-            self.content_re = re.compile(str(self.content))
+            if self.port != 80:
+                self.content_re = re.compile(str(self.content))
         else:
             self.content_re = None
         if password:
@@ -77,6 +80,11 @@ class Service(threading.Thread):
             self.username = username
         else:
             self.username = "blueteam"
+        if isinstance(content, dict):
+            self.loginpage = content.get("loginpage")
+            self.user_param = content.get("user_param")
+            self.pwd_param = content.get("pwd_param")
+            self.pages = content.get("pages")
         self.mail_re = re.compile("220")
         self.msg_queue = queue
 
@@ -110,13 +118,56 @@ class Service(threading.Thread):
                 mysock.settimeout(timeout)
                 if globalvars.verbose:
                     self.logger.err("connected!\n")
+                    self.logger.err("good\n")
             except:
                 if globalvars.verbose:
                     self.logger.err("there was a problem...\n")
                 myscore = self.value * 1
                 traceback.print_exc(file=self.logger)
-                self.set_score(this_round, myscore)
+            try:
+                pageindex = random.randint(0, len(self.pages)-1)
+                current_page = self.pages[pageindex]
+                if globalvars.verbose:
+                    self.logger.err("\t\t\tTrying to fetch %s..." % self.uri)
+                web_session = requests.Session()
+                if self.loginpage:
+                    payload = {
+                        self.user_param: self.username,
+                        self.pwd_param: self.password
+                    }
+                    web_session.post(
+                        "http://{}{}".format(ipaddress, self.loginpage),
+                        data=payload, timeout=timeout
+                    )
+                url = "http://{}{}".format(ipaddress, current_page.get("url"))
+                result = web_session.get(url, timeout=timeout)
+                try:
+                    content_length = int(result.headers.get('content_length'))
+                except:
+                    content_length = len(result.text)
+                content_min = current_page.get("size") - 100
+                content_max = current_page.get("size") + 100
+                if content_length >= content_min or content_length <= content_max:
+                    if globalvars.verbose:
+                        self.logger.err("content length matched!\n")
+                        self.logger.err("good\n")
+                else:
+                    self.logger.err("Content-length: {} did not current_page size: {}.\n".format(content_length, current_page.get("size")))
+                    raise Exception('Content-length did not match size')
+                if "keywords" in current_page.keys():
+                    for keyword in current_page.get("keywords"):
+                        if keyword not in result.text:
+                            raise Exception(
+                                'Keywords {} not matched'.format(keyword)
+                            )
+                self.set_score(this_round, self.value * 0)
+            except Exception as e:
+                if globalvars.verbose:
+                    self.logger.err("there was a problem...{}\n".format(e))
+                myscore = self.value * 0.25
+                traceback.print_exc(file=self.logger)
             ############################################
+            """
             try:
                 if globalvars.verbose:
                     self.logger.err("\t\t\tTrying to fetch %s..." % self.uri)
@@ -178,6 +229,7 @@ class Service(threading.Thread):
                 if globalvars.verbose:
                     self.logger.err("bad: %s\n" % data)
                 self.set_score(this_round, self.value * .25)
+        """
         elif tcp_21_re.match(service_name):
             ############################################
             try:
