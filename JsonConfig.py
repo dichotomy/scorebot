@@ -194,7 +194,7 @@ class JsonConfig(object):
         if "category" in inject:
             category = inject["category"]
         else:
-            raise Exception("Inject without category: %s" % join(inject.values()))
+            raise Exception("Inject without category: %s" % "".join(str(inject.values())))
         if "inject_duration" in inject:
             inject_duration = inject["inject_duration"]
         else:

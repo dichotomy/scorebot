@@ -9,7 +9,7 @@ function sleep(millis, callback) {
 }
 
 function getMovie() {
-    $.getJSON( "http://www.prosversusjoes.net:8090/movie", function(data) {
+    $.getJSON( "http://localhost:8090/movie", function(data) {
         $.each( data, function(type, val) {
             if (type == "movie" ) {
                 var name = val["name"];
@@ -72,7 +72,7 @@ function setCredits() {
 }
 
 function getScores() {
-    $.getJSON( "http://www.prosversusjoes.net:8090/scores2", function(data) {
+    $.getJSON( "http://localhost:8090/scores2", function(data) {
         $(".score").remove();
         $(".score_type").remove();
         $(".scoreindent").remove();
@@ -262,7 +262,7 @@ function getScores() {
 }
 
 function getTickets() {
-    $.getJSON( "http://www.prosversusjoes.net:8090/tickets", function(data) {
+    $.getJSON( "http://localhost:8090/tickets", function(data) {
         $(".ticket").remove();
         $(".ticket_type").remove();
         $(".ticketindent").remove();
@@ -358,7 +358,7 @@ function getTickets() {
 }
 
 function getRedcell() {
-    $.getJSON( "http://www.prosversusjoes.net:8090/redcell", function(data) {
+    $.getJSON( "http://localhost:8090/redcell", function(data) {
         $(".redcell").remove();
         $(".redflag").remove();
         $(".redskull").remove();
@@ -410,7 +410,7 @@ function getRedcell() {
 }
 
 function getFlags() {
-    $.getJSON( "http://www.prosversusjoes.net:8090/flags2", function(data) {
+    $.getJSON( "http://localhost:8090/flags2", function(data) {
         $(".flag").remove();
         $(".flag_type").remove();
         $(".flagindent").remove();
@@ -510,7 +510,7 @@ function getFlags() {
 }
 
 function getHealth(){
-    $.getJSON( "http://www.prosversusjoes.net:8090/health", function(data) {
+    $.getJSON( "http://localhost:8090/health", function(data) {
         $.each ( data, function(team, hosts) {
             host_scores= {}
             servicelist = []
@@ -611,7 +611,7 @@ function getHealth(){
 }
 
 function getBeacons() {
-    $.getJSON("http://www.prosversusjoes.net:8090/beacons", function(data) {
+    $.getJSON("http://localhost:8090/beacons", function(data) {
         $(".healthredskull").remove();
         $(".beacon_label").remove();
         $(".beacon_block").remove();
@@ -644,7 +644,7 @@ function getBeacons() {
 }
 
 function getMarquee() {
-    $.getJSON( "http://www.prosversusjoes.net:8090/marquee", function(data) {
+    $.getJSON( "http://localhost:8090/marquee", function(data) {
         $.each (data, function(key, val) {
             if (key == "marquee") {
                 $( ".marquee" ).html(val);
