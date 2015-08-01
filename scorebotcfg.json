@@ -592,110 +592,117 @@
               }
         }
     }],
-    "injects": [
-        {
-              "inject_name": "Change Record",
-              "inject_value": 5000,
-              "inject_duration": 180,
-              "inject_subject":  "Change Record",
-              "set_ticket": "True",
-              "inject_body":
-                  [
-                      "Create a spreadsheet of all the changes your team makes. You must email these logs at the time specified"
-                  ]
-        },
-        {
-              "inject_name": "New Users",
-              "inject_value": 5000,
-              "inject_duration": 60,
-              "inject_subject":  "Change Record",
-              "set_ticket": "True",
-              "inject_body":
-                  [
-                      " Please add 5 users in your Active Directory server.  The users must have email accounts on your mail server.  The username/passwords are:",
-                      "     a. Edgar Smythe/Lucas1834",
-                      "     b. Judy Thompson/Besson2012",
-                      "     c. Roland Henderson/Lean3258",
-                      "     d. Mary Campo/Geffen2834",
-                      "     e. Jack Crow/Lasseter1999"
-                  ]
-        },
-        {
-              "inject_name": "Audit Deliverable",
-              "inject_value": 5000,
-              "inject_duration": 30,
-              "inject_subject":  "Audit Deliverable",
-              "set_ticket": "True",
-              "inject_body":
-                  [
-                      "Managament has been asked by Audit to provide a complete inventory of all systems presently active in the company's networks, both internal and external.",
-                      "",
-                      "IT teams are to take a total assessment of the systems they are responsible for and reply to this email with a list.  Present the data in table format.  For each system, the following pieces of information are equired:",
-                      "    * Hostname",
-                      "    * IP address",
-                      "    * Operating System",
-                      "    * Running Services",
-                      "    * Internet-facing vs. Internal",
-                      "",
-                      "Employees should be aware that audit will be verifying our presented inventories with independent scans, so it is imperetive that the list be accurate and complete.  Failure to do so will result in an audit finding for the team."
-                  ]
-        },
-        {
-              "inject_name": "DNS update",
-              "inject_value": 5000,
-              "inject_duration": 60,
-              "inject_subject":  "DNS Update",
-              "set_ticket": "True",
-              "inject_body":
-                  [
-                      " Add the following entries to the DNS server",
-                      "",
-                      "    www2  (last octet is .99)",
-                      "    mail2 (last octet is .108)",
-                      "    db     (last octet is .66)",
-                      "    db2    (last octet is .88)"
-                  ]
-        },
-        {
-              "inject_name": "Slow Connecitons",
-              "inject_value": 5000,
-              "inject_duration": 180,
-              "inject_subject":  "Slow Connections",
-              "set_ticket": "True",
-              "inject_body":
-                  [
-                      "The helpdesk is receiving calls that our services are slow.  Please investigate and remedy the solution.",
-                      "",
-                      "Reply with a diagnosis of the issue and what was done to remedy it.  Include the time the fix was implemented."
-                  ]
-        },
-        {
-              "inject_name": "Inventory Report",
-              "inject_value": 5000,
-              "inject_duration": 60,
-              "inject_subject":  "Inventory Report",
-              "set_ticket": "True",
-               "inject_body":
-                  [
-                      "Management would like a downtime report.  Please give a full report with the following fields for each affected system and service:",
-                      "",
-                      "    System Name",
-                      "    Services Down",
-                      "    Outage Duration",
-                      "    Expected Recovery Time",
-                      "    Reason for the outage"
-                  ]
-        },
-        {
-              "inject_name": "Fix Tomcat",
-              "inject_value": 5000,
-              "inject_duration": 60,
-              "inject_subject":  "Fix Tomcat",
-              "set_ticket": "True",
-              "inject_body":
-                  [
-                      "It has come to Management's attention that the Tomcat instances on win2k8-1 and win2k8-2 are not functioning.  Please remedy this immediately."
-                  ]
-        }
-    ]
+            "injects": [
+                {
+                      "inject_name": "Change Record",
+                      "inject_value": 5000,
+                      "inject_duration": 180,
+                      "category": "change",
+                      "inject_subject":  "Change Record",
+                      "set_ticket": "True",
+                      "inject_body":
+                          [
+                              "Create a spreadsheet of all the changes your team makes. You must email these logs at the time specified"
+                          ]
+                },
+                {
+                      "inject_name": "New Users",
+                      "inject_value": 5000,
+                      "inject_duration": 60,
+                      "category": "change",
+                      "inject_subject":  "Change Record",
+                      "set_ticket": "True",
+                      "inject_body":
+                          [
+                              " Please add 5 users in your Active Directory server.  The users must have email accounts on your mail server.  The username/passwords are:",
+                              "     a. Edgar Smythe/Lucas1834",
+                              "     b. Judy Thompson/Besson2012",
+                              "     c. Roland Henderson/Lean3258",
+                              "     d. Mary Campo/Geffen2834",
+                              "     e. Jack Crow/Lasseter1999"
+                          ]
+                },
+                {
+                      "inject_name": "Audit Deliverable",
+                      "inject_value": 5000,
+                      "inject_duration": 30,
+                      "category": "outage",
+                      "inject_subject":  "Audit Deliverable",
+                      "set_ticket": "True",
+                      "inject_body":
+                          [
+                              "Managament has been asked by Audit to provide a complete inventory of all systems presently active in the company's networks, both internal and external.",
+                              "",
+                              "IT teams are to take a total assessment of the systems they are responsible for and reply to this email with a list.  Present the data in table format.  For each system, the following pieces of information are equired:",
+                              "    * Hostname",
+                              "    * IP address",
+                              "    * Operating System",
+                              "    * Running Services",
+                              "    * Internet-facing vs. Internal",
+                              "",
+                              "Employees should be aware that audit will be verifying our presented inventories with independent scans, so it is imperetive that the list be accurate and complete.  Failure to do so will result in an audit finding for the team."
+                          ]
+                },
+                {
+                      "inject_name": "DNS update",
+                      "inject_value": 5000,
+                      "inject_duration": 60,
+                      "category": "change",
+                      "inject_subject":  "DNS Update",
+                      "set_ticket": "True",
+                      "inject_body":
+                          [
+                              " Add the following entries to the DNS server",
+                              "",
+                              "    www2  (last octet is .99)",
+                              "    mail2 (last octet is .108)",
+                              "    db     (last octet is .66)",
+                              "    db2    (last octet is .88)"
+                          ]
+                },
+                {
+                      "inject_name": "Slow Connecitons",
+                      "inject_value": 5000,
+                      "inject_duration": 180,
+                      "category": "outage",
+                      "inject_subject":  "Slow Connections",
+                      "set_ticket": "True",
+                      "inject_body":
+                          [
+                              "The helpdesk is receiving calls that our services are slow.  Please investigate and remedy the solution.",
+                              "",
+                              "Reply with a diagnosis of the issue and what was done to remedy it.  Include the time the fix was implemented."
+                          ]
+                },
+                {
+                      "inject_name": "Inventory Report",
+                      "inject_value": 5000,
+                      "inject_duration": 60,
+                      "category": "deliverable",
+                      "inject_subject":  "Inventory Report",
+                      "set_ticket": "True",
+                       "inject_body":
+                          [
+                              "Management would like a downtime report.  Please give a full report with the following fields for each affected system and service:",
+                              "",
+                              "    System Name",
+                              "    Services Down",
+                              "    Outage Duration",
+                              "    Expected Recovery Time",
+                              "    Reason for the outage"
+                          ]
+                },
+                {
+                      "inject_name": "Fix Tomcat",
+                      "inject_value": 5000,
+                      "inject_duration": 60,
+                      "category": "deliverable",
+                      "inject_subject":  "Fix Tomcat",
+                      "set_ticket": "True",
+                      "inject_body":
+                          [
+                              "It has come to Management's attention that the Tomcat instances on win2k8-1 and win2k8-2 are not functioning.  Please remedy this immediately."
+                          ]
+                }
+            ]
 }
