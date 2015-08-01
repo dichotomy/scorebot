@@ -8,6 +8,24 @@ function sleep(millis, callback) {
         , millis);
 }
 
+function trunkname(name) {
+    var i = 0;
+    shortname = "";
+    while (i < name.length) {
+        character = name.charAt(i);
+        if (!isNaN(character*1)) {
+            1;
+        } else {
+            if (character == character.toUpperCase()){
+                shortname += character
+            }
+        }
+        i += 1;
+    }
+    return shortname
+
+}
+
 function getMovie() {
     $.getJSON( "http://www.prosversusjoes.net:8090/movie", function(data) {
         $.each( data, function(type, val) {
@@ -41,18 +59,65 @@ function setCredits() {
     $(".credit").remove();
     $(".creditclear").remove();
     var d = new Date();
-    var n = d.getTime()
-    var a = n % 8;
-    if (a > 4) {
+    var n = d.getTime();
+    var ns = n.toString();
+    var b = ns.charAt(ns.length-1);
+    var a = +b
+    if ((a == 1) || (a == 2)) {
         var h5_credit = $("<h5>", {
             "class": "credit",
-            html: "The Pros V Joes build and support crew:  Gi0cann, PhobosJ, h4zm4t, Sail0rl00n"
+            html: "The Pros V Joes 2015 build and support crew:  Gi0cann, idigitalflame, "
         });
         h5_credit.appendTo("#creditslist");
+    } else if ((a == 3) || (a == 4 )) {
+        var h5_credit = $("<h5>", {
+            "class": "credit",
+            html: "Thanks to Maven Security for their contributions!"
+        });
+        var img_credit = $("<img>", {
+            "class": "credit",
+            "src": "/images/logo-no-binary.png"
+        });
+        var div_credit = $("<div>", {
+            "class": "credit",
+            html: h5_credit
+        });
+        img_credit.appendTo(div_credit);
+        div_credit.appendTo("#creditslist");
+    } else if ((a == 5) || (a == 6))  {
+        var h5_credit = $("<h5>", {
+            "class": "credit",
+            html: "Special thanks to Bijoti for the use of their monitoring equipment and software"
+        });
+        var img_credit = $("<img>", {
+            "class": "credit",
+            "src": "/images/data-marshal-transparent.jpg"
+        });
+        var div_credit = $("<div>", {
+            "class": "credit",
+            html: h5_credit
+        });
+        img_credit.appendTo(div_credit);
+        div_credit.appendTo("#creditslist");
+    } else if ((a == 7) || (a == 8))  {
+        var h5_credit = $("<h5>", {
+            "class": "credit",
+            html: "Special thanks to Gi0cann for his many years of support!"
+        });
+        var img_credit = $("<img>", {
+            "class": "credit",
+            "src": "/images/gi0cann.jpg"
+        });
+        var div_credit = $("<div>", {
+            "class": "credit",
+            html: h5_credit
+        });
+        img_credit.appendTo(div_credit);
+        div_credit.appendTo("#creditslist");
     } else {
         var h5_credit = $("<h5>", {
             "class": "credit",
-            html: "CTF equipment provided by:"
+            html: "CTF equipment provided by Wilmington University"
         });
         var img_credit = $("<img>", {
             "class": "credit",
@@ -71,6 +136,31 @@ function setCredits() {
     div_credit_clear.appendTo("#creditslist");
 }
 
+function getTeamNames() {
+    $.getJSON( "http://www.prosversusjoes.net:8090/teamnames", function(data) {
+        $(".teamname").remove();
+        $(".teamindent").remove();
+        $.each( data["teamnames"], function(index, name) {
+            var shortname = trunkname(name);
+            var h5_team = $("<h5>", {
+                "class": "teamname",
+                html: name + " (" + shortname + ")"
+            });
+            var div_team = $("<div>", {
+                "class": "teamname",
+                html: h5_team
+            });
+            div_team.appendTo("#teamlist");
+            var div_indent = $("<div>", {
+                "class": "teamindent",
+                html: "."
+            });
+            div_indent.appendTo("#teamlist")
+        });
+    });
+}
+
+
 function getScores() {
     $.getJSON( "http://www.prosversusjoes.net:8090/scores2", function(data) {
         $(".score").remove();
@@ -80,7 +170,7 @@ function getScores() {
         $.each( data, function (team, scores) {
             var h5_team = $("<h5>", {
                 "class": "score",
-                html: team
+                html: trunkname(team)
             });
             var div_team = $( "<div>", {
                 "class": "score",
@@ -270,7 +360,7 @@ function getTickets() {
         $.each( data, function(team, tickets) {
             var h5_team = $("<h5>", {
                 "class": "ticket",
-                html: team
+                html: trunkname(team)
             });
             var div_team = $( "<div>", {
                 "class": "ticket",
@@ -420,7 +510,7 @@ function getFlags() {
                 $.each( flags, function(team, flag_types) {
                         var h5_team = $("<h5>", {
                             "class": "flag",
-                            html: team
+                            html: trunkname(team)
                         });
                         var div_team = $( "<div>", {
                             "class": "flag",
@@ -529,7 +619,7 @@ function getHealth(){
             div_indent.appendTo(team_id);
             var h5_team = $( "<h5>", {
                 "class": "health",
-                html: team
+                html: trunkname(team)
             });
             var div_team = $( "<div>", {
                 "class": "health_label",
@@ -653,6 +743,7 @@ function getMarquee() {
     });
 }
 
+getTeamNames();
 getScores();
 getHealth();
 getMarquee();
@@ -670,8 +761,9 @@ setInterval(function() {
     getBeacons();
     getTickets();
     getRedcell();
+    getTeamNames();
 }, 10000);
 
 setInterval(function() {
     setCredits();
-}, 4000);
+}, 5000);

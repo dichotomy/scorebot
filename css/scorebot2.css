@@ -111,7 +111,7 @@ h1.marquee {
     float: right;
 }
 
-.flag,
+
 .health{
     margin-left: auto;
     margin-right: auto;
@@ -176,6 +176,32 @@ h1.marquee {
     float: left;
 }
 
+.statusbar {
+    margin-left: auto;
+    margin-right: auto;
+    width: 96%;
+    height: 25%;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+.teamlist {
+    margin-left: auto;
+    margin-right: auto;
+    width: 75%;
+    height: 25%;
+    float: left;
+}
+
+.gamestatus{
+    margin-left: auto;
+    margin-right: auto;
+    width: 10%;
+    height: 25%;
+    float: left;
+}
+
 .flag_block,
 .ticket_block,
 .service_block {
@@ -201,6 +227,9 @@ h2.score,
 h3.score,
 h4.score,
 h5.score,
+h5.teamlist_label,
+h5.teamname,
+h5.gamestatus_label,
 h1.ticket,
 h2.ticket,
 h3.ticket,
@@ -304,9 +333,31 @@ div.health_header {
     height: 20px;
 }
 
-.score,
+.teamname_label {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100px;
+    float: left;
+    height: 20px;
+}
+
+.teamname {
+    margin-left: auto;
+    margin-right: auto;
+    float: left;
+    height: 20px;
+}
+
 .ticket,
-.flag,
+.flag {
+    margin-left: auto;
+    margin-right: auto;
+    width: 80px;
+    float: right;
+    height: 20px;
+}
+
+.score,
 .breach {
     margin-left: auto;
     margin-right: auto;
@@ -353,10 +404,11 @@ div.health_header {
 
 .flagindent,
 .redindent,
+.teamindent,
 .ticketindent,
 .scoreindent,
 .indent {
-    width: 5%;
+    width: 10px;
     float: left;
     height: 20px;
 }
@@ -369,7 +421,7 @@ img.flag {
 }
 
 img.redflag {
-    height: 30px;
+    height: 20px;
 }
 
 img.credit,

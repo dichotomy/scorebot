@@ -178,7 +178,7 @@ class FlagHandler(SocketServer.BaseRequestHandler):
     def get_feedback(self, msg_id):
         self.request.send("Checking for feedback...\n")
         tries = 0
-        while tries <= self.max_tries:
+        while True:
             tries += 1
             try:
                 (this_msg_id, answer) = self.server.flag_answer_queue.get(True, 1)

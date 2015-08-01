@@ -353,23 +353,20 @@ class BlueTeam(threading.Thread):
             self.scores.set_score(this_round, value)
             return
         # Service scoring
-        service_score = 0
+        raw_service_score = 0
         for host in self.hosts:
-            service_score += self.hosts[host].get_score(self.this_round)
+            raw_service_score += self.hosts[host].get_score(self.this_round)
+        service_score = raw_service_score / 10
         self.service_scores[self.this_round] = service_score
         # Ticket scoring
         (all_tickets, closed_tickets) = self.get_tickets()
         open_tickets = int(all_tickets) - int(closed_tickets)
-        ticket_score = (int(closed_tickets) - int(open_tickets)) * 1000
-        #if ticket_score == self.last_ticket_score:
-        #    ticket_score = 0
-        #else:
-        #    self.last_ticket_score = ticket_score
+        ticket_score = (int(closed_tickets) - int(open_tickets)) * 100
         if int(all_tickets) < int(closed_tickets):
             self.logger.err("There are more closed tickets than all for %s!" % self.teamname)
         self.ticket_scores[self.this_round] = ticket_score
         # Flag scoring
-        flag_score = self.flag_store.score(self.teamname, self.this_round) * 1000
+        flag_score = self.flag_store.score(self.teamname, self.this_round) * 100
         if flag_score != self.last_flag_score:
             this_flag_score = flag_score - self.last_flag_score
             self.last_flag_score = flag_score
@@ -385,7 +382,7 @@ class BlueTeam(threading.Thread):
                     beacon_count += 1
                 else:
                     pass
-        beacon_score = 0 - (beacon_count * 1000)
+        beacon_score = 0 - (beacon_count * 100)
         self.beacon_scores[self.this_round] = beacon_score
         print self.beacon_scores
         # Final tally

@@ -66,9 +66,16 @@ class BottleServer(threading.Thread):
         self._app.route('/beacons', callback=self._beacons)
         self._app.route('/tickets', callback=self._tickets)
         self._app.route('/redcell', callback=self._redcell)
+        self._app.route('/teamnames', callback=self._teamnames)
 
     def run(self):
         self._app.run(host=self._host, port=self._port, server="paste")
+
+    def _teamnames(self):
+        teamnames = {"teamnames":[]}
+        for team in self.teams:
+            teamnames["teamnames"].append(team)
+        return teamnames
 
     def _css(self, filename):
         return static_file(filename, root="css")
