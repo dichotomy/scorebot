@@ -3,7 +3,10 @@
 
 @autor:  dichotomy@riseup.net
 
-scorebot.py is the main script of the scorebot program.  It is run from the command prompt of a Linux box for game time, taking in all options from the command line and config files, instanciating and running classes from all modules.
+scorebot.py is the main script of the scorebot program.
+It is run from the command prompt of a Linux box for game time,
+taking in all options from the command line and config files,
+instanciating and running classes from all modules.
 
 Copyright (C) 2011 Dichotomy
 
@@ -31,17 +34,17 @@ import time
 
 class TicketInterface(object):
 
-    def __init__(self, host="10.150.100.153", user="scorebot", passwd="password", db="sts"):
+    def __init__(self, sqlhost, sqluser, sqlpasswd, sqldb):
         self.locations = {}
         self.users = {}
         self.users_by_id = {}
         self.categories = {}
         self.all_tickets = {}
         self.closed_tickets = {}
-        self.sqlhost = host
-        self.sqluser = user
-        self.sqlpass = passwd
-        self.dbname = db
+        self.sqlhost = sqlhost
+        self.sqluser = sqluser
+        self.sqlpasswd = sqlpasswd
+        self.sqldb = sqldb
         # Database stuff
         # Insert a ticket
         self.insert_ticket_query = """INSERT INTO tickets (
@@ -81,7 +84,7 @@ class TicketInterface(object):
         #a_uid = assigned_uid
         eu_uid = user_id
         a_uid = user_id
-        db = _mysql.connect(host=self.sqlhost, user=self.sqluser, passwd=self.sqlpass,db=self.dbname);
+        db = _mysql.connect(host=self.sqlhost, user=self.sqluser, passwd=self.sqlpasswd,db=self.sqldb);
         db.query(self.insert_ticket_query %
                        (subject, issue, preview, c_id, cdate, ctime, loc_id, s_id, eu_uid, cat_id, a_uid))
         db.close()
@@ -150,7 +153,7 @@ class TicketInterface(object):
 
     def query(self, query):
         results = []
-        db = _mysql.connect(host=self.sqlhost, user=self.sqluser, passwd=self.sqlpass,db=self.dbname);
+        db = _mysql.connect(self.sqlhost, self.sqluser, self.sqlpasswd, self.sqldb);
         db.query(query)
         r = db.store_result()
         new_row = r.fetch_row()
@@ -162,9 +165,8 @@ class TicketInterface(object):
 
 class TeamTicket(TicketInterface):
 
-    def __init__(self, teamname, locale, \
-                 host="10.150.100.153", user="scorebot", passwd="password", db="sts"):
-        TicketInterface.__init__(self, host, user, passwd, db)
+    def __init__(self, teamname, locale, sqlhost, sqluser, sqlpasswd, sqldb):
+        TicketInterface.__init__(self, sqlhost, sqluser, sqlpasswd, sqldb)
         self.teamname = teamname
         if self.teamname in self.users:
             self.user_id = self.users[self.teamname]
