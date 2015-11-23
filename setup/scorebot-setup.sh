@@ -54,7 +54,7 @@ printf "\n${YELLOW}### Checking if the system needs updates ### ${ORG}\n\n"
 apt-get update && apt-get upgrade -y
 printf "\n${YELLOW}###         Installing Dependencies      ###\n"
 printf "### This could take awhile, grab a beer! ###${ORG}\n\n"
-apt-get install -y python-dnspython python-rrdtool apache2 php5 php5-mysql python-pymongo python-dns python-mysqldb git mongodb mysql-server mysql-client python-pip build-essential python-dev
+apt-get install -y python-dnspython python-rrdtool apache2 php5 php5-mysql python-pymongo python-dns python-mysqldb git mongodb mysql-server mysql-client python-pip build-essential python-dev libav-tools
 printf "\n${YELLOW}### Installing required python libraries ### ${ORG}\n\n"
 pip install jaraco.modb bottle paste requests backports.functools_lru_cache
 printf "\n${YELLOW}### Ensuring all installed python libraries are up2date ### ${ORG}\n\n"
@@ -63,7 +63,7 @@ printf "\n${YELLOW}### Coping Ticket System to /var/www/html ###${ORG}\n\n"
 cp -rf sts/ /var/www/html
 
 printf "\n${YELLOW}### CREATING Ticket DATABASE and scorebot user ###${ORG}\n\n"
-mysql --user="root" --password="$sqlpass" --execute="CREATE DATABASE sts; GRANT ALL ON sts.* TO scorebot@localhost IDENTIFIED BY '$scorepass';"
+mysql --user="root" --password="$sqlpass" --execute="CREATE DATABASE sts; GRANT ALL ON sts.* TO scorebot@'localhost' IDENTIFIED BY '$scorepass';"
 
 printf "${YELLOW}### Adding Tables to Ticket System ###${ORG}\n\n"
 mysql --user="scorebot" --password="$scorepass" sts < sts/config/sts.sql
