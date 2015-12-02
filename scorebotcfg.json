@@ -1,4 +1,11 @@
-{
+{   
+    "settings": 
+	{
+	"sqlhost" : "127.0.0.1",
+	"sqluser" : "scorebot",
+	"sqlpasswd" : "password",
+	"sqldb" : "sts"
+	},
     "game_name": "20140607 CTF",
     "blueteams": [
         {

@@ -3,7 +3,8 @@
 
 @autor:  dichotomy@riseup.net
 
-scorebot.py is the main script of the scorebot program.  It is run from the command prompt of a Linux box for game time, taking in all options from the command line and config files, instanciating and running classes from all modules.
+scorebot.py is the main script of the scorebot program.  It is run from the command prompt of a Linux box for game time,
+ taking in all options from the command line and config files, instanciating and running classes from all modules.
 
 Copyright (C) 2011 Dichotomy
 
@@ -76,6 +77,16 @@ class JsonConfig(object):
             pass
         else:
             pass
+        if "settings" in self.config:
+            settings = self.config["settings"]
+            self.proc_settings(settings)
+            sqlhost = self.config["settings"]["sqlhost"]
+            sqluser = self.config["settings"]["sqluser"]
+            sqlpasswd = self.config["settings"]["sqlpasswd"]
+            sqldb = self.config["settings"]["sqldb"]
+            #self.proc_settings(settings)
+        else:
+                raise Exception("Missining settings")
         if "blueteams" in self.config:
             for blueteam in self.config["blueteams"]:
                 blue_obj = self.proc_blueteam(blueteam)
@@ -88,7 +99,8 @@ class JsonConfig(object):
                 teamname = blue_teams[team].get_teamname()
                 email = blue_teams[team].get_email()
                 location = email.split("@")[1]
-                ticket_obj = TeamTicket(teamname, location)
+                TicketInterface(sqlhost, sqluser, sqlpasswd, sqldb)
+                ticket_obj = TeamTicket(teamname, location, sqlhost, sqluser, sqlpasswd, sqldb)
                 blue_teams[team].set_ticket_interface(ticket_obj)
                 email = blue_teams[team].get_email()
                 injects.add_email(team, email)
@@ -130,6 +142,24 @@ class JsonConfig(object):
                 this_flag = blueteam["flags"][flag_name]
                 self.proc_flags(blue_obj, flag_name, this_flag)
         return blue_obj
+
+    def proc_settings(self, settings):
+        if "sqlhost" in settings:
+            pass
+        else:
+            raise Exception("No host given for the sql database in scorebotcfg.json!")
+        if "sqluser" in settings:
+            pass
+        else:
+            raise Exception("No sql user given for the sql database in scorebotcfg.json!")
+        if "sqlpasswd" in settings:
+            pass
+        else:
+            raise Exception("No sql password given for the sql database in scorebotcfg.json!")
+        if "sqldb" in settings:
+            pass
+        else:
+            raise Exception("No sql database configured in scorebotcfg.json!")
 
 
     def proc_hosts(self, blue_obj, hosts):
@@ -245,6 +275,7 @@ if __name__ == "__main__":
     logger_obj = Logger("JsonConfigTesT")
     flag_store = FlagStore(logger_obj, queue_obj, "test")
     json_obj = JsonConfig("scorebotcfg.json", flag_store)
+    (settings) = json_obj.process()
     (blueteams, injects) = json_obj.process()
     for blueteam in blueteams:
         print blueteam.get_teamname()

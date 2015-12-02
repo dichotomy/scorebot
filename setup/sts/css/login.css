@@ -1,0 +1,52 @@
+.login {
+width:300px;
+height:200px;
+margin:0 auto;
+margin-top:150px;
+background-color:#3B5998;
+color:#FFF;
+border-radius:20px;
+padding:15px;
+text-align:center;
+}
+
+.login h1 {
+margin:0px;
+padding:0px;
+font-size:28px;
+}
+
+.login p {
+margin:0px;
+padding:0px;
+}
+
+#user_name {
+width:100%;
+margin-top:15px;
+height:36px;
+font-size:20px;
+}
+
+#password {
+width:100%;
+margin-top:5px;
+height:36px;
+font-size:20px;
+}
+
+#login_button{
+margin-top:5px;
+width:100%;
+margin-right: -3px;
+font-size:14px;
+
+}
+
+#fp_button{
+margin-top:5px;
+width:90%;
+margin-right: 5px;
+font-size:14px;
+
+}

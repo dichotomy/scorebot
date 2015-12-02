@@ -1,0 +1,7 @@
+1. DB is in /config
+2. Edit application_settings.php in /config
+	-Change the $application_root = "http://localhost/sts/index.php"; to match your setup...
+3. Edit /config/connect to connect to db.
+
+Default User is admin
+Passwrd is password
