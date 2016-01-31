@@ -1,0 +1,98 @@
+/*CSS principale per il menu*/
+
+div#top_menu{
+width:960px;
+margin:0 auto;
+background: #3B5998;
+color:#fff;
+border-bottom-left-radius:15px;
+border-bottom-right-radius:15px;
+}
+
+.application_name {
+float:left;
+margin-top: 2px;
+margin-left: 10px;
+text-decoration:none;
+}
+
+.application_name a {
+text-decoration:none;
+color:#fff;
+}
+
+h1.application_name {
+text-decoration:none;
+color:#fff;
+font-size:16px;
+}
+
+.menu_left {
+float:left;
+}
+
+.menu_right {
+float:right;
+}
+
+ul#nav_right,ul#nav_right li,ul#nav_right ul,ul#nav_right ul li{margin:0;padding:0;list-style-type:none}
+ul#nav_right{height:26px;line-height:25px;margin-left:50px;
+    background: #3B5998;color: #fff; border-bottom-right-radius:15px;}
+ul#nav_right a{display:block;padding: 0 15px;text-decoration: none; color:#FFF;}
+ul#nav_right li{float: right;position: relative}
+ul#nav_right li li{float: none;line-height: 22px;
+    display:block !important;display: inline; /*IE*/}
+ul#nav_right ul{position: absolute;top: 23px;left: -9999px;
+    width: 12em;background: #fff;color: #3B5998}
+ul#nav_right ul{padding: 7px 0;border: 1px solid #3B5998}
+ul#nav_right li li a{height:22px}   /*fix per IE */
+ul#nav_right ul,ul#nav_right li li a{background-color: #FFF;color: #3B5998}
+ul#nav_right li:hover,ul#nav_right a:hover{background-color: #5C75AA;color: #FFF; }
+ul#nav_right li.asdf:hover,ul#nav_right a:hover{background-color: #5C75AA;color: #FFF; border-bottom-right-radius:15px; }
+ul#nav_right li:hover ul,ul#nav_right li.sfhover ul{left: -1px;z-index: 100;}
+
+/*regole per separatore e le icone */
+
+ul#nav_right li.sep{height: 34px;background: #fff}
+ul#nav_right li.sep span{display: block;height: 1px;overflow: hidden;
+    margin: 6px 5px 0;background: #CCC}
+ul#nav_right li li.icon a{padding-left: 24px}
+ul#nav_right li li.users a{background: url(system-users.png) no-repeat 3px 3px}
+ul#nav_right li li.privacy a{background: url(icon_padlock.gif) no-repeat 3px 3px}
+ul#nav_right li li.options a{background: url(../img/icons/16x16/categories/applications-system.png) no-repeat 3px 3px}
+ul#nav_right li li.logout a{background: url(../img/icons/16x16/actions/system-log-out.png) no-repeat 3px 3px}
+
+ul#nav_left,ul#nav_left li,ul#nav_left ul,ul#nav_left ul li{margin:0;padding:0;list-style-type:none}
+ul#nav_left{height:26px;line-height:25px;margin-left:50px;
+    background: #3B5998;color: #fff}
+ul#nav_left a{display:block;padding: 0 15px;text-decoration: none; color:#FFF}
+ul#nav_left li{float: left;position: relative}
+ul#nav_left li li{float: none;line-height: 22px;
+    display:block !important;display: inline; /*IE*/}
+ul#nav_left ul{position: absolute;top: 23px;left: -9999px;
+    width: 12em;background: #fff;color: #3B5998}
+ul#nav_left ul{padding: 7px 0;border: 1px solid #3B5998}
+ul#nav_left li li a{height:22px}   /*fix per IE */
+ul#nav_left ul,ul#nav_left li li a{background-color: #FFF;color: #3B5998}
+ul#nav_left li:hover,ul#nav_left a:hover{background-color: #5C75AA;color: #FFF}
+ul#nav_left li:hover ul,ul#nav_right li.sfhover ul{left: -1px;z-index: 100;}
+
+/*regole per separatore e le icone */
+
+ul#nav_left li.sep{height: 34px;background: #fff}
+ul#nav_left li.sep span{display: block;height: 1px;overflow: hidden;
+    margin: 6px 5px 0;background: #CCC}
+ul#nav_left li li.icon a{padding-left: 24px}
+ul#nav_left li li.users a{background: url(../img/icons/16x16/apps/system-users.png) no-repeat 3px 3px}
+ul#nav_left li li.locations a{background: url(../img/icons/16x16/apps/internet-web-browser.png) no-repeat 3px 3px}
+ul#nav_left li li.categories a{background: url(../img/icons/16x16/apps/preferences-desktop-locale.png) no-repeat 3px 3px}
+ul#nav_left li li.quick_ticket a{background: url(../img/icons/16x16/apps/preferences-system-session.png) no-repeat 3px 3px}
+ul#nav_left li li.permissions a{background: url(../img/icons/16x16/places/folder.png) no-repeat 3px 3px}
+ul#nav_left li li.administration a{background: url(../img/icons/16x16/categories/applications-development.png) no-repeat 3px 3px}
+ul#nav_left li li.new_ticket a{background: url(../img/icons/16x16/actions/document-new.png) no-repeat 3px 3px}
+ul#nav_left li li.tickets_assigned a{background: url(../img/icons/16x16/emblems/emblem-important.png) no-repeat 3px 3px}
+ul#nav_left li li.all_tickets a{background: url(../img/icons/16x16/status/folder-open.png) no-repeat 3px 3px}
+
+
+ul#nav_left li li.settings a{background: url(folder.gif) no-repeat 3px 3px}
+ul#nav_left li li.privacy a{background: url(icon_padlock.gif) no-repeat 3px 3px}

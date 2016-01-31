@@ -1,0 +1,292 @@
+html,body{
+margin:0;
+padding:0;
+font: 85% Verdena,Tahoma,sans-serif;
+}
+
+body{
+background:#FFF;color:#333
+font-size:11px;
+}
+
+input.full {
+width:100%;
+}
+
+a.full {
+width:100%;
+}
+
+textarea.full {
+width:100%;
+height:100px;
+}
+
+textarea.full_400 {
+width:100%;
+height:400px;
+}
+
+select.full {
+width:100%;
+}
+
+table.full {
+width:100%;
+}
+
+.section_960 {
+width:960px;
+margin:0 auto;
+margin-top:0px;
+}
+
+.section_960_b {
+width:940px;
+margin:0 auto;
+margin-top:0px;
+padding:10px;
+margin-bottom:5px;
+margin-top:10px;
+border:1px solid #3B5998;
+border-bottom-right-radius:15px; border-bottom-left-radius:15px; border-top-right-radius:15px; border-top-left-radius:15px;
+text-align:center;
+}
+
+a {
+color:#3B5998;
+}
+
+.section_125_l {
+width:125px;
+margin:0px;
+padding:10px;
+float:left;
+border-right:1px solid #3B5998;
+border-bottom:1px solid #3B5998;
+border-bottom-right-radius:15px; border-bottom-left-radius:15px;
+}
+
+.section_300_l {
+width:300px;
+margin:0px;
+padding:10px;
+float:left;
+border-right:1px solid #3B5998;
+border-bottom:1px solid #3B5998;
+border-bottom-right-radius:15px; border-bottom-left-radius:15px;
+}
+
+.section_300_l h1 {
+font-size:14px;
+padding:0px;
+margin:0px;
+color:#3B5998;
+}
+
+.section_125_l h1 {
+font-size:14px;
+padding:0px;
+margin:0px;
+color:#3B5998;
+}
+
+.section_125_l a {
+font-size:11px;
+padding:0px;
+margin:0px;
+color:#3B5998;
+}
+
+
+.section_780_r {
+width:780px;
+margin:0px;
+padding:10px;
+float:right;
+border:1px solid #3B5998;
+border-bottom-right-radius:15px; border-bottom-left-radius:15px; border-top-right-radius:15px;
+}
+
+.section_600_r {
+width:600px;
+margin:0px;
+padding:10px;
+float:right;
+border:1px solid #3B5998;
+border-bottom-right-radius:15px; border-bottom-left-radius:15px; border-top-right-radius:15px;
+}
+
+.dashboard_item {
+background-color:#3B5998;
+float:left;
+margin:10px;
+padding:20px;
+color:#FFF;
+border-bottom-right-radius:15px; border-bottom-left-radius:15px; border-top-right-radius:15px;
+text-align:center;
+width:200px;
+overflow:hidden;
+}
+
+.dashboard_item_no_float {
+background-color:#3B5998;
+margin:10px;
+padding:15px;
+color:#FFF;
+border-bottom-right-radius:15px; border-bottom-left-radius:15px; border-top-right-radius:15px;
+text-align:center;
+}
+
+.dashboard_item_no_float h1 {
+margin:0px;
+padding:0px;
+font-size:32px;
+color:#B8B8B8;
+}
+
+.dashboard_item_no_float h2 {
+margin:0px;
+padding:0px;
+font-size:18px;
+}
+
+.dashboard_item_no_float h3 {
+margin:0px;
+padding:0px;
+font-size:16px;
+}
+
+
+.dashboard_item h1 {
+margin:0px;
+padding:0px;
+font-size:32px;
+color:#B8B8B8;
+}
+
+.dashboard_item h2 {
+margin:0px;
+padding:0px;
+font-size:18px;
+}
+
+.dashboard_item h3 {
+margin:0px;
+padding:0px;
+font-size:16px;
+}
+
+.dashboard_item h4 {
+margin:0px;
+padding:0px;
+margin-top:8px;
+margin-bottom:10px;
+font-size:18px;
+color:#B8B8B8;
+}
+
+p.gauge {
+margin-top:44px;
+}
+
+#splitter {
+height: 650px;
+}
+
+.clear {
+clear:both;
+}
+
+
+table{
+color:#3B5998;
+}
+
+p.ticket_id {
+float:left;
+margin:0px;
+padding:0px;
+}
+
+p.ticket_category {
+float:right;
+margin:0px;
+padding:0px;
+}
+
+p.ticket_issue {
+margin:0px;
+padding:0px;
+margin-top:5px;
+margin-bottom:5px;
+}
+
+.float_right {
+float:right;
+}
+
+p.ticket_eu {
+float:left;
+margin:0px;
+padding:0px;
+}
+
+p.ticket_state {
+float:right;
+margin:0px;
+padding:0px;
+}
+
+
+p.notes_date {
+margin:0px;
+padding:0px;
+float:left;
+font-weight:bold;
+font-size:12px;
+padding-left:15px;
+}
+
+p.notes_user {
+margin:0px;
+padding:0px;
+float:right;
+font-weight:bold;
+font-size:12px;
+padding-right:15px;
+}
+
+p.notes_issue {
+margin:px;
+padding:0px;
+padding-left:15px;
+padding-right:15px;
+font-size:12px;
+}
+
+.eu_portal_wrapper {
+padding:15px;
+margin: 0 auto;
+margin-top:10px;
+width:500px;
+height:400px;
+background-color:#3B5998;
+color:#FFF;
+border-radius:15px;
+}
+
+.eu_portal_wrapper h1 {
+font-size:18px;
+margin:0px;
+margin-left:3px;
+}
+
+.eu_portal_wrapper th {
+color:#FFF;
+}
+
+.important_red {
+font-size:10px;
+color:#FF0000;
+}
