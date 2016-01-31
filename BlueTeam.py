@@ -33,7 +33,7 @@ import globalvars
 import jsonpickle
 import re
 from Host import Host
-from Logger import Logger
+from Logger import Logger, ThreadedLogger, QueueP
 from Scores import Scores
 from FlagStore import FlagStore
 
@@ -58,16 +58,12 @@ class BlueTeam(threading.Thread):
         self.id = id
         self.db = db
         self.queue_obj = queue
-        now = time.strftime("%Y %b %d %H:%M:%S", time.localtime(time.time()))
+        self.oqueue = Queue.Queue()
+        self.equeue = Queue.Queue()
         self.dns_servers = []
         self.teamname = teamname
-        self.logger = Logger(self.teamname)
-        self.logger.err("\n" + globalvars.sep + "\n")
-        self.logger.err("| Starting run for Blueteam %s\n" % self.teamname)
-        self.logger.err("| Start time: %s\n" % now)
-        self.logger.out(globalvars.sep + "\n")
-        self.logger.out("| Starting run for Blueteam %s\n" % self.teamname)
-        self.logger.out("| Start time: %s\n" % now)
+        self.logger = ThreadedLogger(self.teamname, self.oqueue, self.equeue)
+        self.logger.start()
         self.hosts = {}
         self.hosts_rounds = {}
         self.host_queues = {}
@@ -123,6 +119,13 @@ class BlueTeam(threading.Thread):
 
 
     def run(self):
+        now = time.strftime("%Y %b %d %H:%M:%S", time.localtime(time.time()))
+        self.equeue.put("\n" + globalvars.sep + "\n")
+        self.equeue.put("| Starting run for Blueteam %s\n" % self.teamname)
+        self.equeue.put("| Start time: %s\n" % now)
+        self.oqueue.put(globalvars.sep + "\n")
+        self.oqueue.put("| Starting run for Blueteam %s\n" % self.teamname)
+        self.oqueue.put("| Start time: %s\n" % now)
         print "Firing up Blueteam %s, go time is %s" % \
                         (self.teamname, self.go_time)
         if globalvars.quick:
@@ -147,7 +150,8 @@ class BlueTeam(threading.Thread):
                 except Queue.Empty:
                     pass
                 except:
-                    traceback.print_exc(file=self.logger)
+                    errstr = traceback.format_exc()
+                    self.equeue.put(errstr)
             score_round = True
             # Check to see if all hosts have finished the last round
             donemsg = ""
@@ -197,7 +201,8 @@ class BlueTeam(threading.Thread):
             except Queue.Empty:
                 pass
             except:
-                traceback.print_exc(file=self.logger)
+                errstr = traceback.format_exc()
+                self.equeue.put(errstr)
             else:
                 time.sleep(0.1)
 
@@ -205,7 +210,7 @@ class BlueTeam(threading.Thread):
         if dnssvr in self.dns_servers:
             pass
         else:
-            self.logger.out("Adding DNS %s to %s\n" % (dnssvr, self.teamname))
+            self.oqueue.put("Adding DNS %s to %s\n" % (dnssvr, self.teamname))
             self.dns_servers.append(dnssvr)
         for host in self.hosts:
             self.hosts[host].add_dns(dnssvr)
@@ -229,11 +234,12 @@ class BlueTeam(threading.Thread):
         # Have to strip "." because MongoDB doesn't like them for key names
         clean_hostname = hostname.replace(".", "___")
         if self.hosts.has_key(clean_hostname):
-            self.logger.err(clobber_host_blue_str % (self.teamname, hostname))
+            self.equeue.put(clobber_host_blue_str % (self.teamname, hostname))
         else:
-            self.logger.err(add_host_blue_str % (self.teamname, hostname))
+            self.equeue.put(add_host_blue_str % (self.teamname, hostname))
         this_queue = Queue.Queue()
-        self.hosts[clean_hostname] = Host(self.teamname, hostname, value, self.logger, self.dns_servers, this_queue)
+        self.hosts[clean_hostname] = Host(self.teamname, hostname, value, self.dns_servers, this_queue, \
+                                          self.oqueue, self.equeue)
         self.hosts_rounds[clean_hostname] = False
         self.host_queues[clean_hostname] = this_queue
 
@@ -241,34 +247,34 @@ class BlueTeam(threading.Thread):
         # Have to strip "." because MongoDB doesn't like them for key names
         clean_hostname = hostname.replace(".", "___")
         if self.hosts.has_key(clean_hostname):
-            self.logger.err(del_host_blue_str % (self.teamname, hostname))
+            self.equeue.put(del_host_blue_str % (self.teamname, hostname))
             del(self.hosts[clean_hostname])
             del(self.host_queues[clean_hostname])
         else:
-            self.logger.err(del_host_blue_err_str % (self.teamname, hostname))
+            self.equeue.put(del_host_blue_err_str % (self.teamname, hostname))
 
     def add_service(self, hostname, port, proto, value, uri=None, content=None,
                                 username=None, password=None):
         # Have to strip "." because MongoDB doesn't like them for key names
         clean_hostname = hostname.replace(".", "___")
         if self.hosts.has_key(clean_hostname):
-            self.logger.err(add_srvc_blue_str % \
+            self.equeue.put(add_srvc_blue_str % \
                     (self.teamname, port, proto, value, hostname))
             self.hosts[clean_hostname].add_service(self.teamname, port, proto, value, uri, content, \
                                 username, password)
         else:
-            self.logger.err(add_srvc_blue_err_str % \
+            self.equeue.put(add_srvc_blue_err_str % \
                     (self.teamname, port, proto, hostname))
 
     def del_service(self, hostname, port, proto):
         # Have to strip "." because MongoDB doesn't like them for key names
         clean_hostname = hostname.replace(".", "___")
         if self.hosts.has_key(clean_hostname):
-            self.logger.err(add_srvc_blue_str % \
+            self.equeue.put(add_srvc_blue_str % \
                     (self.teamname, port, proto, hostname))
             self.hosts[clean_hostname].del_service(port, proto, app, value)
         else:
-            self.logger.err(add_srvc_blue_err_str % \
+            self.equeue.put(add_srvc_blue_err_str % \
                     (self.teamname, port, proto, hostname))
 
     def get_score(self, this_round=None):
@@ -366,7 +372,7 @@ class BlueTeam(threading.Thread):
         #else:
         #    self.last_ticket_score = ticket_score
         if int(all_tickets) < int(closed_tickets):
-            self.logger.err("There are more closed tickets than all for %s!" % self.teamname)
+            self.equeue.put("There are more closed tickets than all for %s!" % self.teamname)
         self.ticket_scores[self.this_round] = ticket_score
         # Flag scoring
         flag_score = self.flag_store.score(self.teamname, self.this_round) * 1000
@@ -392,10 +398,15 @@ class BlueTeam(threading.Thread):
         round_score = service_score + ticket_score + this_flag_score + beacon_score
         self.scores.set_score(self.this_round, round_score)
         total = self.scores.total()
-        print "Blueteam %s round %s scored %s for a new total of %s\n" % \
+        msg = "Blueteam %s round %s scored %s for a new total of %s\n" % \
                   (self.teamname, self.this_round, round_score, total)
-        print "Blueteam %s: tally: %s services: %s tickets: %s flags: %s beacons: %s\n" % \
-              (self.teamname, self.get_score(), service_score, ticket_score, this_flag_score, beacon_score)
+        self.oqueue.put(msg)
+        print msg
+        msg = "Blueteam %s: tally: %s services: %s tickets: %s flags: %s beacons: %s\n" % \
+                  (self.teamname, self.get_score(), service_score, ticket_score, \
+                   this_flag_score, beacon_score)
+        self.oqueue.put(msg)
+        print msg
 
     def get_health(self):
         host_hash = {}
@@ -404,7 +415,7 @@ class BlueTeam(threading.Thread):
             clean_name = host_re.match(name).groups()[0]
             service_hash = self.hosts[host].get_health()
             if host_hash.has_key(clean_name):
-                self.logger.err("Found duplicate host %s" % name)
+                self.equeue.put("Found duplicate host %s" % name)
             else:
                 host_hash[clean_name] = service_hash
         return host_hash

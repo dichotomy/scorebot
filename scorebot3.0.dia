@@ -3882,7 +3882,7 @@
         <dia:point val="85.6632,34.6884"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="49.4158,20.5338;85.7277,34.753"/>
+        <dia:rectangle val="49.4158,20.5338;85.7277,34.7529"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
@@ -3944,7 +3944,7 @@
         <dia:point val="85.6632,35.4884"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="61.3631,35.4232;85.7284,45.7822"/>
+        <dia:rectangle val="61.3631,35.4231;85.7285,45.7822"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
@@ -4276,13 +4276,13 @@
     </dia:object>
     <dia:object type="UML - Class" version="0" id="O30">
       <dia:attribute name="obj_pos">
-        <dia:point val="31.423,30.6646"/>
+        <dia:point val="31.123,31.1146"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="31.373,30.6146;43.138,35.9146"/>
+        <dia:rectangle val="31.073,31.0646;42.838,36.3646"/>
       </dia:attribute>
       <dia:attribute name="elem_corner">
-        <dia:point val="31.423,30.6646"/>
+        <dia:point val="31.123,31.1146"/>
       </dia:attribute>
       <dia:attribute name="elem_width">
         <dia:real val="11.665000000000001"/>
@@ -4403,7 +4403,7 @@
         </dia:composite>
         <dia:composite type="umlattribute">
           <dia:attribute name="name">
-            <dia:string>#blueteamID#</dia:string>
+            <dia:string>#gameteamsID#</dia:string>
           </dia:attribute>
           <dia:attribute name="type">
             <dia:string>#int#</dia:string>
@@ -4479,23 +4479,23 @@
     </dia:object>
     <dia:object type="UML - Constraint" version="0" id="O31">
       <dia:attribute name="obj_pos">
-        <dia:point val="43.088,34.1646"/>
+        <dia:point val="42.788,34.6146"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="43.0203,34.0969;57.6573,45.6267"/>
+        <dia:rectangle val="42.7196,34.5462;57.5073,45.6391"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
-        <dia:point val="43.088,34.1646"/>
+        <dia:point val="42.788,34.6146"/>
         <dia:point val="49.1264,45.3932"/>
       </dia:attribute>
       <dia:attribute name="constraint">
         <dia:string>#Players_BluePlayers_playerID#</dia:string>
       </dia:attribute>
       <dia:attribute name="text_pos">
-        <dia:point val="46.1073,39.5789"/>
+        <dia:point val="45.9573,39.8039"/>
       </dia:attribute>
       <dia:attribute name="text_colour">
         <dia:color val="#000000"/>
@@ -6051,23 +6051,23 @@
     </dia:object>
     <dia:object type="UML - Constraint" version="0" id="O51">
       <dia:attribute name="obj_pos">
-        <dia:point val="31.423,33.3646"/>
+        <dia:point val="31.123,33.8146"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="25.0284,25.284;41.8741,33.4348"/>
+        <dia:rectangle val="24.9908,26.8681;42.0841,33.8851"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
-        <dia:point val="31.423,33.3646"/>
-        <dia:point val="25.3751,25.5687"/>
+        <dia:point val="31.123,33.8146"/>
+        <dia:point val="25.3251,27.1687"/>
       </dia:attribute>
       <dia:attribute name="constraint">
-        <dia:string>#GamesTeams_BluePlayers_blueteamID#</dia:string>
+        <dia:string>#GamesTeams_BluePlayers_gameteamsID#</dia:string>
       </dia:attribute>
       <dia:attribute name="text_pos">
-        <dia:point val="28.3991,29.2667"/>
+        <dia:point val="28.2241,30.2917"/>
       </dia:attribute>
       <dia:attribute name="text_colour">
         <dia:color val="#000000"/>
@@ -6077,7 +6077,7 @@
       </dia:attribute>
       <dia:connections>
         <dia:connection handle="0" to="O30" connection="10"/>
-        <dia:connection handle="1" to="O29" connection="9"/>
+        <dia:connection handle="1" to="O29" connection="13"/>
       </dia:connections>
     </dia:object>
   </dia:layer>

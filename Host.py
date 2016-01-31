@@ -32,7 +32,7 @@ import Ping
 import globalvars
 import jsonpickle
 from Scores import Scores
-from Logger import Logger
+from Logger import ThreadedLogger, QueueP
 from Service import Service
 
 ctfnet_re = re.compile("^10")
@@ -44,7 +44,7 @@ class Host(threading.Thread):
     classdocs
     '''
 
-    def __init__(self, teamname, hostname, value, logger, dns_servers, msgqueue, timeout=180):
+    def __init__(self, teamname, hostname, value, dns_servers, msgqueue, BToqueue, BTequeue, timeout=180):
         '''
         Constructor
         '''
@@ -52,7 +52,12 @@ class Host(threading.Thread):
         self.hostname = hostname
         self.dns_servers = dns_servers
         basename = "%s-%s" % (teamname, hostname)
-        self.logger = Logger(basename)
+        self.oqueue = QueueP()
+        self.equeue = QueueP()
+        self.BToqueue = BToqueue
+        self.BTequeue = BTequeue
+        self.logger = ThreadedLogger(basename, self.oqueue, self.equeue)
+        self.logger.start()
         self.ipaddress = None
         self.compromised = False
         self.services = {}
@@ -79,7 +84,7 @@ class Host(threading.Thread):
     def lookup(self, record="A"):
         if globalvars.verbose:
             mydns = ", ".join(self.dns_servers)
-            self.logger.err("Looking up %s with %s\n" % (self.hostname, mydns))
+            self.equeue.put("Looking up %s with %s\n" % (self.hostname, mydns))
         try:
             for svr in self.dns_servers:
                 # We set a short timeout because life moves too fast...so does the game!
@@ -90,17 +95,17 @@ class Host(threading.Thread):
                         ipaddress = answer["data"]
                         break
                     else:
-                        self.logger.err("Failed to get DNS!")
+                        self.equeue.put("Failed to get DNS!")
             if ctfnet_re.search(ipaddress):
                 if globalvars.verbose:
-                    self.logger.err("got %s\n" % self.ipaddress)
+                    self.equeue.put("got %s\n" % self.ipaddress)
                 self.ipaddress = ipaddress
                 return True
             else:
-                self.logger.err("Got non RFC1918: %s\n" % ipaddress)
+                self.equeue.put("Got non RFC1918: %s\n" % ipaddress)
                 return False
         except:
-            traceback.print_exc(file=self.logger)
+            traceback.print_exc(file=self.equeue)
             self.ipaddress = None
             return False
 
@@ -110,8 +115,9 @@ class Host(threading.Thread):
         if self.services.has_key(service_name):
             pass
         this_queue = Queue.Queue()
-        self.services[service_name] = Service(port, proto, value, \
-                    teamname , this_queue, self.hostname, uri, content, username, password)
+        self.services[service_name] = Service(port, proto, value, teamname , this_queue, self.hostname, \
+                                              self.oqueue, self.equeue, self.BToqueue, self.BTequeue, \
+                                              uri, content, username, password)
         self.service_rounds[service_name] = False
         self.service_queues[service_name] = this_queue
 
@@ -134,7 +140,7 @@ class Host(threading.Thread):
                 except Queue.Empty:
                     pass
                 except:
-                    traceback.print_exc(file=self.logger)
+                    traceback.print_exc(file=self.equeue)
             score_round = True
             # Check to see if all our services have finished the last round
             for service in self.service_rounds:
@@ -142,6 +148,7 @@ class Host(threading.Thread):
                     #sys.stdout.write("Host %s service %s done\n" % (self.hostname, service))
                     continue
                 else:
+                    #self.equeue.put("Host %s service %s not done\n" % (self.hostname, service))
                     score_round = False
                     break
             if score_round:
@@ -166,7 +173,7 @@ class Host(threading.Thread):
                 try:
                     if self.lookup():
                         if globalvars.verbose:
-                            self.logger.err("Checking for %s(%s) with ping...\n" \
+                            self.equeue.put("Checking for %s(%s) with ping...\n" \
                                     % (self.hostname, self.ipaddress))
                         myping = Ping.Ping()
                         results = myping.quiet_ping(self.ipaddress)
@@ -179,15 +186,15 @@ class Host(threading.Thread):
                         score = int(self.value) - (int(self.value)*percent_failed/100)
                         if globalvars.verbose:
                             if score:
-                                self.logger.err("%s failed: %s\n" % (self.hostname,score))
+                                self.equeue.put("%s failed: %s\n" % (self.hostname,score))
                             else:
-                                self.logger.err("%s scored: %s\n" % (self.hostname,score))
+                                self.equeue.put("%s scored: %s\n" % (self.hostname,score))
                         else:
                             pass
                     else:
                         self.fail_services(this_round)
                 except:
-                    traceback.print_exc(file=self.logger)
+                    traceback.print_exc(file=self.equeue)
                 self.set_score(this_round, score)
             elif item:
                 # This isn't for me...
@@ -198,10 +205,10 @@ class Host(threading.Thread):
 
     def check_services(self, this_round):
         if globalvars.verbose:
-            self.logger.err("Checking services for %s:\n" % self.hostname)
+            self.equeue.put("Checking services for %s:\n" % self.hostname)
         for service_name in self.service_queues:
             if globalvars.verbose:
-                self.logger.err("\tHost %s queueing Service Check %s\n" % (self.name, service_name))
+                self.equeue.put("\tHost %s queueing Service Check %s\n" % (self.name, service_name))
             self.service_queues[service_name].put([this_round, self.ipaddress, self.timeout])
 
     def set_score(self, this_round, value=None):
@@ -209,19 +216,23 @@ class Host(threading.Thread):
             this_value = self.value
         else:
             this_value = value
-        self.logger.out("Round %s host %s score %s\n" % \
+        self.oqueue.put("Round %s host %s score %s\n" % \
                     (this_round, self.hostname, this_value))
-        self.logger.err("Round %s host %s score %s\n" % \
+        self.BToqueue.put("Round %s host %s score %s\n" % \
+                        (this_round, self.hostname, this_value))
+        self.equeue.put("Round %s host %s score %s\n" % \
                     (this_round, self.hostname, this_value))
+        self.BTequeue.put("Round %s host %s score %s\n" % \
+                          (this_round, self.hostname, this_value))
         self.scores.set_score(this_round, this_value)
 
     def fail_services(self, this_round):
         if globalvars.verbose:
-            self.logger.err("Failing service scores for %s:\n" % self.hostname)
+            self.equeue.put("Failing service scores for %s:\n" % self.hostname)
         services = self.services.keys()
         for service in services:
             if globalvars.verbose:
-                self.logger.err("\tFailing for %s:" % service)
+                self.equeue.put("\tFailing for %s:" % service)
             self.services[service].set_score(this_round)
             self.service_rounds[service] = True
 
@@ -234,8 +245,8 @@ class Host(threading.Thread):
                 score += self.services[service].get_score(this_round)
             return score
         except:
-            self.logger.err("Had a problem with host %s:\n" % self.hostname)
-            traceback.print_exc(file=self.logger)
+            self.equeue.put("Had a problem with host %s:\n" % self.hostname)
+            traceback.print_exc(file=self.equeue)
             return False
 
     def get_health(self):
@@ -245,7 +256,7 @@ class Host(threading.Thread):
                         self.services[service].protocol)
             state = self.services[service].get_state()
             if service_hash.has_key(name):
-                self.logger.err("Found duplicate service %s" % name)
+                self.equeue.put("Found duplicate service %s" % name)
             else:
                 service_hash[name] = state
         return service_hash

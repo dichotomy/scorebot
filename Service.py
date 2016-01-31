@@ -50,15 +50,22 @@ class Service(threading.Thread):
     classdocs
     '''
 
-    def __init__(self, port, protocol, value, teamname, queue, hostname, uri="index.html", \
-                            content=None, username=None, password=None):
+    def __init__(self, port, protocol, value, teamname, queue, hostname, \
+                        oqueue, equeue, BToqueue, BTequeue, \
+                        uri="index.html", content=None, username=None, password=None):
         '''
         Constructor
         '''
         threading.Thread.__init__(self)
         self.hostname = hostname
         basename = "%s-%s:%s_%s" % (teamname, hostname, port, protocol)
-        self.logger = Logger(basename)
+        #self.logger = Logger(basename)
+        self.oqueue = oqueue
+        self.equeue = equeue
+        self.BToqueue = BToqueue
+        self.BTequeue = BTequeue
+        self.olog = ""
+        self.elog = ""
         self.port = int(port)
         self.protocol = protocol
         self.value = float(value)
@@ -102,7 +109,6 @@ class Service(threading.Thread):
                 self.msg_queue.put(item)
             time.sleep(0.1)
 
-
     def check(self, this_round, ipaddress, timeout):
         service_name = "%s/%s" % (self.port, self.protocol)
         penalty = self.value
@@ -111,25 +117,26 @@ class Service(threading.Thread):
             ############################################
             try:
                 if globalvars.verbose:
-                    self.logger.err("\t\tChecking for service %s/%s..." \
-                        % (self.port, self.protocol))
+                    self.elog += "\t\tChecking for service %s/%s..." \
+                        % (self.port, self.protocol)
                 addrport = [ipaddress, self.port]
                 mysock = socket.create_connection(addrport, timeout)
                 mysock.settimeout(timeout)
                 if globalvars.verbose:
-                    self.logger.err("connected!\n")
-                    self.logger.err("good\n")
+                    self.elog += "connected!\n"
+                    self.elog += "good\n"
             except:
                 if globalvars.verbose:
-                    self.logger.err("there was a problem...\n")
+                    self.elog += "there was a problem...\n"
                 penalty = self.value * 1
-                traceback.print_exc(file=self.logger)
+                self.elog += traceback.format_exc()
                 self.set_score(this_round, penalty)
+                return
             try:
                 pageindex = random.randint(0, len(self.pages)-1)
                 current_page = self.pages[pageindex]
                 if globalvars.verbose:
-                    self.logger.err("\t\t\tTrying to fetch %s..." % self.uri)
+                    self.elog += "\t\t\tTrying to fetch %s..." % self.uri
                 web_session = requests.Session()
                 if self.loginpage:
                     payload = {
@@ -150,10 +157,10 @@ class Service(threading.Thread):
                 content_max = current_page.get("size") + 100
                 if content_length >= content_min or content_length <= content_max:
                     if globalvars.verbose:
-                        self.logger.err("content length matched!\n")
-                        self.logger.err("good\n")
+                        self.elog += "content length matched!\n"
+                        self.elog += "good\n"
                 else:
-                    self.logger.err("Content-length: {} did not current_page size: {}.\n".format(content_length, current_page.get("size")))
+                    self.elog += "Content-length: {} did not current_page size: {}.\n".format(content_length, current_page.get("size"))
                     raise Exception('Content-length did not match size')
                 if "keywords" in current_page.keys():
                     for keyword in current_page.get("keywords"):
@@ -164,213 +171,161 @@ class Service(threading.Thread):
                 self.set_score(this_round, self.value * 0)
             except Exception as e:
                 if globalvars.verbose:
-                    self.logger.err("there was a problem...{}\n".format(e))
+                    self.elog += "there was a problem...{}\n".format(e)
                 penalty = self.value * 0.25
-                traceback.print_exc(file=self.logger)
-            ############################################
-            """
-            try:
-                if globalvars.verbose:
-                    self.logger.err("\t\t\tTrying to fetch %s..." % self.uri)
-                mysock.send(self.uri)
-                if globalvars.verbose:
-                    self.logger.err("requested...\n")
-            except:
-                if globalvars.verbose:
-                    self.logger.err("there was a problem:\n")
-                penalty = self.value * .75
-                traceback.print_exc(file=self.logger)
+                self.elog += traceback.format_exc()
                 self.set_score(this_round, penalty)
+                return
             ############################################
-            try:
-                if globalvars.verbose:
-                    self.logger.err("\t\t\tGetting data...")
-                data = mysock.recv(4098)
-                if globalvars.verbose:
-                    self.logger.err("fetched\n")
-            except:
-                if globalvars.verbose:
-                    self.logger.err("there was a problem...\n")
-                penalty = self.value * .50
-                traceback.print_exc(file=self.logger)
-                self.set_score(this_round, penalty)
-            ############################################
-            if globalvars.verbose:
-                self.logger.err("\t\t\tChecking data...")
-            if self.content_re:
-                if self.content_re.search(data):
-                    if globalvars.verbose:
-                        self.logger.err("good\n")
-                    self.set_score(this_round, self.value * 0)
-                else:
-                    if globalvars.verbose:
-                        self.logger.err("bad: %s\n" % data)
-                    self.set_score(this_round, self.value * .25)
-            elif score_str_re.search(data):
-                if globalvars.verbose:
-                    self.logger.err("good\n")
-                self.set_score(this_round, self.value * 0)
-            elif html1_str_re.search(data):
-                if globalvars.verbose:
-                    self.logger.err("good\n")
-                self.set_score(this_round, self.value * 0)
-            elif html2_str_re.search(data):
-                if globalvars.verbose:
-                    self.logger.err("good\n")
-                self.set_score(this_round, self.value * 0)
-            elif html3_str_re.search(data):
-                if globalvars.verbose:
-                    self.logger.err("good\n")
-                self.set_score(this_round, self.value * 0)
-            elif html4_str_re.search(data):
-                if globalvars.verbose:
-                    self.logger.err("good\n")
-                self.set_score(this_round, self.value * 0)
-            else:
-                if globalvars.verbose:
-                    self.logger.err("bad: %s\n" % data)
-                self.set_score(this_round, self.value * .25)
-        """
         elif tcp_21_re.match(service_name):
             ############################################
             try:
                 if globalvars.verbose:
-                    self.logger.err("\t\tChecking for service %s/%s..." \
-                        % (self.port, self.protocol))
+                    self.elog += "\t\tChecking for service %s/%s..." \
+                        % (self.port, self.protocol)
                 myftp = ftplib.FTP(timeout=timeout)
                 myftp.connect(ipaddress, self.port)
                 if globalvars.verbose:
-                    self.logger.err("connected!\n")
+                    self.elog += "connected!\n"
             except:
                 if globalvars.verbose:
-                    self.logger.err("there was a problem...\n")
+                    self.elog += "there was a problem...\n"
                 penalty = self.value * 1
-                traceback.print_exc(file=self.logger)
+                self.elog += traceback.format_exc()
                 self.set_score(this_round, penalty)
+                return
             ############################################
             try:
                 if globalvars.verbose:
-                    self.logger.err("\t\t\tTrying to login with %s and %s..." % \
-                                            (self.username, self.password))
+                    self.elog += "\t\t\tTrying to login with %s and %s..." % \
+                                            (self.username, self.password)
                 myftp.login(self.username, self.password)
                 if globalvars.verbose:
-                    self.logger.err("success!\n")
+                    self.elog += "success!\n"
             except:
                 if globalvars.verbose:
-                    self.logger.err("there was a problem...\n")
+                    self.elog += "there was a problem...\n"
                 penalty = self.value * 0.75
-                traceback.print_exc(file=self.logger)
+                self.elog += traceback.format_exc()
                 self.set_score(this_round, penalty)
+                return
             ############################################
             try:
                 if globalvars.verbose:
-                    self.logger.err("\t\t\tTrying to fetch %s..." % self.uri)
+                    self.elog += "\t\t\tTrying to fetch %s..." % self.uri
                 filename = "%s.%s" % (ipaddress, self.port)
                 file_obj = open(filename, "w")
                 myftp.set_pasv(False)
                 myftp.retrbinary("RETR scoring_file.txt", file_obj.write)
                 if globalvars.verbose:
-                    self.logger.err("requested...\n")
+                    self.elog += "requested...\n"
             except:
                 if globalvars.verbose:
-                    self.logger.err("there was a problem...\n")
+                    self.elog += "there was a problem...\n"
                 penalty = self.value * 0.50
-                traceback.print_exc(file=self.logger)
+                self.elog += traceback.format_exc()
                 self.set_score(this_round, penalty)
+                return
             ############################################
             try:
                 if globalvars.verbose:
-                    self.logger.err("\t\t\tChecking data...")
+                    self.elog += "\t\t\tChecking data..."
                 file_obj = open(filename)
                 for line in file_obj:
                     if score_str_re.match(line):
                         penalty = self.value * 0
                         if globalvars.verbose:
-                            self.logger.err("good\n")
+                            self.elog += "good\n"
                     else:
                         penalty = self.value * 0.25
                     self.set_score(this_round, penalty)
             except:
                 if globalvars.verbose:
-                    self.logger.err("bad: %s\n" % data)
+                    self.elog += "bad: %s\n" % data
                 penalty = self.value * 0.333
-                traceback.print_exc(file=self.logger)
+                self.elog += traceback.format_exc()
                 self.set_score(this_round, penalty)
+                return
         elif tcp_25_re.match(service_name):
             #self.set_score(this_round, 0)
-            #self.logger.err("NEED TO IMPLEMENT 25/TCP SCORE CHECKING!!\n")
+            #self.elog += "NEED TO IMPLEMENT 25/TCP SCORE CHECKING!!\n"
             ############################################
             try:
                 if globalvars.verbose:
-                    self.logger.err("\t\tChecking for service %s/%s..." \
-                        % (self.port, self.protocol))
+                    self.elog += "\t\tChecking for service %s/%s..." \
+                        % (self.port, self.protocol)
                 addrport = [ipaddress, self.port]
                 mysock = socket.create_connection(addrport, timeout)
                 mysock.settimeout(timeout)
                 if globalvars.verbose:
-                    self.logger.err("connected!\n")
+                    self.elog += "connected!\n"
             except:
                 if globalvars.verbose:
-                    self.logger.err("there was a problem...\n")
+                    self.elog += "there was a problem...\n"
                 penalty = self.value * 1
-                traceback.print_exc(file=self.logger)
+                self.elog += traceback.format_exc()
                 self.set_score(this_round, penalty)
+                return
             ############################################
             try:
                 if globalvars.verbose:
-                    self.logger.err("\t\tSending HELO..." )
+                    self.elog += "\t\tSending HELO..."
                 mysock.send("HELO mail")
                 if globalvars.verbose:
-                    self.logger.err("sent...\n")
+                    self.elog += "sent...\n"
             except:
                 if globalvars.verbose:
-                    self.logger.err("there was a problem:\n")
+                    self.elog += "there was a problem:\n"
                 penalty = self.value * .75
-                traceback.print_exc(file=self.logger)
+                self.elog += traceback.format_exc()
                 self.set_score(this_round, penalty)
+                return
             ############################################
             try:
                 if globalvars.verbose:
-                    self.logger.err("\t\t\tGetting data...")
+                    self.elog += "\t\t\tGetting data..."
                 data = mysock.recv(1024)
                 if globalvars.verbose:
-                    self.logger.err("fetched\n")
+                    self.elog += "fetched\n"
             except:
                 if globalvars.verbose:
-                    self.logger.err("there was a problem...\n")
+                    self.elog += "there was a problem...\n"
                 penalty = self.value * .50
-                traceback.print_exc(file=self.logger)
+                self.elog += traceback.format_exc()
                 self.set_score(this_round, penalty)
+                return
             ############################################
             if globalvars.verbose:
-                self.logger.err("\t\t\tChecking data...")
+                self.elog += "\t\t\tChecking data..."
             if self.mail_re.search(data):
                 if globalvars.verbose:
-                    self.logger.err("good\n")
+                    self.elog += "good\n"
                 self.set_score(this_round, self.value * 0)
             else:
                 if globalvars.verbose:
-                    self.logger.err("bad: %s\n" % data)
+                    self.elog += "bad: %s\n" % data
                 self.set_score(this_round, self.value * .25)
+                return
             ############################################
         else:
             try:
                 if globalvars.verbose:
-                    self.logger.err("\t\tChecking for service %s/%s..." \
-                        % (self.port, self.protocol))
+                    self.elog += "\t\tChecking for service %s/%s..." \
+                        % (self.port, self.protocol)
                 addrport = [ipaddress, self.port]
                 mysock = socket.create_connection(addrport, timeout)
                 mysock.settimeout(timeout)
                 if globalvars.verbose:
-                    self.logger.err("connected!\n")
+                    self.elog += "connected!\n"
                 penalty = self.value * 0
                 self.set_score(this_round, penalty)
             except:
                 if globalvars.verbose:
-                    self.logger.err("there was a problem...\n")
+                    self.elog += "there was a problem...\n"
                 penalty = self.value * 1
-                traceback.print_exc(file=self.logger)
+                self.elog += traceback.format_exc()
                 self.set_score(this_round, penalty)
+                return
             service_name = "%s/%s" % (str(self.port), str(self.protocol))
             self.set_score(this_round, penalty)
 
@@ -394,10 +349,12 @@ class Service(threading.Thread):
         this_penalty = penalty
         this_value = self.value - this_penalty
         this_time = time.strftime('%X %x %Z')
-        self.logger.out("%s Round %s host %s service %s score %s\n" % \
-                    (this_time, this_round, self.hostname, service_name, this_value))
-        self.logger.err("Round %s service %s score %s\n" % \
-                    (this_round, service_name, this_value))
+        self.equeue.put(self.elog)
+        self.oqueue.put(self.olog)
+        msg = "%s Round %s host %s service %s score %s\n" % \
+                    (this_time, this_round, self.hostname, service_name, this_value)
+        print msg
+        self.BToqueue.put(msg)
         self.scores.set_score(this_round, this_value)
 
     def get_state(self):
