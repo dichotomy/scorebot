@@ -51,12 +51,12 @@ class Host(threading.Thread):
         threading.Thread.__init__(self)
         self.hostname = hostname
         self.dns_servers = dns_servers
-        basename = "%s-%s" % (teamname, hostname)
+        self.basename = "%s-%s" % (teamname, hostname)
         self.oqueue = QueueP()
         self.equeue = QueueP()
         self.BToqueue = BToqueue
         self.BTequeue = BTequeue
-        self.logger = ThreadedLogger(basename, self.oqueue, self.equeue)
+        self.logger = ThreadedLogger(self.basename, self.oqueue, self.equeue)
         self.logger.start()
         self.ipaddress = None
         self.compromised = False
@@ -143,14 +143,20 @@ class Host(threading.Thread):
                     traceback.print_exc(file=self.equeue)
             score_round = True
             # Check to see if all our services have finished the last round
+            finished = []
+            not_finished = []
             for service in self.service_rounds:
                 if self.service_rounds[service]:
                     #sys.stdout.write("Host %s service %s done\n" % (self.hostname, service))
-                    continue
+                    finished.append(service)
                 else:
                     #self.equeue.put("Host %s service %s not done\n" % (self.hostname, service))
                     score_round = False
-                    break
+                    not_finished.append(service)
+            statfile = open("%s.status" % self.basename, "w")
+            statfile.write("%s finished: \n\t%s\n" % (self.basename, "\n\t".join(finished)))
+            statfile.write("%s not finished: \n\t%s\n" % (self.basename, "\n\t".join(not_finished)))
+            statfile.close()
             if score_round:
                 for service in self.service_rounds:
                     self.service_rounds[service] = False
@@ -176,7 +182,19 @@ class Host(threading.Thread):
                             self.equeue.put("Checking for %s(%s) with ping...\n" \
                                     % (self.hostname, self.ipaddress))
                         myping = Ping.Ping()
-                        results = myping.quiet_ping(self.ipaddress)
+                        count = 3
+                        while count:
+                            try:
+                                results = myping.quiet_ping(self.ipaddress)
+                                count = 0
+                            except:
+                                msg = "Had a problem: %s\n" % sys.exc_info()[0]
+                                msg += traceback.format_exc()
+                                if count:
+                                    msg += "\nTrying again...\n"
+                                else:
+                                    count -= 1
+                                self.equeue.write(msg)
                         percent_failed = int(results[0])
                         if percent_failed < 100:
                             # The host seems up, check the services

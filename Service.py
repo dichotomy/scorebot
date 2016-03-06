@@ -102,7 +102,8 @@ class Service(threading.Thread):
                 this_round = item[0]
                 ipaddress = item[1]
                 timeout = item[2]
-                self.check(this_round, ipaddress, timeout)
+                results = self.check(this_round, ipaddress, timeout)
+                self.set_score(results[0], results[1])
                 #print "Putting done for %s:%s/%s" % (self.hostname, self.port, self.protocol)
                 self.msg_queue.put("Done")
             else:
@@ -130,8 +131,7 @@ class Service(threading.Thread):
                     self.elog += "there was a problem...\n"
                 penalty = self.value * 1
                 self.elog += traceback.format_exc()
-                self.set_score(this_round, penalty)
-                return
+                return this_round, penalty
             try:
                 pageindex = random.randint(0, len(self.pages)-1)
                 current_page = self.pages[pageindex]
@@ -168,14 +168,13 @@ class Service(threading.Thread):
                             raise Exception(
                                 'Keywords {} not matched'.format(keyword)
                             )
-                self.set_score(this_round, self.value * 0)
+                return this_round, self.value * 0
             except Exception as e:
                 if globalvars.verbose:
                     self.elog += "there was a problem...{}\n".format(e)
                 penalty = self.value * 0.25
                 self.elog += traceback.format_exc()
-                self.set_score(this_round, penalty)
-                return
+                return this_round, penalty
             ############################################
         elif tcp_21_re.match(service_name):
             ############################################
@@ -192,8 +191,7 @@ class Service(threading.Thread):
                     self.elog += "there was a problem...\n"
                 penalty = self.value * 1
                 self.elog += traceback.format_exc()
-                self.set_score(this_round, penalty)
-                return
+                return this_round, penalty
             ############################################
             try:
                 if globalvars.verbose:
@@ -207,8 +205,7 @@ class Service(threading.Thread):
                     self.elog += "there was a problem...\n"
                 penalty = self.value * 0.75
                 self.elog += traceback.format_exc()
-                self.set_score(this_round, penalty)
-                return
+                return this_round, penalty
             ############################################
             try:
                 if globalvars.verbose:
@@ -224,28 +221,28 @@ class Service(threading.Thread):
                     self.elog += "there was a problem...\n"
                 penalty = self.value * 0.50
                 self.elog += traceback.format_exc()
-                self.set_score(this_round, penalty)
-                return
+                return this_round, penalty
             ############################################
             try:
                 if globalvars.verbose:
                     self.elog += "\t\t\tChecking data..."
                 file_obj = open(filename)
+                penalty = 0
                 for line in file_obj:
                     if score_str_re.match(line):
                         penalty = self.value * 0
-                        if globalvars.verbose:
-                            self.elog += "good\n"
+                        break
                     else:
                         penalty = self.value * 0.25
-                    self.set_score(this_round, penalty)
+                if globalvars.verbose:
+                    self.elog += "good\n"
+                return this_round, penalty
             except:
                 if globalvars.verbose:
                     self.elog += "bad: %s\n" % data
                 penalty = self.value * 0.333
                 self.elog += traceback.format_exc()
-                self.set_score(this_round, penalty)
-                return
+                return this_round, penalty
         elif tcp_25_re.match(service_name):
             #self.set_score(this_round, 0)
             #self.elog += "NEED TO IMPLEMENT 25/TCP SCORE CHECKING!!\n"
@@ -264,8 +261,7 @@ class Service(threading.Thread):
                     self.elog += "there was a problem...\n"
                 penalty = self.value * 1
                 self.elog += traceback.format_exc()
-                self.set_score(this_round, penalty)
-                return
+                return this_round, penalty
             ############################################
             try:
                 if globalvars.verbose:
@@ -278,8 +274,7 @@ class Service(threading.Thread):
                     self.elog += "there was a problem:\n"
                 penalty = self.value * .75
                 self.elog += traceback.format_exc()
-                self.set_score(this_round, penalty)
-                return
+                return this_round, penalty
             ############################################
             try:
                 if globalvars.verbose:
@@ -292,20 +287,18 @@ class Service(threading.Thread):
                     self.elog += "there was a problem...\n"
                 penalty = self.value * .50
                 self.elog += traceback.format_exc()
-                self.set_score(this_round, penalty)
-                return
+                return this_round, penalty
             ############################################
             if globalvars.verbose:
                 self.elog += "\t\t\tChecking data..."
             if self.mail_re.search(data):
                 if globalvars.verbose:
                     self.elog += "good\n"
-                self.set_score(this_round, self.value * 0)
+                return  this_round, self.value * 0
             else:
                 if globalvars.verbose:
                     self.elog += "bad: %s\n" % data
-                self.set_score(this_round, self.value * .25)
-                return
+                return this_round, self.value * .25
             ############################################
         else:
             try:
@@ -318,16 +311,13 @@ class Service(threading.Thread):
                 if globalvars.verbose:
                     self.elog += "connected!\n"
                 penalty = self.value * 0
-                self.set_score(this_round, penalty)
+                return this_round, penalty
             except:
                 if globalvars.verbose:
                     self.elog += "there was a problem...\n"
                 penalty = self.value * 1
                 self.elog += traceback.format_exc()
-                self.set_score(this_round, penalty)
-                return
-            service_name = "%s/%s" % (str(self.port), str(self.protocol))
-            self.set_score(this_round, penalty)
+                return this_round, penalty
 
 
     def get_score(self, this_round):

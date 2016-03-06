@@ -155,13 +155,19 @@ class BlueTeam(threading.Thread):
             score_round = True
             # Check to see if all hosts have finished the last round
             donemsg = ""
+            finished = []
+            not_finished = []
             for host in self.hosts_rounds:
                 if self.hosts_rounds[host]:
                     donemsg += "%s, " % host
-                    continue
+                    finished.append(host)
                 else:
                     score_round = False
-                    break
+                    not_finished.append(host)
+            statfile = open("%s.status" % self.teamname, "w")
+            statfile.write("Team %s round %s not finished: \n\t%s\n" % (self.teamname, self.this_round, "\n\t".join(not_finished)))
+            statfile.write("Team %s round %s finished: \n\t%s\n" % (self.teamname, self.this_round, "\n\t".join(finished)))
+            statfile.close()
             if donemsg:
                 failmsg = "Failed: "
                 for host in self.hosts_rounds:

@@ -66,7 +66,7 @@ function setCredits() {
     if ((a == 1) || (a == 2)) {
         var h5_credit = $("<h5>", {
             "class": "credit",
-            html: "The Pros V Joes 2015 build and support crew:  Gi0cann, idigitalflame, "
+            html: "The Pros V Joes 2016 build and support crew:  Gi0cann, idigitalflame"
         });
         h5_credit.appendTo("#creditslist");
     } else if ((a == 3) || (a == 4 )) {

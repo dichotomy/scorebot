@@ -35,7 +35,7 @@ import jaraco.modb
 import globalvars
 from bson.objectid import ObjectId
 from decoder import *
-from Logger import Logger
+from Logger import Logger, ThreadedLogger, QueueP
 from FlagStore import FlagStore
 from FlagServer import FlagServer
 from Scoreboard import Scoreboard
@@ -54,6 +54,10 @@ class CTFgame(threading.Thread):
         self.flag_answer_queue = Queue.Queue()
         self.msg_queue = Queue.Queue()
         self.logger_obj = Logger("scorebot")
+        self.oqueue = Queue.Queue()
+        self.equeue = Queue.Queue()
+        self.logger = ThreadedLogger("ctfgame.log", self.oqueue, self.equeue)
+        self.logger.start()
         self.pp = pprint.PrettyPrinter(indent=2)
         self.blues_queues = {}
         self.teams_rounds = {}
@@ -79,7 +83,6 @@ class CTFgame(threading.Thread):
                 raise Exception("No config section in restore object!")
             self.message_store = MessageStore(self.logger_obj, self.msg_queue)
             self.flag_server = FlagServer(self.logger_obj, self.flag_queue, self.flag_answer_queue, self.msg_queue)
-            #self.myscoreboard = Scoreboard(self.blue_teams, self.flag_store, self.message_store)
             for team in self.blue_teams.keys():
                 self.blue_teams[team].add_queue(self.flag_queue)
             if "scores" in game:
@@ -105,7 +108,6 @@ class CTFgame(threading.Thread):
             (self.blue_teams, self.injects) = self.json_cfg_obj.process()
             self.message_store = MessageStore(self.logger_obj, self.msg_queue)
             self.flag_server = FlagServer(self.logger_obj, self.flag_queue, self.flag_answer_queue, self.msg_queue)
-            #self.myscoreboard = Scoreboard(self.blue_teams, self.flag_store, self.message_store)
             for team in self.blue_teams.keys():
                 self.blue_teams[team].add_queue(self.flag_queue)
                 blue_queue = Queue.Queue()
@@ -128,7 +130,7 @@ class CTFgame(threading.Thread):
                 if globalvars.debug:
                     pp.pprint(json_obj)
                 self.obj_id = self.col.save(json_obj)
-                print "Saved Game ID %s" % self.obj_id
+                self.oqueue.put("Saved Game ID %s" % self.obj_id)
                 self.save_time += self.save_interval
             for team in self.blues_queues:
                 try:
@@ -149,13 +151,15 @@ class CTFgame(threading.Thread):
             score_round = True
             # Check to see if all hosts have finished the last round
             donemsg = ""
+            finished = []
+            not_finished = []
             for team in self.teams_rounds:
                 if self.teams_rounds[team]:
                     donemsg += "%s, " % team
-                    continue
+                    finished.append(team)
                 else:
                     score_round = False
-                    break
+                    not_finished.append(team)
             if donemsg:
                 failmsg = "Failed: "
                 for team in self.teams_rounds:
@@ -168,21 +172,25 @@ class CTFgame(threading.Thread):
                 for team in self.teams_rounds:
                     self.teams_rounds[team] = False
             now = time.time()
+            statfile = open("scorebot.status", "w")
+            statfile.write("Round %s, teams %s not finished\n" % (self.this_round, ",".join(not_finished)))
+            statfile.write("Round %s, teams %s finished\n" % (self.this_round, ", ".join(finished)))
+            statfile.write("Go time:   %s\nNow time:  %s\n" % (self.go_time, now))
+            statfile.close()
             if self.go_time <= now and not self.inround:
                 try:
                     # Report times so that we know whether or not the last round ran too long
                     for team in self.blues_queues:
-                        print "Starting Service check for Blueteam %s.  Go time was %s, now is %s." % \
-                              (team, self.go_time, now)
+                        self.oqueue.put("Starting Service check for Blueteam %s.  Go time was %s, now is %s." % (team, self.go_time, now))
                         self.blues_queues[team].put(["Go", self.this_round], 1)
                     self.this_round += 1
                     self.go_time += self.interval
-                    print "New go time is %s" % self.go_time
+                    self.oqueue.put("New go time is %s" % self.go_time)
                     self.inround = True
                 except:
                     traceback.print_exc(file=self.logger_obj)
             else:
-                time.sleep(0.1)
+                time.sleep(1)
 
     def build_json(self):
         # master hash for the whole thing
