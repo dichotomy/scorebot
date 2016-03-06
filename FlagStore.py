@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 import re
 import sys
+import cgi
 import time
 import Queue
 import random
@@ -116,6 +117,7 @@ class FlagStore(threading.Thread):
                             self.bogus[thief] = [flag]
                 elif msg_type == 1:
                     (label, bandit) = match_obj.groups()
+                    bandit = cgi.escape(bandit)
                     if bandit in self.bandits:
                         msg = "\t%s already registered once, regenerating key...\n"
                         self.logger.out(msg)
