@@ -283,9 +283,9 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"player_id":"1", "activ
         raise BadRequest("Flag with id of %d not found" % flag_id)
     if 'player_id' in request.json:
         player_id = request.json['player_id']
-    player = Players.query.get(flag_id)
+    player = Players.query.get(player_id)
     if not player:
-        raise BadRequest("Player with id of %d not found" % flag_id)
+        raise BadRequest("Player with id of %d not found" % player_id)
     if 'activity' in request.json:
         activity = request.json['activity']
     else:
@@ -310,9 +310,9 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"player_id":"1", "activ
         raise BadRequest("Flag with id of %d not found" % flag_id)
     if 'player_id' in request.json:
         player_id = request.json['player_id']
-    player = Players.query.get(flag_id)
+    player = Players.query.get(player_id)
     if not player:
-        raise BadRequest("Player with id of %d not found" % flag_id)
+        raise BadRequest("Player with id of %d not found" % player_id)
     if 'activity' in request.json:
         activity = request.json['activity']
     else:
