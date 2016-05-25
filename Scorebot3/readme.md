@@ -4,7 +4,7 @@ There may be bugs.
 
 Requirments:
  - MySQL or Postgres
-  - MySQL must use PyMSQL (pip install PyMYSQL)
+  - MySQL must use PyMSQL & MySQLClient (pip install PyMYSQL && pip install mysqlclient)
  - Python 3.5 (no 2.X BS)
  - PIP
  - Django (pip install django)
@@ -13,6 +13,13 @@ Requirments:
  - Apache2
  - Mod Wsgi for Apache
  - Python Virtual-Env
+
+PIP Output of Packages (For those who need this):
+Django==1.9.4
+django-ipware==1.1.5
+django-picklefield==0.3.2
+mysqlclient==1.3.7
+PyMySQL==0.7.2
 
 How to install:
  - Install Python, PIP, Apache, WSGI and Python Env
@@ -38,12 +45,12 @@ TODO: Create a script for this.
 <VirtualHost *:80>
     Alias /static /scorebot/v3.02/static
     <Directory /scorebot/v3.02/static>
-	Require all granted
+    	Require all granted
     </Directory>
     <Directory /scorebot/v3.02>
-	<Files wsgi.py>
-	    Require all granted
-	</Files>
+    <Files wsgi.py>
+    	Require all granted
+    </Files>
     </Directory>
     WSGIDaemonProcess scorebotv3 python-path=/scorebot/v3.02:/scorebot/pyvirt/lib/python3.5/site-packages
     WSGIProcessGroup scorebotv3
