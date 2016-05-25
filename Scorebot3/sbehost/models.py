@@ -112,6 +112,9 @@ class GameTeam(models.Model):
     def __len__(self):
         return self.team_score_basic + self.team_score_beacons + self.team_score_flags + self.team_score_tickets
 
+    def __str__(self):
+        return 'Team %s (Score: %d)' % (self.get_team_name(), self.__len__())
+
     def get_team_name(self):
         # Use this instead of .name
         if self.team_inst:
