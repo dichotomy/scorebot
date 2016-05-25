@@ -8,7 +8,7 @@ Requirments:
  - Python 3.5 (no 2.X BS)
  - PIP
  - Django (pip install django)
- - Djago IPWare (pip install django-ipware)
+ - Django IPWare (pip install django-ipware)
  - Django Pickledfield (pip install django-pickledfield)
  - Apache2
  - Mod Wsgi for Apache
