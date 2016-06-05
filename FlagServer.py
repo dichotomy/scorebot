@@ -31,6 +31,7 @@ import re
 import random
 import Queue
 import time
+import cgi
 
 class Responses(object):
 
@@ -122,6 +123,7 @@ class FlagHandler(SocketServer.BaseRequestHandler):
             elif self.message_re.match(clean_data):
                 reply = self.message_re.match(clean_data)
                 (message,) = reply.groups()
+                message = cgi.escape(message)
                 self.server.logger.out("%s:%d sent |%s|\n" %
                                  (self.client_address[0], self.client_address[1],
                                   data.strip()))
