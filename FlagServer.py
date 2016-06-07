@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 '''
 import sys
+import cgi
 import traceback
 import SocketServer
 import globalvars
@@ -119,9 +120,10 @@ class FlagHandler(SocketServer.BaseRequestHandler):
                 else:
                     self.mischief()
             # Banner system update
-            elif self.message_re.match(clean_data):
+            elif self.message_re.match(clean_data) and self.client_address[0] in globalvars.message_ip:
                 reply = self.message_re.match(clean_data)
                 (message,) = reply.groups()
+                message = cgi.escape(message)
                 self.server.logger.out("%s:%d sent |%s|\n" %
                                  (self.client_address[0], self.client_address[1],
                                   data.strip()))

@@ -35,7 +35,7 @@ from Scores import Scores
 from Logger import ThreadedLogger, QueueP
 from Service import Service
 
-ctfnet_re = re.compile("^10")
+ctfnet_re = re.compile("^"+globalvars.ctfnet_re_ip)
 score_str = "Round %s host %s scored %s\n"
 DNS.ParseResolvConf()
 

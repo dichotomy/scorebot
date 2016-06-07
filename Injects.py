@@ -35,7 +35,7 @@ class Injects(threading.Thread):
     classdocs
     '''
 
-    def __init__(self, smtp_ip="10.150.100.70"):
+    def __init__(self, smtp_ip=globalvars.goldcell_mail_svr):
         '''
         Constructor
         '''
@@ -48,7 +48,7 @@ class Injects(threading.Thread):
         self.smtpserver = smtplib.SMTP()
         self.start_time = time.time()
         self.to_addresses = {}
-        self.from_address = '"Gold Team" <admin@goldteam.net>'
+        self.from_address = globalvars.goldcell_email
         self.teams = []
         self.did_time = None
         self.ticket_objs = {}

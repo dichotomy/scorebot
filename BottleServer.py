@@ -212,5 +212,5 @@ class BottleServer(threading.Thread):
         return flags
 
 if __name__=="__main__":
-    server = BottleServer(host='localhost', port=8090)
+    server = BottleServer(host='localhost', port=globalvars.web_port)
     server.start()
