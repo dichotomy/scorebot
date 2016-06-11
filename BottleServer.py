@@ -25,12 +25,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
 from bottle import *
-import sys
-import logging
 import threading
-import traceback
 import globalvars
-from Logger import Logger
+import logging
+from functools import wraps
+
+
+logger = logging.getLogger('BottleServer')
+logger.setLevel(logging.INFO)
+log_file = logging.FileHandler('logs/BottleServer.log')
+formatter = logging.Formatter('%(msg)s')
+log_file.setLevel(logging.DEBUG)
+log_file.setFormatter(formatter)
+logger.addHandler(log_file)
+
+def log_to_logger(log_file):
+    @wraps(log_file)
+    def _log_to_logger(*args, **kwargs):
+        request_time = datetime.now()
+        actual_response = log_file(*args, **kwargs)
+        logger.info('%s %s %s %s %s' % (request.remote_addr, request_time, request.method, request.url, response.status))
+        return actual_response
+    return _log_to_logger
 
 
 class BottleServer(threading.Thread):
@@ -40,8 +56,8 @@ class BottleServer(threading.Thread):
         self._host = host
         self._port = port
         self._app = Bottle()
+        self._app.install(log_to_logger)
         self._route()
-        self.logger = Logger("BottleServer")
         self.teams = teams
         self.movies = movies
         self.flag_store = flag_store
@@ -67,9 +83,10 @@ class BottleServer(threading.Thread):
         self._app.route('/tickets', callback=self._tickets)
         self._app.route('/redcell', callback=self._redcell)
         self._app.route('/teamnames', callback=self._teamnames)
+        self._app.route('/', callback=self._index)
 
     def run(self):
-        self._app.run(host=self._host, port=self._port, server="paste")
+        self._app.run(host=self._host, port=self._port, server="paste", quiet=globalvars.quiet)
 
     def _teamnames(self):
         teamnames = {"teamnames":[]}
@@ -92,7 +109,7 @@ class BottleServer(threading.Thread):
     def _images(self, filename):
         return static_file(filename, root="images")
 
-    def _index(self, filename="scoreboard.html"):
+    def _index(self, filename="scoreboard2.html"):
         if filename in self.whitelist:
             return static_file(filename, root="")
         else:
