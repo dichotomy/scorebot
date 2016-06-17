@@ -37,6 +37,19 @@ p {
     height: 20px;
 }
 
+.pwned {
+        background-color: #FFFF00;
+    background-image: url('/images/redskullt.png');
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 60px;
+    float: left;
+    border: 2px solid;
+    border-radius: 25px;
+    height: 20px;
+}
+
 .empty {
     width: 60px;
     float: left;

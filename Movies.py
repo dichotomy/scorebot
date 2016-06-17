@@ -56,7 +56,7 @@ class Movies(object):
         for filename in os.listdir(self.movie_dir):
             full_filename = os.path.join(self.movie_dir, filename)
             try:
-                p = subprocess.Popen(["ffmpeg", "-i", full_filename], \
+                p = subprocess.Popen(["avconv", "-i", full_filename], \
                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = p.communicate()
             except:

@@ -172,7 +172,7 @@ class CTFgame(threading.Thread):
                 for team in self.teams_rounds:
                     self.teams_rounds[team] = False
             now = time.time()
-            statfile = open("scorebot.status", "w")
+            statfile = open("status/scorebot.status", "w")
             statfile.write("Round %s, teams %s not finished\n" % (self.this_round, ",".join(not_finished)))
             statfile.write("Round %s, teams %s finished\n" % (self.this_round, ", ".join(finished)))
             statfile.write("Go time:   %s\nNow time:  %s\n" % (self.go_time, now))
@@ -227,4 +227,3 @@ class CTFgame(threading.Thread):
         self.message_store.start()
         self.injects.start()
         self.bottle_server.start()
-
