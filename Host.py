@@ -153,7 +153,7 @@ class Host(threading.Thread):
                     #self.equeue.put("Host %s service %s not done\n" % (self.hostname, service))
                     score_round = False
                     not_finished.append(service)
-            statfile = open("%s.status" % self.basename, "w")
+            statfile = open("status/%s.status" % self.basename, "w")
             statfile.write("%s finished: \n\t%s\n" % (self.basename, "\n\t".join(finished)))
             statfile.write("%s not finished: \n\t%s\n" % (self.basename, "\n\t".join(not_finished)))
             statfile.close()

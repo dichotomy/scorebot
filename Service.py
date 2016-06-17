@@ -22,7 +22,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 import re
-import sys
 import time
 import ftplib
 import socket
@@ -31,7 +30,6 @@ import threading
 import globalvars
 import random
 import requests
-from Logger import Logger
 from Scores import Scores
 
 score_str_re = re.compile("Gold Team scoring file, do not touch")
@@ -39,6 +37,7 @@ html1_str_re = re.compile("It works")
 html2_str_re = re.compile("IIS")
 html3_str_re = re.compile("lamp")
 html4_str_re = re.compile("Wordpress")
+redcell_str_re = re.compile("#Redcell", re.IGNORECASE)
 
 tcp_80_re = re.compile("80/tcp")
 tcp_21_re = re.compile("21/tcp")
@@ -73,7 +72,9 @@ class Service(threading.Thread):
         self.uri = "GET /%s\r\n\r\n" % uri
         self.up = False
         self.functional = False
+        self.redcell_here = False
         self.content = content
+        self.teamname = teamname
         if self.content:
             if self.port != 80:
                 self.content_re = re.compile(str(self.content))
@@ -149,6 +150,12 @@ class Service(threading.Thread):
                     )
                 url = "http://{}{}".format(ipaddress, current_page.get("url"))
                 result = web_session.get(url, timeout=timeout)
+                if redcell_str_re.search(result.text) is not None:
+                    self.redcell_here = True
+                    self.elog += "#Redcell tag was detected"
+                    return this_round, self.value * 0
+                else:
+                    self.redcell_here = False
                 try:
                     content_length = int(result.headers.get('content_length'))
                 except:
@@ -210,7 +217,7 @@ class Service(threading.Thread):
             try:
                 if globalvars.verbose:
                     self.elog += "\t\t\tTrying to fetch %s..." % self.uri
-                filename = "%s.%s" % (ipaddress, self.port)
+                filename = "status/%s-%s.%s" % (self.teamname, ipaddress, self.port)
                 file_obj = open(filename, "w")
                 myftp.set_pasv(False)
                 myftp.retrbinary("RETR scoring_file.txt", file_obj.write)
@@ -232,6 +239,9 @@ class Service(threading.Thread):
                     if score_str_re.match(line):
                         penalty = self.value * 0
                         break
+                    elif redcell_str_re.search(line):
+                        penalty = self.value * 0.25
+                        self.redcell_here = True
                     else:
                         penalty = self.value * 0.25
                 if globalvars.verbose:
@@ -348,10 +358,14 @@ class Service(threading.Thread):
         self.scores.set_score(this_round, this_value)
 
     def get_state(self):
+        # Returns 3 if up and fucntional, but redcell has taken it over
         # Returns 2 if up and functional
         # Returns 1 if up but not functional
         # Returns 0 if down
-        return self.up + self.functional
+        if self.redcell_here == True:
+            return 3
+        else:
+            return self.up + self.functional
 
     def get_scores(self):
         return self.scores
