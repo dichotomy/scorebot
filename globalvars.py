@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 verbose = False
 quick = False
 debug = False
+quiet = True  #Setting this to false will have all web logs outputted to console
+nomovie = True
 binjitsu = False
 dns = "172.16.33.3"
 sep = "=" * 80
