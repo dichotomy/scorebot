@@ -119,18 +119,14 @@ class FlagStore(threading.Thread):
                     (label, bandit) = match_obj.groups()
                     bandit = cgi.escape(bandit)
                     if bandit in self.bandits:
-                        msg = "\t%s already registered once, regenerating key...\n"
+                        msg = "\t%s already registered once, adding new key...\n"
                         self.logger.out(msg)
-                        key = int(random.random() * 10000000)
-                        self.bandit_keys[key] = bandit
-                        self.answer_queue.put([msg_id, key])
-                        self.logger.out("%s registered with key %s\n" % (bandit, key))
                     else:
                         self.bandits[bandit] = []
-                        key = int(random.random() * 10000000)
-                        self.bandit_keys[key] = bandit
-                        self.answer_queue.put([msg_id, key])
-                        self.logger.out("%s registered with key %s\n" % (bandit, key))
+                    key = int(random.random() * 10000000)
+                    self.bandit_keys[key] = bandit
+                    self.answer_queue.put([msg_id, key])
+                    self.logger.out("%s registered with key %s\n" % (bandit, key))
                 elif msg_type == 2:
                     (team, flag) = match_obj.groups()
                     self.logger.out("Got integrity sumbission %s:%s\n" % (team,flag))
