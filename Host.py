@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 import re
 import sys
+import os
 import time
 import Queue
 import traceback
@@ -32,7 +33,7 @@ import Ping
 import globalvars
 import jsonpickle
 from Scores import Scores
-from Logger import ThreadedLogger, QueueP
+from Logger import ThreadedLogger, QueueP, Logger
 from Service import Service
 
 ctfnet_re = re.compile("^"+globalvars.ctfnet_re_ip)
@@ -153,6 +154,11 @@ class Host(threading.Thread):
                     #self.equeue.put("Host %s service %s not done\n" % (self.hostname, service))
                     score_round = False
                     not_finished.append(service)
+            try:
+                statfile = open("status/%s.status" % self.basename, "w")
+            except IOError:
+                os.makedirs("status/")
+                statfile = open("status/%s.status" % self.basename, "w")
             statfile = open("status/%s.status" % self.basename, "w")
             statfile.write("%s finished: \n\t%s\n" % (self.basename, "\n\t".join(finished)))
             statfile.write("%s not finished: \n\t%s\n" % (self.basename, "\n\t".join(not_finished)))

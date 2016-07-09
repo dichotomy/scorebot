@@ -32,7 +32,7 @@ import random
 import requests
 from Scores import Scores
 
-score_str_re = re.compile("Gold Team scoring file, do not touch")
+score_str_re = re.compile("#BlueTeam", re.IGNORECASE)
 html1_str_re = re.compile("It works")
 html2_str_re = re.compile("IIS")
 html3_str_re = re.compile("lamp")
@@ -152,7 +152,7 @@ class Service(threading.Thread):
                 result = web_session.get(url, timeout=timeout)
                 if redcell_str_re.search(result.text) is not None:
                     self.redcell_here = True
-                    self.elog += "#Redcell tag was detected"
+                    self.elog += "#Redcell tag was detected..\n"
                     return this_round, self.value * 0
                 else:
                     self.redcell_here = False
@@ -238,11 +238,12 @@ class Service(threading.Thread):
                 for line in file_obj:
                     if score_str_re.match(line):
                         penalty = self.value * 0
-                        break
+                        self.redcell_here = False
                     elif redcell_str_re.search(line):
                         penalty = self.value * 0.25
                         self.redcell_here = True
                     else:
+                        self.redcell_here = False
                         penalty = self.value * 0.25
                 if globalvars.verbose:
                     self.elog += "good\n"

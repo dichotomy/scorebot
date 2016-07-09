@@ -25,7 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 __author__ = 'dichotomy'
 
-import sys
 import time
 import Queue
 import pprint
@@ -38,7 +37,6 @@ from decoder import *
 from Logger import Logger, ThreadedLogger, QueueP
 from FlagStore import FlagStore
 from FlagServer import FlagServer
-from Scoreboard import Scoreboard
 from JsonConfig import JsonConfig
 from MessageStore import MessageStore
 from BottleServer import BottleServer
