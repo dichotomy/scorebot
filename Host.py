@@ -51,7 +51,7 @@ class Host(threading.Thread):
         threading.Thread.__init__(self)
         self.hostname = hostname
         self.dns_servers = dns_servers
-        self.basename = "%s-%s" % (teamname, hostname)
+        self.basename = "%s-%s" % (teamname, hopstname)
         self.oqueue = QueueP()
         self.equeue = QueueP()
         self.BToqueue = BToqueue
@@ -63,10 +63,12 @@ class Host(threading.Thread):
         self.services = {}
         self.service_queues = {}
         self.service_rounds = {}
+        self.service_scores = {}
         self.value = value
         self.scores = Scores()
         self.timeout = timeout
         self.msgqueue = msgqueue
+        self.latest_round = 1
 
     def add_dns(self, dnssvr):
         if dnssvr in self.dns_servers:
@@ -76,7 +78,7 @@ class Host(threading.Thread):
 
     def del_dns(self, dnssvr):
         if dnssvr in self.dns_servers:
-            index = self.dns.nameservers.index(dnssvr)
+            index = self.dns_servers.index(dnssvr)
             self.dns_servers.pop(index)
         else:
             pass
@@ -86,6 +88,7 @@ class Host(threading.Thread):
             mydns = ", ".join(self.dns_servers)
             self.equeue.put("Looking up %s with %s\n" % (self.hostname, mydns))
         try:
+            ipaddress = None
             for svr in self.dns_servers:
                 # We set a short timeout because life moves too fast...so does the game!
                 r = DNS.DnsRequest(self.hostname, qtype="A", server=[svr], protocol='udp', timeout=60)
@@ -96,13 +99,16 @@ class Host(threading.Thread):
                         break
                     else:
                         self.equeue.put("Failed to get DNS!")
-            if ctfnet_re.search(ipaddress):
-                if globalvars.verbose:
-                    self.equeue.put("got %s\n" % self.ipaddress)
-                self.ipaddress = ipaddress
-                return True
+            if ipaddress:
+                if ctfnet_re.search(ipaddress):
+                    if globalvars.verbose:
+                        self.equeue.put("got %s\n" % self.ipaddress)
+                    self.ipaddress = ipaddress
+                    return True
+                else:
+                    self.equeue.put("Got non RFC1918: %s\n" % ipaddress)
+                    return False
             else:
-                self.equeue.put("Got non RFC1918: %s\n" % ipaddress)
                 return False
         except:
             traceback.print_exc(file=self.equeue)

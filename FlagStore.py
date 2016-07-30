@@ -97,7 +97,11 @@ class FlagStore(threading.Thread):
                                     self.answer_queue.put([msg_id, "This ain't Binjisu!!"])
                                     raise Exception("Bad flag submission")
                                 elif thief in self.bandits:
-                                    self.bandits[thief].append(name)
+                                    if name in self.bandits[thief]:
+                                        self.answer_queue.put([msg_id, "You've already submitted this flag!!"])
+                                        raise Exception("Duplicate flag submission")
+                                    else:
+                                        self.bandits[thief].append(name)
                                 else:
                                     self.answer_queue.put([msg_id, "bogus idenity %s!" % thief])
                                     raise Exception("Bad flag submission")
@@ -152,6 +156,7 @@ class FlagStore(threading.Thread):
                         self.logger.err(msg % (flag, team))
                 elif msg_type == 3:
                     resp_match = match_obj[0]
+                    #The IP address of the pwned asset
                     pwned = match_obj[1]
                     key = int(resp_match.groups()[0])
                     print "Got key %s from %s" % (key,pwned)

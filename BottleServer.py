@@ -28,6 +28,7 @@ from bottle import *
 import threading
 import globalvars
 import logging
+import random
 from functools import wraps
 
 
@@ -64,6 +65,10 @@ class BottleServer(threading.Thread):
         self.message_store = message_store
         self.whitelist = ["scoreboard.html", "movie.html", "scoreboard2.html"]
         self.all_flags_found = []
+        self.redcell_key = str(random.random())
+        keyfile = open("redcell_key.txt", "w")
+        keyfile.write("%s\n" % self.redcell_key)
+        keyfile.close()
 
     def _route(self):
         self._app.route('/<filename>', method="GET", callback=self._index)
@@ -80,6 +85,8 @@ class BottleServer(threading.Thread):
         self._app.route('/flags', callback=self._flags)
         self._app.route('/flags2', callback=self._flags2)
         self._app.route('/beacons', callback=self._beacons)
+        self._app.route('/beacons/teams', callback=self._beacons_teams)
+        self._app.route('/beacons/status/<key>', callback=self._beacons_status)
         self._app.route('/tickets', callback=self._tickets)
         self._app.route('/redcell', callback=self._redcell)
         self._app.route('/teamnames', callback=self._teamnames)
@@ -136,6 +143,19 @@ class BottleServer(threading.Thread):
                             redcell[bandit]["beacons"][team] = 1
         return redcell
 
+    def _beacons_teams(self):
+        beaconlist = self.flag_store.get_beacons()
+        beacon_teams = {}
+        for bandit in beaconlist:
+            for pwned in beaconlist[bandit]:
+                for team in self.teams:
+                    if self.teams[team].has_ip(pwned):
+                        if team in beacon_teams:
+                            beacon_teams[team] += 1
+                        else:
+                            beacon_teams[team] = 1
+        return beacon_teams
+
     def _beacons(self):
         beaconlist = self.flag_store.get_beacons()
         beacons = {}
@@ -149,6 +169,13 @@ class BottleServer(threading.Thread):
                         else:
                             beacons[bandit][team] = 1
         return beacons
+
+    def _beacons_status(self, key):
+        if str(key) == self.redcell_key:
+            beaconlist = self.flag_store.get_beacons()
+            return beaconlist
+        else:
+            return []
 
     def _tickets(self):
         team_tickets = {}

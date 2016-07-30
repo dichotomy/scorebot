@@ -701,34 +701,32 @@ function getHealth(){
 }
 
 function getBeacons() {
-    $.getJSON("http://localhost:8090/beacons", function(data) {
+    $.getJSON("http://localhost:8090/beacons/teams", function(data) {
         $(".healthredskull").remove();
         $(".beacon_label").remove();
         $(".beacon_block").remove();
         $(".skulllabel").remove();
-        $.each (data, function(bandit, beacons) {
-            $.each(beacons, function(team, count) {
-                var h5_team = $( "<h5>", {
-                    "class": "skulllabel",
-                    html:team
-                });
-                var div_team = $( "<div>", {
-                    "class": "beacon_label",
-                    html: h5_team
-                });
-                div_team.appendTo("#BeaconBlock");
-                for (i=0; i<count; i++) {
-                    var skull_img = $( "<img>", {
-                        "src": "/images/redskull.jpeg",
-                        "class": "healthredskull"
-                    });
-                    var div_img = $( "<div>", {
-                        "class": "beacon_block",
-                        html: skull_img
-                    });
-                    div_img.appendTo("#BeaconBlock");
-                }
+        $.each (data, function(team, count) {
+            var h5_team = $( "<h5>", {
+                "class": "skulllabel",
+                html:team
             });
+            var div_team = $( "<div>", {
+                "class": "beacon_label",
+                html: h5_team
+            });
+            div_team.appendTo("#BeaconBlock");
+            for (i=0; i<count; i++) {
+                var skull_img = $( "<img>", {
+                    "src": "/images/redskull.jpeg",
+                    "class": "healthredskull"
+                });
+                var div_img = $( "<div>", {
+                    "class": "beacon_block",
+                    html: skull_img
+                });
+                div_img.appendTo("#BeaconBlock");
+            }
         });
     });
 }
