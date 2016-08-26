@@ -375,14 +375,12 @@ class BlueTeam(threading.Thread):
         service_score = raw_service_score / 10
         self.service_scores[self.this_round] = service_score
         # Ticket scoring
-        (all_tickets, closed_tickets) = self.get_tickets()
-        all_tickets = int(all_tickets)
+        (open_tickets, closed_tickets) = self.get_tickets()
         closed_tickets = int(closed_tickets)
-        open_tickets = all_tickets - closed_tickets
-        if closed_tickets > open_tickets:
-            ticket_score = 0
-        else:
-            ticket_score = (closed_tickets - open_tickets) * 50
+        open_tickets = int(open_tickets)
+        all_tickets = closed_tickets + open_tickets
+        ticket_score = 0 if closed_tickets > open_tickets else (closed_tickets - open_tickets) * 50
+
         if all_tickets < closed_tickets:
             self.equeue.put("There are more closed tickets than all for %s!" % self.teamname)
         self.ticket_scores[self.this_round] = ticket_score
