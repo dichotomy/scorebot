@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
 import os
+import globalvars
 import os.path
 import time
 import Queue
@@ -73,11 +74,11 @@ class QueueP(Queue.Queue):
 class ThreadedLogger(threading.Thread):
 
 
-    def __init__(self, basename, oqueue, equeue, path="logs"):
+    def __init__(self, basename, path="logs"):
         threading.Thread.__init__(self)
         self.basename = basename
-        self.oqueue = oqueue
-        self.equeue = equeue
+        self.oqueue = QueueP()
+        self.equeue = QueueP()
         if os.path.exists(path):
             pass
         else:
@@ -87,20 +88,40 @@ class ThreadedLogger(threading.Thread):
         self.outfile = open(self.outfilename, "a")
         self.errfile = open(self.errfilename, "a")
 
+    def get_oqueue(self):
+        return self.oqueue
+
+    def get_equeue(self):
+        return self.equeue
+
     def run(self):
         while True:
             try:
+                if globalvars.verbose:
+                    eqsze = self.equeue.qsize()
+                    oqsze = self.oqueue.qsize()
+                    if eqsze > 0:
+                        print "B Log %s equeue has %s logs" % (self.basename, eqsze)
+                    if oqsze > 0:
+                        print "B Log %s oqueue has %s logs" % (self.basename, oqsze)
                 e_item = self.equeue.get(False)
                 if e_item:
-                    self.err(e_item)
+                    self.put_err(e_item)
                 o_item = self.oqueue.get(False)
                 if o_item:
-                    self.out(o_item)
+                    self.put_out(o_item)
+                if globalvars.verbose:
+                    eqsze = self.equeue.qsize()
+                    oqsze = self.oqueue.qsize()
+                    if eqsze > 0:
+                        print "B Log %s equeue has %s logs" % (self.basename, eqsze)
+                    if oqsze > 0:
+                        print "B Log %s oqueue has %s logs" % (self.basename, oqsze)
             except Queue.Empty:
                 time.sleep(0.01)
                 pass
 
-    def out(self, message):
+    def put_out(self, message):
         now = time.strftime('%X %x %Z')
         self.outfile.write("%s|%s" % (now, message))
         self.outfile.flush()
@@ -108,7 +129,7 @@ class ThreadedLogger(threading.Thread):
     def write(self, message):
         self.err(message)
 
-    def err(self, message):
+    def put_err(self, message):
         now = time.strftime('%X %x %Z')
         self.errfile.write("%s|%s" % (now, message))
         self.errfile.flush()

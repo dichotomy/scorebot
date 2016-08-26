@@ -58,11 +58,11 @@ class BlueTeam(threading.Thread):
         self.id = id
         self.db = db
         self.queue_obj = queue
-        self.oqueue = Queue.Queue()
-        self.equeue = Queue.Queue()
         self.dns_servers = []
         self.teamname = teamname
-        self.logger = ThreadedLogger(self.teamname, self.oqueue, self.equeue)
+        self.logger = ThreadedLogger(self.teamname)
+        self.equeue = self.logger.get_equeue()
+        self.oqueue = self.logger.get_equeue()
         self.logger.start()
         self.hosts = {}
         self.hosts_rounds = {}
@@ -306,10 +306,14 @@ class BlueTeam(threading.Thread):
         scores["beacons"] = 0
         scores["total"] = 0
         for round in range(1,current_round+1):
-            scores["services"] += self.service_scores[round]
-            scores["tickets"]  += self.ticket_scores[round]
-            scores["flags"]    += self.flag_scores[round]
-            scores["beacons"]  += self.beacon_scores[round]
+            if round in self.service_scores:
+                scores["services"] += self.service_scores[round]
+            if round in self.ticket_scores:
+                scores["tickets"]  += self.ticket_scores[round]
+            if round in self.flag_scores:
+                scores["flags"]    += self.flag_scores[round]
+            if round in self.beacon_scores:
+                scores["beacons"]  += self.beacon_scores[round]
             scores["total"]     = self.scores.total()
         return scores
 
@@ -372,9 +376,14 @@ class BlueTeam(threading.Thread):
         self.service_scores[self.this_round] = service_score
         # Ticket scoring
         (all_tickets, closed_tickets) = self.get_tickets()
-        open_tickets = int(all_tickets) - int(closed_tickets)
-        ticket_score = (int(closed_tickets) - int(open_tickets)) * 100
-        if int(all_tickets) < int(closed_tickets):
+        all_tickets = int(all_tickets)
+        closed_tickets = int(closed_tickets)
+        open_tickets = all_tickets - closed_tickets
+        if closed_tickets > open_tickets:
+            ticket_score = 0
+        else:
+            ticket_score = (closed_tickets - open_tickets) * 50
+        if all_tickets < closed_tickets:
             self.equeue.put("There are more closed tickets than all for %s!" % self.teamname)
         self.ticket_scores[self.this_round] = ticket_score
         # Flag scoring

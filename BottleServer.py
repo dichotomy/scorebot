@@ -65,7 +65,7 @@ class BottleServer(threading.Thread):
         self.message_store = message_store
         self.whitelist = ["scoreboard.html", "movie.html", "scoreboard2.html"]
         self.all_flags_found = []
-        self.redcell_key = str(random.random())
+        self.redcell_key = str(random.random()*1000000000)
         keyfile = open("redcell_key.txt", "w")
         keyfile.write("%s\n" % self.redcell_key)
         keyfile.close()

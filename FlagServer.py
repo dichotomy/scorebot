@@ -72,6 +72,9 @@ class FlagHandler(SocketServer.BaseRequestHandler):
         self.integrity_re = re.compile("integrity:(\S+),(.+)")
         # Beacons
         self.beacon_re = re.compile("(\d+)")
+        # New service request
+        # Format:  key, requested port
+        self.newserve_re = re.compile("newservice:(\d+),(\d+)")
         #########################################################
         self.responses = Responses()
         self.banner = "This is Scorebot v2.5, I accept the following commands:\n\n"
@@ -92,7 +95,7 @@ class FlagHandler(SocketServer.BaseRequestHandler):
             # Flag submission
             if self.msg_re.match(clean_data):
                 reply = self.msg_re.match(clean_data)
-                self.server.logger.out("%s:%d sent |%s|\n" %
+                self.server.logger.out("%s:%d sent |%s|, being processed as a flag\n" %
                                  (self.client_address[0], self.client_address[1],
                                   data.strip()))
                 if reply:
@@ -107,7 +110,7 @@ class FlagHandler(SocketServer.BaseRequestHandler):
             elif self.reg_re.match(clean_data):
                 reply = self.reg_re.match(clean_data)
                 (label, bandit) = reply.groups()
-                self.server.logger.out("%s:%d sent |%s|\n" %
+                self.server.logger.out("%s:%d sent |%s|, being processed as red cell reg\n" %
                                  (self.client_address[0], self.client_address[1],
                                   data.strip()))
                 if reply:
@@ -124,7 +127,7 @@ class FlagHandler(SocketServer.BaseRequestHandler):
                 reply = self.message_re.match(clean_data)
                 (message,) = reply.groups()
                 message = cgi.escape(message)
-                self.server.logger.out("%s:%d sent |%s|\n" %
+                self.server.logger.out("%s:%d sent |%s|, being processed as a banner update\n" %
                                  (self.client_address[0], self.client_address[1],
                                   data.strip()))
                 if reply:
@@ -135,7 +138,7 @@ class FlagHandler(SocketServer.BaseRequestHandler):
             # Integrity flag submission
             elif self.integrity_re.match(clean_data):
                 reply = self.integrity_re.match(clean_data)
-                self.server.logger.out("%s:%d sent |%s|\n" %
+                self.server.logger.out("%s:%d sent |%s|, being processed as an integrity flag submission\n" %
                                  (self.client_address[0], self.client_address[1],
                                   data.strip()))
                 if reply:
@@ -153,14 +156,14 @@ class FlagHandler(SocketServer.BaseRequestHandler):
                     self.mischief()
             elif self.change_re.match(clean_data):
                 reply = self.change_re.match(clean_data)
-                self.server.logger.out("%s:%d sent |%s|\n" %
+                self.server.logger.out("%s:%d sent |%s|, being processed as a change\n" %
                                        (self.client_address[0], self.client_address[1],
                                         data.strip()))
                 if reply:
                     pass
             elif self.beacon_re.match(clean_data):
                 reply = self.beacon_re.match(clean_data)
-                self.server.logger.out("%s:%d sent |%s|\n" %
+                self.server.logger.out("%s:%d sent |%s|, being processed as a beacon\n" %
                                        (self.client_address[0], self.client_address[1],
                                         data.strip()))
                 if reply:
@@ -168,6 +171,23 @@ class FlagHandler(SocketServer.BaseRequestHandler):
                     self.server.flag_queue.put([3, msg_id, [reply, self.client_address[0]]])
                     answer = self.get_feedback(msg_id)
                     self.request.send("%s" % answer)
+                else:
+                    self.mischief()
+            elif self.newserve_re.match(clean_data):
+                reply = self.newserve_re.match(clean_data)
+                self.server.logger.out("%s:%d sent |%s|, being processed as a new service\n" %
+                                       (self.client_address[0], self.client_address[1],
+                                        data.strip()))
+                if reply:
+                    # Check the key
+                    if reply.group(1) == self.server.key:
+                        self.request.send("Standby...\n")
+                        self.server.flag_game_queue.put(reply.group(2))
+                        time.sleep(5)
+                        answer = self.server.flag_game_queue.get(timeout=5)
+                        self.request.send(answer)
+                    else:
+                        self.request.send("WRONG KEY!\n")
                 else:
                     self.mischief()
             else:
@@ -209,7 +229,7 @@ class FlagServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
     classdocs
     '''
 
-    def __init__(self, logger, flag_queue, flag_answer_queue, message_queue, port=50007,  handler=FlagHandler):
+    def __init__(self, logger, flag_queue, flag_answer_queue, message_queue, flag_game_queue, port=50007,  handler=FlagHandler):
         '''
         Constructor
         '''
@@ -217,6 +237,11 @@ class FlagServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
         self.flag_queue = flag_queue
         self.flag_answer_queue = flag_answer_queue
         self.message_queue = message_queue
+        self.flag_game_queue = flag_game_queue
+        self.key = str(int(random.random()*1000000000))
+        keyfile = open("newservice_key.txt", "w")
+        keyfile.write("%s\n" % self.key)
+        keyfile.close()
         SocketServer.TCPServer.__init__(self, ('', port), handler)
         return
 

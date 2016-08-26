@@ -51,12 +51,12 @@ class Host(threading.Thread):
         threading.Thread.__init__(self)
         self.hostname = hostname
         self.dns_servers = dns_servers
-        self.basename = "%s-%s" % (teamname, hopstname)
-        self.oqueue = QueueP()
-        self.equeue = QueueP()
+        self.basename = "%s-%s" % (teamname, hostname)
         self.BToqueue = BToqueue
         self.BTequeue = BTequeue
-        self.logger = ThreadedLogger(self.basename, self.oqueue, self.equeue)
+        self.logger = ThreadedLogger(self.basename)
+        self.equeue = self.logger.get_equeue()
+        self.oqueue = self.logger.get_oqueue()
         self.logger.start()
         self.ipaddress = None
         self.compromised = False

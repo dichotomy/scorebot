@@ -52,11 +52,14 @@ class CTFgame(threading.Thread):
         self.col = db_col
         self.flag_queue = Queue.Queue()
         self.flag_answer_queue = Queue.Queue()
+        self.flag_game_queue = Queue.Queue()
+        self.flag_servers = {}
+        self.default_port = 50007
         self.msg_queue = Queue.Queue()
         self.logger_obj = Logger("scorebot")
-        self.oqueue = Queue.Queue()
-        self.equeue = Queue.Queue()
-        self.logger = ThreadedLogger("ctfgame.log", self.oqueue, self.equeue)
+        self.logger = ThreadedLogger("ctfgame.log")
+        self.oqueue = self.logger.get_oqueue()
+        self.equeue = self.logger.get_equeue()
         self.logger.start()
         self.pp = pprint.PrettyPrinter(indent=2)
         self.blues_queues = {}
@@ -82,7 +85,7 @@ class CTFgame(threading.Thread):
             else:
                 raise Exception("No config section in restore object!")
             self.message_store = MessageStore(self.logger_obj, self.msg_queue)
-            self.flag_server = FlagServer(self.logger_obj, self.flag_queue, self.flag_answer_queue, self.msg_queue)
+            self.flag_servers[self.default_port] = FlagServer(self.logger_obj, self.flag_queue, self.flag_answer_queue, self.msg_queue, self.flag_game_queue, self.default_port)
             for team in self.blue_teams.keys():
                 self.blue_teams[team].add_queue(self.flag_queue)
             if "scores" in game:
@@ -107,7 +110,7 @@ class CTFgame(threading.Thread):
             self.json_cfg_obj = JsonConfig(cfg_file, self.flag_store)
             (self.blue_teams, self.injects) = self.json_cfg_obj.process()
             self.message_store = MessageStore(self.logger_obj, self.msg_queue)
-            self.flag_server = FlagServer(self.logger_obj, self.flag_queue, self.flag_answer_queue, self.msg_queue)
+            self.flag_servers[self.default_port] = FlagServer(self.logger_obj, self.flag_queue, self.flag_answer_queue, self.msg_queue, self.flag_game_queue, self.default_port)
             for team in self.blue_teams.keys():
                 self.blue_teams[team].add_queue(self.flag_queue)
                 blue_queue = Queue.Queue()
@@ -123,6 +126,7 @@ class CTFgame(threading.Thread):
         self.inround = False
         while True:
             now = time.time()
+            newservice = None
             if self.save_time <= now:
                 json_obj = self.build_json()
                 if self.obj_id:
@@ -130,8 +134,27 @@ class CTFgame(threading.Thread):
                 if globalvars.debug:
                     pp.pprint(json_obj)
                 self.obj_id = self.col.save(json_obj)
-                self.oqueue.put("Saved Game ID %s" % self.obj_id)
+                self.oqueue.put("Saved Game ID %s\n" % self.obj_id)
                 self.save_time += self.save_interval
+            try:
+                queue_item = self.flag_game_queue.get(False)
+                if len(queue_item)> 5:
+                    self.flag_game_queue.put(queue_item)
+                else:
+                    newservice = int(queue_item)
+                self.oqueue.put("Received new service request for %s, processing...\n" % newservice)
+            except Queue.Empty, err:
+                pass
+            if newservice:
+                if newservice in self.flag_servers:
+                    self.flag_game_queue.put("Failure, service already open")
+                elif len(self.flag_servers) > 10:
+                    self.flag_game_queue.put("Failure, too many custom services open (10)")
+                else:
+                    self.flag_servers[newservice] = FlagServer(self.logger_obj, self.flag_queue, self.flag_answer_queue, self.msg_queue, self.flag_game_queue, newservice)
+                    t = threading.Thread(target=self.flag_servers[newservice].serve_forever)
+                    t.start()
+                    self.flag_game_queue.put("New service started on %s" % newservice)
             for team in self.blues_queues:
                 try:
                     item = self.blues_queues[team].get(False)
@@ -180,12 +203,12 @@ class CTFgame(threading.Thread):
             if self.go_time <= now and not self.inround:
                 try:
                     # Report times so that we know whether or not the last round ran too long
+                        self.oqueue.put("Starting Service check for Blueteam %s.  Go time was %s, now is %s.\n" % (team, self.go_time, now))
                     for team in self.blues_queues:
-                        self.oqueue.put("Starting Service check for Blueteam %s.  Go time was %s, now is %s." % (team, self.go_time, now))
                         self.blues_queues[team].put(["Go", self.this_round], 1)
                     self.this_round += 1
                     self.go_time += self.interval
-                    self.oqueue.put("New go time is %s" % self.go_time)
+                    self.oqueue.put("New go time is %s\n" % self.go_time)
                     self.inround = True
                 except:
                     traceback.print_exc(file=self.logger_obj)
@@ -217,7 +240,8 @@ class CTFgame(threading.Thread):
         return json_obj
 
     def start_game(self):
-        t = threading.Thread(target=self.flag_server.serve_forever)
+        for port in self.flag_servers:
+            t = threading.Thread(target=self.flag_servers[port].serve_forever)
         t.start()
         # Get this party started!
         #self.myscoreboard.start()
