@@ -25,7 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 __author__ = 'dichotomy'
 
-import sys
 import time
 import Queue
 import pprint
@@ -38,7 +37,6 @@ from decoder import *
 from Logger import Logger, ThreadedLogger, QueueP
 from FlagStore import FlagStore
 from FlagServer import FlagServer
-from Scoreboard import Scoreboard
 from JsonConfig import JsonConfig
 from MessageStore import MessageStore
 from BottleServer import BottleServer
@@ -195,7 +193,7 @@ class CTFgame(threading.Thread):
                 for team in self.teams_rounds:
                     self.teams_rounds[team] = False
             now = time.time()
-            statfile = open("scorebot.status", "w")
+            statfile = open("status/scorebot.status", "w")
             statfile.write("Round %s, teams %s not finished\n" % (self.this_round, ",".join(not_finished)))
             statfile.write("Round %s, teams %s finished\n" % (self.this_round, ", ".join(finished)))
             statfile.write("Go time:   %s\nNow time:  %s\n" % (self.go_time, now))
@@ -251,4 +249,3 @@ class CTFgame(threading.Thread):
         self.message_store.start()
         self.injects.start()
         self.bottle_server.start()
-

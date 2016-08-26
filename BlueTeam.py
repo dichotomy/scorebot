@@ -164,7 +164,7 @@ class BlueTeam(threading.Thread):
                 else:
                     score_round = False
                     not_finished.append(host)
-            statfile = open("%s.status" % self.teamname, "w")
+            statfile = open("status/%s.status" % self.teamname, "w")
             statfile.write("Team %s round %s not finished: \n\t%s\n" % (self.teamname, self.this_round, "\n\t".join(not_finished)))
             statfile.write("Team %s round %s finished: \n\t%s\n" % (self.teamname, self.this_round, "\n\t".join(finished)))
             statfile.close()
