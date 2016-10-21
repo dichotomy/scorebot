@@ -32,7 +32,6 @@ class Game(models.Model):
         verbose_name = 'SBE Game'
         verbose_name_plural = 'SBE Games'
 
-    game_teams = models.ManyToManyField('sbehost.GameTeam')
     game_name = models.CharField('Game Name', max_length=250)
     game_mode = models.SmallIntegerField('Game Mode', default=0)
     game_paused = models.BooleanField('Game Pause', default=False)
@@ -48,10 +47,10 @@ class Game(models.Model):
                                             through_fields=('player_game', 'player_inst'))
 
     def __str__(self):
-        return '%sGame %s (%s-%s) %d Teams' % (('[Running]' if not self.game_paused else '[Paused]'),
+        return '%s Game %s (%s-%s) %d Teams' % (('[Running]' if not self.game_paused else '[Paused]'),
                                                self.game_name, self.game_start.strftime('%m/%d/%y %H:%M'),
                                                (self.game_finish.strftime('%m/%d/%y %H:%M')
-                                                if self.game_finish else 'Present'), self.game_teams.all().count())
+                                                if self.game_finish else 'Present'), self.gameteam_set.all().count())
 
 
 class GameDNS(models.Model):
@@ -97,11 +96,12 @@ class GameTeam(models.Model):
         verbose_name = 'SBE Game Team'
         verbose_name_plural = 'SBE Game Team'
 
+    game = models.ForeignKey('Game')
     team_dns = models.ManyToManyField('sbehost.GameDNS')
     team_flags = models.ManyToManyField('sbehost.GameFlag')
     team_hosts = models.ManyToManyField('sbehost.GameHost')
     team_tickets = models.ManyToManyField('sbehost.GameTicket')
-    team_inst = models.ForeignKey('sbegame.Team', blank=True, null=True)  # Reference to existing team, null if auto
+    team = models.ForeignKey('sbegame.Team', blank=True, null=True)  # Reference to existing team, null if auto
     team_score_flags = models.IntegerField('Team Score (Flags)', default=0)
     team_score_basic = models.IntegerField('Team Score (Uptime)', default=0)
     team_score_beacons = models.IntegerField('Team Score (Beans)', default=0)
@@ -117,16 +117,16 @@ class GameTeam(models.Model):
 
     def get_team_name(self):
         # Use this instead of .name
-        if self.team_inst:
-            return self.team_inst.team_name
+        if self.team:
+            return self.team.team_name
         if not self.static_name:
-            self.static_name = GameTeam.BASIC_TEAM_NAMES[random.randint(0, len(GameTeam.BASIC_TEAM_NAMES))]
+            self.static_name = GameTeam.BASIC_TEAM_NAMES[random.randint(0, len(GameTeam.BASIC_TEAM_NAMES)-1)]
         return self.static_name
 
     def get_team_color(self):
         # Use this instead of .color
-        if self.team_inst:
-            return self.team_inst.team_color
+        if self.team:
+            return self.team.team_color
         if not self.static_color:
             self.static_color = random.randint(0, 66113)
         return self.static_color

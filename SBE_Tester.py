@@ -114,13 +114,24 @@ class ServiceCredentials:
 
 
 if __name__ == '__main__':
+    import sys
     a = requests.session()
-    a.headers['SBE-AUTH'] = '1AAAAAAAAAAAAAAAAAAAAAAAAAAA' # auth key for a monitor with all hosts enabled
+    a.headers['SBE-AUTH'] = 'gambite' # auth key for a monitor with all hosts enabled
     #a.headers['SBE-AUTH'] = 'BBBBBBBBBBBBBBBBBBBBBBBBBBB' # auth key for a monitor with 2 assigned hosts (mailsvr, domain2)
     #a.headers['SBE-AUTH'] = 'CCCCCCCCCCCCCCCCCCCCCCCCCCC' # auth key for a monitor with 3 assigned hosts (filesvr, domain, mailsvr)
 
-    b = a.get('http://10.200.100.50/game/')
-    print(b.content.decode('utf-8'))
+    path = sys.argv[1] if len(sys.argv) == 2 else None
+    if not path:
+        print('%s <path>'%__file__)
+        sys.exit()
+
+    b = a.get('http://192.168.149.151:8000%s'%path)
+    r = b.content.decode('utf-8')
+    print r
+    '''
+    j = json.loads(r) if r else {}
+    print json.dumps(j, indent=4)
+    '''
     """"
     if b.status_code == 201:
         f = open('json-receive.json', 'w')

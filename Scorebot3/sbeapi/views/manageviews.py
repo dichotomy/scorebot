@@ -2,7 +2,7 @@ import random
 import scorebot.utils.log as logger
 
 from ipware.ip import get_real_ip
-from scorebot.utils.json import translator
+from scorebot.utils.json2 import translator
 from django.views.decorators.csrf import csrf_exempt
 from sbehost.models import Game, GameHost, GameTeam, GameMonitor
 from sbegame.models import Player, Team, MonitorJob, MonitorServer
