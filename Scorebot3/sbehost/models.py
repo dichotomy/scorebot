@@ -67,9 +67,6 @@ class GameDNS(models.Model):
 
     dns_address = models.CharField('DNS Server Address', max_length=140)
 
-    def __str__(self):
-        return 'DNS %s' % self.dns_address
-
 
 class GameTeam(models.Model):
     BASIC_TEAM_NAMES = [
@@ -113,7 +110,7 @@ class GameTeam(models.Model):
         return self.team_score_basic + self.team_score_beacons + self.team_score_flags + self.team_score_tickets
 
     def __str__(self):
-        return 'Team %s (Score: %d)' % (self.get_team_name(), self.__len__())
+        return 'GameTeam (%s:%d) %s' % (self.get_team_name(), self.get_team_color(), self.__len__())
 
     def get_team_name(self):
         # Use this instead of .name
@@ -145,13 +142,13 @@ class GameHost(models.Model):
         verbose_name_plural = 'SBE Game Hosts'
 
     host_server = models.ForeignKey('sbegame.HostServer')
+    host_flags = models.ManyToManyField('sbehost.GameFlag')
     host_fqdn = models.CharField('Host Name', max_length=250)
+    host_tickets = models.ManyToManyField('sbehost.GameTicket')
     host_services = models.ManyToManyField('sbehost.GameService')
+    host_used = models.BooleanField('Host in Game', default=False)  # Trying to design a setup that dosent need this
+    host_compromises = models.ManyToManyField('sbehost.GameCompromise')
     host_status = models.BooleanField('Host Online', default=False)
-    host_value = models.SmallIntegerField('Host Value', default=250)
-    host_flags = models.ManyToManyField('sbehost.GameFlag', blank=True)
-    host_tickets = models.ManyToManyField('sbehost.GameTicket', blank=True)
-    host_compromises = models.ManyToManyField('sbehost.GameCompromise', blank=True)
     host_ping_ratio = models.SmallIntegerField('Host Pingback Percentage', default=0)
     host_name = models.CharField('Host VM Name', max_length=250, null=True, blank=True)
 
@@ -159,7 +156,7 @@ class GameHost(models.Model):
         return 'Host %s (%s)' % (self.host_fqdn, '; '.join(['%d' % f.service_port for f in self.host_services.all()]))
 
     def __bool__(self):
-        if self.host_compromises.all().filter(comp_finish=None).count() > 0:
+        if self.host_compromise.all().filter(comp_finish=None).count() > 0:
             return True
         return False
 
@@ -317,7 +314,7 @@ class GameMonitor(models.Model):
     monitor_hosts = models.ManyToManyField('sbehost.GameHost')
 
     def __str__(self):
-        return self.monitor_inst.__str__()
+        return 'Montor %s (%s) Hosts' % (self.monitor_inst.monitor_name, self.monitor_hosts.all().count())
 
 
 class GameService(models.Model):
@@ -347,9 +344,7 @@ class GameService(models.Model):
     service_protocol = models.CharField('Service Protocol', max_length=4, default='tcp')
 
     def __str__(self):
-        ret_host = self.gamehost_set.first()
-        return 'SVC %s (%d/%s) %s [%s]' % (self.service_name, self.service_port, self.service_protocol,
-                                           self.service_value, ret_host.host_fqdn if ret_host else 'Unassigned')
+        return 'SVC %s (%d/%s) %s' % (self.service_name, self.service_port, self.service_protocol, self.service_value)
 
     def __bool__(self):
         return self.service_status == 0
@@ -358,7 +353,7 @@ class GameService(models.Model):
         return self.__bool__()
 
     def get_text_status(self):
-        for k, v in GameService.SERVICE_STATUS.items():
+        for k, v in GameService.SERVICE_STATUS:
             if self.service_status == v:
                 return k
         return 'UP'
