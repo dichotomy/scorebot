@@ -9,7 +9,7 @@ from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadReque
 
 from sbehost.models import Game, GameTeam
 from sbegame.models import Team
-from scorebot.utils.general import val_auth, get_object_with_id, get_object_by_filter, get_json
+from scorebot.utils.general import val_auth, get_object_with_id, get_object_by_filter, get_json, save_json_or_error
 """
     Methods supported
 
@@ -26,19 +26,19 @@ from scorebot.utils.general import val_auth, get_object_with_id, get_object_by_f
 
 
 class GameViews:
+    """
+        SBE Game API
+
+        Methods: GET
+
+        GET |   /game/
+        GET |   /game/<game_id>/
+
+        Returns game info.  Read-only.
+    """
     @staticmethod
     @val_auth
     def game(request, game_id=None):
-        """
-            SBE Game API
-
-            Methods: GET
-
-            GET |   /game/
-            GET |   /game/<game_id>/
-
-            Returns game info.  Read-only.
-        """
         if request.method == 'GET':
             return get_object_with_id(request, Game, game_id)
         elif request.method == 'POST':

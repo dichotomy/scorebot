@@ -1,8 +1,5 @@
-import json
-
 from django import forms
 from sbegame.models import AccessKey
-from sbehost.models import GameContent
 
 
 class AccessKeyAdminPanel(forms.ModelForm):
@@ -81,35 +78,5 @@ class AccessKeyAdminPanel(forms.ModelForm):
         for k in AccessKey.KEY_LEVELS.keys():
             v = k.split('.') if '.' in k else k.split('_')
             updated[k] = datav.get('key_perm_%s_%s' % (v[1].lower(), v[0].lower()))
-        updated.save()
-        return updated
-
-
-class GameContentAdminPanel(forms.ModelForm):
-    class Meta:
-        model = GameContent
-        fields = ['content_type']
-
-    content_payload = forms.CharField(label='Content Data (JSON)', required=False, widget=forms.Textarea)
-
-    def __init__(self, *args, **kwargs):
-        instance = kwargs.get('instance', None)
-        if instance:
-            try:
-                payload = json.dumps(instance.content_data)
-            except ValueError:
-                payload = str(instance.content_data)
-            kwargs.update(initial={'content_payload': payload})
-        super(GameContentAdminPanel, self).__init__(*args, **kwargs)
-
-    def save(self, commit=True):
-        if not self.is_valid():
-            return super(GameContentAdminPanel, self).save(commit)
-        datav = self.clean()
-        updated = super(GameContentAdminPanel   , self).save(commit)
-        try:
-            updated.content_data = json.loads(datav.get('content_payload'))
-        except ValueError:
-            updated.content_data = str(datav.get('content_payload'))
         updated.save()
         return updated
