@@ -1,10 +1,12 @@
 import inspect
 import scorebot.utils.log as logger
 import json
+import traceback
 
 from ipware.ip import get_real_ip
 from django.core import serializers
 from sbegame.models import AccessKey
+from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
 from django.db.models.manager import Manager
@@ -14,7 +16,7 @@ from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadReque
 
 
 def get_json(object_data):
-    if not isinstance(object_data, QuerySet):
+    if not isinstance(object_data, QuerySet) and not (type(object_data) == list and isinstance(object_data[0], models.Model)):
         return json.dumps(object_data)
 
     field_data = None
@@ -125,13 +127,15 @@ def save_json_or_error(request, json_id=None, json_response=True):
                 else:
                     logger.warning(__name__, '"%s" value "%s" was not deleted by "%s" due to permissions!' %
                                  (jobject.__class__.__name__, str(jobject), get_real_ip(request)))
-            json_results.append(jobject)
+            json_results.append(jobject.object)
     except ValueError:
         logger.warning(__name__, 'Request by "%s" attempted to send an invalid request body!' % get_real_ip(request))
+        logger.get_logger(__name__).error(traceback.format_exc())
         return HttpResponseBadRequest('SBE [API]: Request body was not in JSON format!') if json_response else None
-    except Exception:
+    except Exception as e:
         logger.get_logger(__name__).error('Exception occured during "save_json_or_error" by "%s"' %
-                                          get_real_ip(request), exec_info=True)
+                                          get_real_ip(request))
+        logger.get_logger(__name__).error(traceback.format_exc())
         return HttpResponseServerError('SBE [API]: Server error in processing request!') if json_response else None
     return HttpResponse(status=(200 if request.method == 'POST' else 201), content=get_json(json_results)) \
         if json_response else json_results
@@ -183,14 +187,13 @@ def get_object(request, object_class, object_id=None, filter_object=None, object
     elif filter_object is not None:
         try:
             object_data = object_model.filter(**filter_object)
-            data = get_json(object_data) if object_response else object_data
-            return HttpResponse(data)
+            return HttpResponse(get_json(object_data)) if object_response else object_data
         except Exception as e:
             obj = get_json(filter_object)
             logger.debug(__name__, 'Requested invalid value "%s" for model "%s"!' % (obj,
                                                                                  object_class.__name__))
             return HttpResponseBadRequest(
-                content='SBE [API]: Object with "%s" does not exist in the requested data set!' % str(**filter_object))\
+                content='SBE [API]: Object with "%s" does not exist in the requested data set!' % str(dict(**filter_object)))\
                 if object_response else None
     else:
         try:

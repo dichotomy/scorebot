@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseForbidden
 
-from sbehost.models import Game, GameTeam
+from sbehost.models import Game, GameTeam, GameHost
 from sbegame.models import Team
 from scorebot.utils.general import val_auth, get_object_with_id, get_object_by_filter, get_json, save_json_or_error
 """
@@ -47,6 +47,7 @@ class GameViews:
         return HttpResponseBadRequest()
 
     @staticmethod
+    @csrf_exempt
     @val_auth
     def game_team(request, game_id=None, team_id=None):
         """
@@ -71,12 +72,46 @@ class GameViews:
                 filter_obj = {'team__id': team_id, 'game__id': game_id}
                 r = get_object_by_filter(request, GameTeam, filter_obj)
             return r
-        elif request.method == 'PUT':
-            data = json.loads(request.body)
         elif request.method == 'POST':
-            pass
-        elif request.method == 'DELETE':
-            pass
+            if not team_id:
+                return HttpResponseBadRequest('SBE [API]: A team ID must be provided!')
 
-        return HttpResponseBadRequest()
+            filter_obj = {'team__id': team_id, 'game__id': game_id}
+            r = get_object_by_filter(request, GameTeam, filter_obj, object_response=False)
+            return save_json_or_error(request, r[0].id)
 
+        return HttpResponseNotAllowed()
+
+    @staticmethod
+    @csrf_exempt
+    @val_auth
+    def game_host(request, game_id=None, host_id=None):
+        """
+            SBE Game Hosts API
+
+            Methods: GET, PUT, POST, DELETE
+
+            GET, PUT            | /game/<game_id>/host/
+            GET, POST, DELETE   | /game/<game_id>/host/<host_id>/
+        """
+        if not game_id:
+            return HttpResponseBadRequest('SBE [API]: A game ID must be provided!')
+
+        if request.method == 'GET':
+            r = None
+            if not host_id:
+                game = Game.objects.get(pk=game_id)
+                r = HttpResponse(get_json(GameHost.objects.filter(game_team__game=game)))
+            else:
+                filter_obj = {'host_server__id': host_id, 'game_team__game_id': game_id}
+                r = get_object_by_filter(request, GameHost, filter_obj)
+            return r
+        elif request.method == 'POST':
+            if not host_id:
+                return HttpResponseBadRequest('SBE [API]: A team ID must be provided!')
+
+            filter_obj = {'host_server__id': host_id, 'game_team__game_id': game_id}
+            r = get_object_by_filter(request, GameHost, filter_obj, object_response=False)
+            return save_json_or_error(request, r[0].id)
+
+        return HttpResponseNotAllowed()

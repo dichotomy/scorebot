@@ -93,15 +93,14 @@ class GameTeam(models.Model):
         verbose_name = 'SBE Game Team'
         verbose_name_plural = 'SBE Game Team'
 
-    game = models.ForeignKey('Game')
+    game = models.ForeignKey(Game)
     team_dns = models.ManyToManyField('sbehost.GameDNS')
     team_flags = models.ManyToManyField('sbehost.GameFlag')
-    team_hosts = models.ManyToManyField('sbehost.GameHost')
     team_tickets = models.ManyToManyField('sbehost.GameTicket')
     team = models.ForeignKey('sbegame.Team', blank=True, null=True)  # Reference to existing team, null if auto
     team_score_flags = models.IntegerField('Team Score (Flags)', default=0)
     team_score_basic = models.IntegerField('Team Score (Uptime)', default=0)
-    team_score_beacons = models.IntegerField('Team Score (Beans)', default=0)
+    team_score_beacons = models.IntegerField('Team Score (Becons)', default=0)
     team_score_tickets = models.IntegerField('Team Score (Tickets)', default=0)
     team_players = models.ManyToManyField('sbegame.Player', through='sbehost.GamePlayer',
                                           through_fields=('player_team', 'player_inst'))
@@ -141,13 +140,14 @@ class GameHost(models.Model):
         verbose_name = 'SBE Game Host'
         verbose_name_plural = 'SBE Game Hosts'
 
+    game_team = models.ForeignKey(GameTeam)
     host_server = models.ForeignKey('sbegame.HostServer')
     host_flags = models.ManyToManyField('sbehost.GameFlag')
     host_fqdn = models.CharField('Host Name', max_length=250)
     host_tickets = models.ManyToManyField('sbehost.GameTicket')
     host_services = models.ManyToManyField('sbehost.GameService')
     host_used = models.BooleanField('Host in Game', default=False)  # Trying to design a setup that dosent need this
-    host_compromises = models.ManyToManyField('sbehost.GameCompromise')
+    host_compromises = models.ManyToManyField('sbehost.GameCompromise', null=True, blank=True)
     host_status = models.BooleanField('Host Online', default=False)
     host_ping_ratio = models.SmallIntegerField('Host Pingback Percentage', default=0)
     host_name = models.CharField('Host VM Name', max_length=250, null=True, blank=True)
