@@ -7,8 +7,19 @@ urlpatterns = [
     url(r'^game/$', GameViews.game, name='games'),
     url(r'^team/$', ManageViews.team, name='teams'),
     url(r'^player/$', ManageViews.player, name='players'),
+    url(r'^team/(?P<team_id>[0-9]+)/$', ManageViews.team, name='team'),
+    url(r'^player/(?P<player_id>[0-9]+)/$', ManageViews.player, name='player'),
     url(r'^game/(?P<game_id>[0-9]+)/$', GameViews.game, name='game'),
-
+    url(r'^game/(?P<game_id>[0-9]+)/team/$', GameViews.game_team, name='game_team'),
+    url(r'^game/(?P<game_id>[0-9]+)/team/(?P<team_id>[0-9]+)/$', GameViews.game_team, name='game_team'),
+    url(r'^game/(?P<game_id>[0-9]+)/host/$', GameViews.game_host, name='game_host'),
+    url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/$', GameViews.game_host, name='game_host'),
+    url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/service/$', GameViews.game_service, name='game_service'),
+    url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/service/(?P<service_id>[0-9]+)/$', GameViews.game_service, name='game_service'),
+    url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/compromise/$', GameViews.game_compromise, name='game_compromise'),
+    url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/compromise/(?P<compromise_id>[0-9]+)/$', GameViews.game_compromise, name='game_compromise'),
+    url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/service/(?P<service_id>[0-9]+)/content/$', GameViews.game_content, name='game_content'),
+    url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/service/(?P<service_id>[0-9]+)/content/(?P<content_id>[0-9]+)/$', GameViews.game_content, name='game_content'),
 
 #
 #    url(r'^job/$', views.SBE_Management.job_request, name='jobs'),

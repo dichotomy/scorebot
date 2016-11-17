@@ -1,5 +1,6 @@
 import json
 import requests
+import argparse
 
 
 class Job:
@@ -114,13 +115,58 @@ class ServiceCredentials:
 
 
 if __name__ == '__main__':
+    import sys
     a = requests.session()
-    a.headers['SBE-AUTH'] = '1AAAAAAAAAAAAAAAAAAAAAAAAAAA' # auth key for a monitor with all hosts enabled
+    a.headers['SBE-AUTH'] = 'gambite' # auth key for a monitor with all hosts enabled
     #a.headers['SBE-AUTH'] = 'BBBBBBBBBBBBBBBBBBBBBBBBBBB' # auth key for a monitor with 2 assigned hosts (mailsvr, domain2)
     #a.headers['SBE-AUTH'] = 'CCCCCCCCCCCCCCCCCCCCCCCCCCC' # auth key for a monitor with 3 assigned hosts (filesvr, domain, mailsvr)
 
-    b = a.get('http://10.200.100.50/game/')
-    print(b.content.decode('utf-8'))
+    parser = argparse.ArgumentParser(
+        description='Test ScoreBot API calls'
+    )
+    parser.add_argument('path', nargs='?', help='API path')
+    parser.add_argument('-p', '--post', help='use POST request', action='store_true')
+    parser.add_argument('-P', '--put', help='use PUT request', action='store_true')
+    parser.add_argument('-d', '--delete', help='use DELETE request', action='store_true')
+    args = parser.parse_args()
+    if not args.path:
+        parser.print_help()
+        sys.exit()
+
+    data = '''
+[
+    {
+        "pk": 2,
+        "model": "sbehost.gamecompromise",
+        "fields": {
+            "game_host": 2,
+            "comp_player": 1,
+            "comp_finish": "2016-11-17T21:08:04Z"
+        }
+    }
+]
+    '''
+
+    path = args.path
+
+    if args.post:
+        b = a.post('http://localhost:8000%s'%path, data=data)
+    elif args.put:
+        b = a.put('http://localhost:8000%s'%path, data=data)
+    elif args.delete:
+        b = a.delete('http://localhost:8000%s'%path)
+    else:
+        b = a.get('http://localhost:8000%s'%path)
+
+    r = b.content.decode('utf-8')
+    try:
+        print json.dumps(json.loads(r), indent=4)
+    except:
+        print r
+    '''
+    j = json.loads(r) if r else {}
+    print json.dumps(j, indent=4)
+    '''
     """"
     if b.status_code == 201:
         f = open('json-receive.json', 'w')

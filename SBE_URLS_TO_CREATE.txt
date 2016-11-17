@@ -17,28 +17,28 @@ DELETE - Delete Data
 /player/ | GET, PUT
 /player/<player_id>/ | GET, POST
 
-/game/player/ | GET, PUT
-/game/player/<player_id>/ | GET, POST, DELETE
+/game/<game_id>/player/ | GET, PUT
+/game/<game_id>/player/<player_id>/ | GET, POST, DELETE
 
-/game/team/ | GET, PUT
-/game/team/<team_id>/ | GET, POST, DELETE
+/game/<game_id>/team/ | GET, PUT
+/game/<game_id>/team/<team_id>/ | GET, POST, DELETE
 
 /game/<game_id>/host/ | GET, PUT
-/game/host/<host_id>/ | GET, POST, DELETE
+/game/<game_id>/host/<host_id>/ | GET, POST, DELETE
 
-/game/host/service/ | GET, PUT
-/game/host/service/<service_id>/ | GET, POST, DELETE
+/game/<game_id>/host/<host_id>/service/ | GET, PUT
+/game/<game_id>/host/<host_id>/service/<service_id>/ | GET, POST, DELETE
 
-/game/host/service/content/ | GET, PUT, POST, DELETE
+/game/<game_id>/host/<host_id>/service/<service_id>/content/ | GET, PUT, POST, DELETE
 
-/game/host/compromise/ | GET, PUT
-/game/host/compromise/<compromise_id>/ | GET, POST, DELETE
+/game/<game_id>/host/<host_id>/compromise/ | GET, PUT
+/game/<game_id>/host/<host_id>/compromise/<compromise_id>/ | GET, POST, DELETE
 
-/game/flag/ | GET, PUT
-/game/flag/<flag_id>/ | GET, POST, DELETE
+/game/<game_id>/flag/ | GET, PUT
+/game/<game_id>/flag/<flag_id>/ | GET, POST, DELETE
 
-/game/ticket/ | GET, PUT
-/game/ticket/<ticket_id>/ | GET, POST, DELETE
+/game/<game_id>/ticket/ | GET, PUT
+/game/<game_id>/ticket/<ticket_id>/ | GET, POST, DELETE
 
-/game/monitor/ | GET, PUT
-/game/monitor/<monitor_id>/ | GET, (POST, DELETE?)
+/game/<game_id>/monitor/ | GET, PUT
+/game/<game_id>/monitor/<monitor_id>/ | GET, (POST, DELETE?)
