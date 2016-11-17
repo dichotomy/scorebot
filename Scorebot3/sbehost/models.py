@@ -1,5 +1,6 @@
 import json
 import random
+from datetime import datetime
 
 from django.db import models
 from django.utils import timezone
@@ -128,6 +129,39 @@ class GameTeam(models.Model):
         return self.static_color
 
 
+class GameCompromise(models.Model):
+    __desc__ = """
+        SBE Game Host Compromise
+
+        This will be created when a host is compromised.  Will store the compromises as start/end times
+        to easier facilitate the timespan that a host is compromised.
+    """
+    __historical__ = True
+
+    class Meta:
+        verbose_name = 'SBE Host Compromise'
+        verbose_name_plural = 'SBE Host Compromises'
+
+    game_host = models.ForeignKey('GameHost')
+    comp_player = models.ForeignKey('sbegame.Player')
+    comp_start = models.DateTimeField('Compromise Start', default=datetime.now)
+    comp_finish = models.DateTimeField('Compromise End', null=True, blank=True)
+
+    def __len__(self):
+        if self.comp_finish:
+            return (self.comp_finish - self.comp_start).seconds
+        return (timezone.now() - self.comp_start).seconds
+
+    def __str__(self):
+        return '%s (%d seconds)' % (self.comp_player.player_name, self.__len__())
+
+    def __bool__(self):
+        return self.comp_finish is None
+
+    def __nonzero__(self):
+        return self.__bool__()
+
+
 class GameHost(models.Model):
     __desc__ = """
         SBE Game Host
@@ -147,7 +181,6 @@ class GameHost(models.Model):
     host_tickets = models.ManyToManyField('sbehost.GameTicket')
     host_services = models.ManyToManyField('sbehost.GameService')
     host_used = models.BooleanField('Host in Game', default=False)  # Trying to design a setup that dosent need this
-    host_compromises = models.ManyToManyField('sbehost.GameCompromise', null=True, blank=True)
     host_status = models.BooleanField('Host Online', default=False)
     host_ping_ratio = models.SmallIntegerField('Host Pingback Percentage', default=0)
     host_name = models.CharField('Host VM Name', max_length=250, null=True, blank=True)
@@ -156,7 +189,7 @@ class GameHost(models.Model):
         return 'Host %s (%s)' % (self.host_fqdn, '; '.join(['%d' % f.service_port for f in self.host_services.all()]))
 
     def __bool__(self):
-        if self.host_compromise.all().filter(comp_finish=None).count() > 0:
+        if GameCompromise.objects.filter(game_host__id=self.id).count() > 0:
             return True
         return False
 
@@ -335,16 +368,16 @@ class GameService(models.Model):
         verbose_name = 'SBE Service'
         verbose_name_plural = 'SBE Services'
 
+    game_host = models.ForeignKey(GameHost)
     service_port = models.SmallIntegerField('Service Port')
     service_name = models.CharField('Service Name', max_length=128)
     service_value = models.SmallIntegerField('Service Value', default=50)
     service_status = models.SmallIntegerField('Service Status', default=0)
     service_bonus = models.BooleanField('Service is Bonus', default=False)
-    service_content = models.ForeignKey('sbehost.GameContent', null=True, blank=True)
     service_protocol = models.CharField('Service Protocol', max_length=4, default='tcp')
 
     def __str__(self):
-        return 'SVC %s (%d/%s) %s' % (self.service_name, self.service_port, self.service_protocol, self.service_value)
+        return 'GAME %d HOST %d SVC %s (%d/%s) %s' % (self.game_host.game_team.game.id, self.game_host.host_server.id, self.service_name, self.service_port, self.service_protocol, self.service_value)
 
     def __bool__(self):
         return self.service_status == 0
@@ -371,6 +404,7 @@ class GameContent(models.Model):
         verbose_name = 'SBE Service Content'
         verbose_name_plural = 'SBE Service Contents'
 
+    game_service = models.ForeignKey(GameService)
     content_data = PickledObjectField()
     content_type = models.CharField('Content Type', max_length=75, default='string')
 
@@ -379,41 +413,3 @@ class GameContent(models.Model):
 
     def monitor_json(self):
         return '{ "content_type": "%s", "content_data": %s }' % (self.content_type, json.dumps(self.content_data))
-
-
-class GameCompromise(models.Model):
-    __desc__ = """
-        SBE Game Host Compromise
-
-        This will be created when a host is compromised.  Will store the compromises as start/end times
-        to easier facilitate the timespan that a host is compromised.
-    """
-    __historical__ = True
-
-    class Meta:
-        verbose_name = 'SBE Host Compromise'
-        verbose_name_plural = 'SBE Host Compromises'
-
-    comp_player = models.ForeignKey('sbegame.Player')
-    comp_start = models.DateTimeField('Compromise Start', auto_now_add=True)
-    comp_finish = models.DateTimeField('Compromise End', null=True, blank=True)
-
-    def __len__(self):
-        if self.comp_finish:
-            return (self.comp_finish - self.comp_start).seconds
-        return (timezone.now() - self.comp_start).seconds
-
-    def __str__(self):
-        return '%s (%d seconds)' % (self.comp_player.player_name, self.__len__())
-
-    def __bool__(self):
-        return self.comp_finish is None
-
-    def __nonzero__(self):
-        return self.__bool__()
-
-    def get_compromised_host(self):
-        try:
-            return self.host.first()
-        except GameHost.DoesNotExist:
-            return None

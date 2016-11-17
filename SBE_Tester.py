@@ -126,42 +126,38 @@ if __name__ == '__main__':
     )
     parser.add_argument('path', nargs='?', help='API path')
     parser.add_argument('-p', '--post', help='use POST request', action='store_true')
+    parser.add_argument('-P', '--put', help='use PUT request', action='store_true')
+    parser.add_argument('-d', '--delete', help='use DELETE request', action='store_true')
     args = parser.parse_args()
     if not args.path:
         parser.print_help()
         sys.exit()
 
-    data = '''[{
+    data = '''
+[
+    {
         "pk": 2,
-        "model": "sbehost.gamehost",
+        "model": "sbehost.gamecompromise",
         "fields": {
-            "host_flags": [
-                2
-            ],
-            "host_fqdn": "host22222",
-            "host_used": false,
-            "host_services": [
-                1
-            ],
-            "host_tickets": [
-                1
-            ],
-            "game_team": 3,
-            "host_status": false,
-            "host_ping_ratio": 0,
-            "host_name": "",
-            "host_compromises": [],
-            "host_server": 2
+            "game_host": 2,
+            "comp_player": 1,
+            "comp_finish": "2016-11-17T21:08:04Z"
         }
-    }]
+    }
+]
     '''
 
     path = args.path
 
     if args.post:
-        b = a.post('http://127.0.0.1:8000%s'%path, data=data)
+        b = a.post('http://localhost:8000%s'%path, data=data)
+    elif args.put:
+        b = a.put('http://localhost:8000%s'%path, data=data)
+    elif args.delete:
+        b = a.delete('http://localhost:8000%s'%path)
     else:
-        b = a.get('http://192.168.149.151:8000%s'%path)
+        b = a.get('http://localhost:8000%s'%path)
+
     r = b.content.decode('utf-8')
     try:
         print json.dumps(json.loads(r), indent=4)
