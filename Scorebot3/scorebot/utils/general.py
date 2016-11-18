@@ -1,9 +1,12 @@
 import inspect
 import scorebot.utils.log as logger
+import json
+import traceback
 
 from ipware.ip import get_real_ip
 from django.core import serializers
 from sbegame.models import AccessKey
+from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
 from django.db.models.manager import Manager
@@ -13,14 +16,15 @@ from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadReque
 
 
 def get_json(object_data):
-    if object_data:
-        field_data = None
-        try:
-            field_data = object.__fields__
-        except AttributeError:
-            pass
-        return serializers.serialize('json', object_data, fields=field_data)
-    return ''
+    if not isinstance(object_data, QuerySet) and not (type(object_data) == list and isinstance(object_data[0], models.Model)):
+        return json.dumps(object_data)
+
+    field_data = None
+    try:
+        field_data = object.__fields__
+    except AttributeError:
+        pass
+    return serializers.serialize('json', object_data, fields=field_data)
 
 
 def val_auth(api_function):
@@ -123,56 +127,95 @@ def save_json_or_error(request, json_id=None, json_response=True):
                 else:
                     logger.warning(__name__, '"%s" value "%s" was not deleted by "%s" due to permissions!' %
                                  (jobject.__class__.__name__, str(jobject), get_real_ip(request)))
-            json_results.append(jobject)
+            json_results.append(jobject.object)
     except ValueError:
         logger.warning(__name__, 'Request by "%s" attempted to send an invalid request body!' % get_real_ip(request))
+        logger.get_logger(__name__).error(traceback.format_exc())
         return HttpResponseBadRequest('SBE [API]: Request body was not in JSON format!') if json_response else None
-    except Exception:
+    except Exception as e:
         logger.get_logger(__name__).error('Exception occured during "save_json_or_error" by "%s"' %
-                                          get_real_ip(request), exec_info=True)
+                                          get_real_ip(request))
+        logger.get_logger(__name__).error(traceback.format_exc())
         return HttpResponseServerError('SBE [API]: Server error in processing request!') if json_response else None
     return HttpResponse(status=(200 if request.method == 'POST' else 201), content=get_json(json_results)) \
         if json_response else json_results
 
 
-def get_object_with_id(request, object_class, object_id=None, object_limit=200, object_page=0, object_response=True):
-    if object_class is not None:
-        object_model = get_query_set(object_class)
-        if object_model is not None:
-            if not request.authkey['ALL_READ'] and not request.authkey['%s.READ' % object_class.__name__]:
-                logger.warning(__name__, 'Model "%s" could not be requested from the database due to permissions!'
-                               % object_class.__name__)
-                return HttpResponseForbidden(content='SBE [API]: You do not have permissions to read "%s"!' %
-                                                     object_class.__name__) if object_response else None
-            logger.debug(__name__, 'Model "%s" was requested from the database!' % object_class.__name__)
-            if object_id is not None:
-                try:
-                    object_data = object_model.filter(pk=int(object_id))
-                    return HttpResponse(get_json(object_data)) if object_response else object_data
-                except ValueError:
-                    logger.debug(__name__, 'Requested bad value "%s" for model "%s"!' % (object_id,
-                                                                                         object_class.__name__))
-                    return HttpResponseBadRequest(content='SBE [API]: Bad Value: "%s"' % object_id) \
-                        if object_response else None
-                except object_class.DoesNotExist:
-                    logger.debug(__name__, 'Requested invalid value "%s" for model "%s"!' % (object_id,
-                                                                                         object_class.__name__))
-                    return HttpResponseNotFound(
-                        content='SBE [API]: Object with "%s" does not exist in the requested data set!' % object_id)\
-                        if object_response else None
-            else:
-                try:
-                    object_data = object_model.all()
-                    if len(object_data) > object_limit:
-                        object_data = object_data[(object_page * object_limit):((object_page + 1) * object_limit)]
-                    return HttpResponse(get_json(object_data)) if object_response else object_data
-                except object_class.DoesNotExist:
-                    return HttpResponseNotFound(content='SBE [API]: There is no data in the requested data set!') \
-                        if object_response else None
-        else:
-            logger.warning(__name__, 'Requested invalid data set model "%s"!' % object_class.__name__)
-            return HttpResponseNotFound(content='SBE [API]: The requested data set does not exist!') \
+def get_object_by_filter(request, object_class, filter_object, object_limit=200, object_page=0, object_response=True):
+    return get_object(
+            request,
+            object_class,
+            filter_object=filter_object,
+            object_id=None,
+            object_limit=object_limit,
+            object_page=object_page,
+            object_response=object_response)
+
+
+def get_object(request, object_class, object_id=None, filter_object=None, object_limit=200, object_page=0, object_response=True):
+    if object_class is None:
+        raise HttpResponseBadRequest(content='SBE [API]: object class must be provided for object ID: %s' % str(object_id))
+
+    object_model = get_query_set(object_class)
+
+    if object_model is None:
+        logger.warning(__name__, 'Requested invalid data set model "%s"!' % object_class.__name__)
+        return HttpResponseNotFound(content='SBE [API]: The requested data set does not exist!') \
                 if object_response else None
+
+    if not request.authkey['ALL_READ'] and not request.authkey['%s.READ' % object_class.__name__]:
+        logger.warning(__name__, 'Model "%s" could not be requested from the database due to permissions!'
+                       % object_class.__name__)
+        return HttpResponseForbidden(content='SBE [API]: You do not have permissions to read "%s"!' %
+                                             object_class.__name__) if object_response else None
+    logger.debug(__name__, 'Model "%s" was requested from the database!' % object_class.__name__)
+    if object_id is not None:
+        try:
+            object_data = object_model.filter(pk=int(object_id))
+            return HttpResponse(get_json(object_data)) if object_response else object_data
+        except ValueError:
+            logger.debug(__name__, 'Requested bad value "%s" for model "%s"!' % (object_id,
+                                                                                 object_class.__name__))
+            return HttpResponseBadRequest(content='SBE [API]: Bad Value: "%s"' % object_id) \
+                if object_response else None
+        except object_class.DoesNotExist:
+            logger.debug(__name__, 'Requested invalid value "%s" for model "%s"!' % (object_id,
+                                                                                 object_class.__name__))
+            return HttpResponseNotFound(
+                content='SBE [API]: Object with "%s" does not exist in the requested data set!' % object_id)\
+                if object_response else None
+    elif filter_object is not None:
+        try:
+            object_data = object_model.filter(**filter_object)
+            return HttpResponse(get_json(object_data)) if object_response else object_data
+        except Exception as e:
+            obj = get_json(filter_object)
+            logger.debug(__name__, 'Requested invalid value "%s" for model "%s"!' % (obj,
+                                                                                 object_class.__name__))
+            return HttpResponseBadRequest(
+                content='SBE [API]: Object with "%s" does not exist in the requested data set!' % str(dict(**filter_object)))\
+                if object_response else None
+    else:
+        try:
+            object_data = object_model.all()
+            if len(object_data) > object_limit:
+                object_data = object_data[(object_page * object_limit):((object_page + 1) * object_limit)]
+            return HttpResponse(get_json(object_data)) if object_response else object_data
+        except object_class.DoesNotExist:
+            return HttpResponseNotFound(content='SBE [API]: There is no data in the requested data set!') \
+                if object_response else None
+
     logger.warning(__name__, 'Requested non-existent data set model "%s"!' % object_class.__name__)
     return HttpResponseNotFound(content='SBE [API]: The requested data set does not exist!') \
         if object_response else None
+
+
+def get_object_with_id(request, object_class, object_id=None, object_limit=200, object_page=0, object_response=True):
+    return get_object(
+            request,
+            object_class,
+            object_id=object_id,
+            filter_object=None,
+            object_limit=object_limit,
+            object_page=object_page,
+            object_response=object_response)
