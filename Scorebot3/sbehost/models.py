@@ -1,6 +1,7 @@
 import json
 import random
 from datetime import datetime
+from dateutil import tz
 
 from django.db import models
 from django.utils import timezone
@@ -96,7 +97,6 @@ class GameTeam(models.Model):
 
     game = models.ForeignKey(Game)
     team_dns = models.ManyToManyField('sbehost.GameDNS')
-    team_flags = models.ManyToManyField('sbehost.GameFlag')
     team_tickets = models.ManyToManyField('sbehost.GameTicket')
     team = models.ForeignKey('sbegame.Team', blank=True, null=True)  # Reference to existing team, null if auto
     team_score_flags = models.IntegerField('Team Score (Flags)', default=0)
@@ -208,12 +208,12 @@ class GameHost(models.Model):
 
 
 class GameFlag(models.Model):
-    FLAG_VALUES = {
-        'FLAG_TAKEN': 1,
-        'FLAG_ENABLED': 2,
-        'FLAG_HIDDEN': 3,
-        'FLAG_PERMA': 4,
-    }
+    FLAG_VALUES = (
+        (1, 'FLAG_TAKEN'),
+        (2, 'FLAG_ENABLED'),
+        (3, 'FLAG_HIDDEN'),
+        (4, 'FLAG_PERMA'),
+    )
 
     __desc__ = """
         SBE Game Flag
@@ -226,53 +226,23 @@ class GameFlag(models.Model):
         verbose_name = 'SBE Game Flag'
         verbose_name_plural = 'SBE Game Flags'
 
+    game = models.ForeignKey(Game)
+    game_team = models.ForeignKey(GameTeam)
     flag_name = models.CharField('Flag Name', max_length=250)
     flag_answer = models.CharField('Flag Answer', max_length=500)
     flag_value = models.SmallIntegerField('Flag Value', default=100)
-    flag_options = models.SmallIntegerField('Flag Options', default=2)
-    flag_owner = models.ForeignKey('sbegame.Player', null=True, blank=True)
+    flag_option = models.SmallIntegerField('Flag Options', choices=FLAG_VALUES, default=2)
+    flag_owner = models.ForeignKey('sbegame.Player', null=True, blank=True, related_name='flag_owner')
+    flag_stealer = models.ForeignKey('sbegame.Player', null=True, blank=True, related_name='flag_stealer')
 
     def __str__(self):
         return 'Flag %s (%d)' % (self.flag_name, self.flag_value)
 
     def __bool__(self):
-        return self.get_option(1) is False and self.flag_online
+        return self.flag_option != 1 and self.flag_online
 
     def __nonzero__(self):
         return self.__bool__()
-
-    def get_option(self, option):
-        if isinstance(option, int):
-            level = option
-        elif isinstance(option, str):
-            if option in GameFlag.FLAG_VALUES:
-                level = GameFlag.FLAG_VALUES[option]
-            else:
-                raise IndexError('The option value "%s" does not exist!' % option)
-        else:
-            raise TypeError('Must be an integer or key option string!')
-        return (self.flag_options & (1 << level)) > 0
-
-    def __getitem__(self, item):
-        return self.check_rule(item)
-
-    def set_rule(self, option, value):
-        if isinstance(option, int):
-            level = option
-        elif isinstance(option, str):
-            if option in GameFlag.FLAG_VALUES:
-                level = GameFlag.FLAG_VALUES[option]
-            else:
-                raise IndexError('The option value "%s" does not exist!' % option)
-        else:
-            raise TypeError('Must be an integer or key option string!')
-        if value:
-            self.flag_options = (self.flag_options | (1 << level))
-        else:
-            self.flag_options = (self.flag_options & (~(1 << level)))
-
-    def __setitem__(self, key, value):
-        self.set_rule(key, value)
 
 
 class GamePlayer(models.Model):
@@ -306,6 +276,7 @@ class GameTicket(models.Model):
         verbose_name = 'SBE Ticket'
         verbose_name_plural = 'SBE Tickets'
 
+    game_team = models.ForeignKey(GameTeam)
     ticket_name = models.CharField('Ticket Name', max_length=250)
     ticket_value = models.SmallIntegerField('Ticket Value', default=500)
     ticket_expired = models.BooleanField('Ticket Expired', default=False)
@@ -319,7 +290,11 @@ class GameTicket(models.Model):
             return 0
         if self.ticket_completed:
             return (self.ticket_completed - self.ticket_started).seconds
-        return (self.ticket_expires - self.ticket_started).seconds
+        if self.ticket_expires:
+            return (self.ticket_expires - self.ticket_started).seconds
+
+        tzapp = tz.tzoffset('UTC', 0)
+        return (datetime.now(tzapp) - self.ticket_started).seconds
 
     def __str__(self):
         return 'Ticket %s (%d) %d sec' % (self.ticket_name, self.ticket_value, self.__len__())

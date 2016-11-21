@@ -20,6 +20,10 @@ urlpatterns = [
     url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/compromise/(?P<compromise_id>[0-9]+)/$', GameViews.game_compromise, name='game_compromise'),
     url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/service/(?P<service_id>[0-9]+)/content/$', GameViews.game_content, name='game_content'),
     url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/service/(?P<service_id>[0-9]+)/content/(?P<content_id>[0-9]+)/$', GameViews.game_content, name='game_content'),
+    url(r'^game/(?P<game_id>[0-9]+)/flag/$', GameViews.game_flag, name='game_flag'),
+    url(r'^game/(?P<game_id>[0-9]+)/flag/(?P<flag_id>[0-9]+)/$', GameViews.game_flag, name='game_flag'),
+    url(r'^game/(?P<game_id>[0-9]+)/ticket/$', GameViews.game_ticket, name='game_ticket'),
+    url(r'^game/(?P<game_id>[0-9]+)/ticket/(?P<ticket_id>[0-9]+)/$', GameViews.game_ticket, name='game_ticket'),
 
 #
 #    url(r'^job/$', views.SBE_Management.job_request, name='jobs'),
