@@ -25,40 +25,65 @@ from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadReque
 
 
 class ManageViews:
-    """
-        SBE Player API
-
-        Methods: GET, PUT, POST
-
-        GET  |  /player/
-        GET  |  /player/<game_id>/
-        PUT  |  /player/
-        POST |  /player/<player_id>/
-
-        Returns player info.  Deletes are not allowed
-    """
     @staticmethod
     @csrf_exempt
     @val_auth
     def team(request, team_id=None):
+        """
+            SBE Team API
+
+            Methods: GET, PUT, POST
+
+            GET, PUT  |  /team/
+            GET, POST |  /team/<team_id>/
+
+            Returns team info.
+        """
         if request.method == 'GET':
             return get_object_with_id(request, Team, team_id)
         elif request.method == 'POST' or request.method == 'PUT':
             return save_json_or_error(request, team_id)
+
         return HttpResponseBadRequest()
 
     @staticmethod
     @csrf_exempt
     @val_auth
     def player(request, player_id=None):
+        """
+            SBE Player API
+
+            Methods: GET, PUT, POST
+
+            GET, PUT  |  /player/
+            GET, POST |  /player/<player_id>/
+
+            Returns player info.  Deletes are not allowed
+        """
         if request.method == 'GET':
             return get_object_with_id(request, Player, player_id)
         elif request.method == 'POST' or request.method == 'PUT':
             return save_json_or_error(request, player_id)
+
         return HttpResponseBadRequest()
 
     @staticmethod
     @csrf_exempt
     @val_auth
-    def job(request):
-        return HttpResponse(request.authkey.key_uuid)
+    def job(request, job_id=None):
+        """
+            SBE Job API
+
+            Methods: GET, PUT, POST
+
+            GET, PUT  |  /job/
+            GET, POST |  /job/<job_id>/
+
+            Returns Job info.
+        """
+        if request.method == 'GET':
+            return get_object_with_id(request, MonitorJob, job_id)
+        elif request.method == 'POST' or request.method == 'PUT':
+            return save_json_or_error(request, job_id)
+
+        return HttpResponseBadRequest()
