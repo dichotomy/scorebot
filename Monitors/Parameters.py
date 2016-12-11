@@ -6,20 +6,30 @@ import json
 class Parameters(object):
 
     def __init__(self):
-        self.debug = False
+        self.debug = True
         self.timeout = 90
         self.sbe_auth = "0987654321"
         self.sb_ip = "10.200.100.50"
         self.sb_port = 80
         self.job_url = "/job/"
-        self.headers = {}
         self.reason = ""
+        self.headers = {}
         self.headers["Connection"] = "keep-alive"
-        self.headers["Host"] = self.sb_ip
+        #self.headers["Host"] = self.sb_ip
         self.headers["Accept-Encoding"] = "gzip, deflate"
         self.headers["User-Agent"] = "Scorebot Monitor/3.0.0"
         self.headers["SBE-AUTH"] = self.sbe_auth
         self.headers["Accept"] = "*/*"
+        self.scheme = "http"
+
+    def get_debug(self):
+        return self.debug
+
+    def set_scheme(self, scheme):
+        self.scheme = scheme
+
+    def get_scheme(self):
+        return self.scheme
 
     def get_timeout(self):
         return self.timeout
@@ -35,8 +45,8 @@ class Parameters(object):
 
     def get_headers(self):
         header_txt = ""
-            for header in self.headers:
-                header_txt += "%s: %s\r\n" % (header, self.headers[header])
+        for header in self.headers:
+            header_txt += "%s: %s\r\n" % (header, self.headers[header])
         return header_txt
 
     def fail_conn(self, status, reason, server_headers, conn_time, sent_bytes, recv_bytes):
@@ -57,7 +67,7 @@ class Parameters(object):
         #sys.stderr.write("Got headers:\n%s\n" % headers)
         #sys.stderr.write("Got body:\n%s\n" % body)
         if int(status) == 201:
-            json_job = json.loads(body)
+            json_job = json.loads("[%s]" % body)
 
 
         #sys.stderr.write("Got body:\n%s\n" % json.dumps(json_body, indent=4))
