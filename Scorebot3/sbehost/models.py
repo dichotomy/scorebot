@@ -1,5 +1,6 @@
 import json
 import random
+from datetime import datetime
 
 from django.db import models
 from django.utils import timezone
@@ -32,7 +33,6 @@ class Game(models.Model):
         verbose_name = 'SBE Game'
         verbose_name_plural = 'SBE Games'
 
-    game_teams = models.ManyToManyField('sbehost.GameTeam')
     game_name = models.CharField('Game Name', max_length=250)
     game_mode = models.SmallIntegerField('Game Mode', default=0)
     game_paused = models.BooleanField('Game Pause', default=False)
@@ -48,10 +48,10 @@ class Game(models.Model):
                                             through_fields=('player_game', 'player_inst'))
 
     def __str__(self):
-        return '%sGame %s (%s-%s) %d Teams' % (('[Running]' if not self.game_paused else '[Paused]'),
+        return '%s Game %s (%s-%s) %d Teams' % (('[Running]' if not self.game_paused else '[Paused]'),
                                                self.game_name, self.game_start.strftime('%m/%d/%y %H:%M'),
                                                (self.game_finish.strftime('%m/%d/%y %H:%M')
-                                                if self.game_finish else 'Present'), self.game_teams.all().count())
+                                                if self.game_finish else 'Present'), self.gameteam_set.all().count())
 
 
 class GameDNS(models.Model):
@@ -66,9 +66,6 @@ class GameDNS(models.Model):
         verbose_name_plural = 'SBE DNS Servers'
 
     dns_address = models.CharField('DNS Server Address', max_length=140)
-
-    def __str__(self):
-        return 'DNS %s' % self.dns_address
 
 
 class GameTeam(models.Model):
@@ -97,14 +94,14 @@ class GameTeam(models.Model):
         verbose_name = 'SBE Game Team'
         verbose_name_plural = 'SBE Game Team'
 
+    game = models.ForeignKey(Game)
     team_dns = models.ManyToManyField('sbehost.GameDNS')
     team_flags = models.ManyToManyField('sbehost.GameFlag')
-    team_hosts = models.ManyToManyField('sbehost.GameHost')
     team_tickets = models.ManyToManyField('sbehost.GameTicket')
-    team_inst = models.ForeignKey('sbegame.Team', blank=True, null=True)  # Reference to existing team, null if auto
+    team = models.ForeignKey('sbegame.Team', blank=True, null=True)  # Reference to existing team, null if auto
     team_score_flags = models.IntegerField('Team Score (Flags)', default=0)
     team_score_basic = models.IntegerField('Team Score (Uptime)', default=0)
-    team_score_beacons = models.IntegerField('Team Score (Beans)', default=0)
+    team_score_beacons = models.IntegerField('Team Score (Becons)', default=0)
     team_score_tickets = models.IntegerField('Team Score (Tickets)', default=0)
     team_players = models.ManyToManyField('sbegame.Player', through='sbehost.GamePlayer',
                                           through_fields=('player_team', 'player_inst'))
@@ -113,23 +110,56 @@ class GameTeam(models.Model):
         return self.team_score_basic + self.team_score_beacons + self.team_score_flags + self.team_score_tickets
 
     def __str__(self):
-        return 'Team %s (Score: %d)' % (self.get_team_name(), self.__len__())
+        return 'GameTeam (%s:%d) %s' % (self.get_team_name(), self.get_team_color(), self.__len__())
 
     def get_team_name(self):
         # Use this instead of .name
-        if self.team_inst:
-            return self.team_inst.team_name
+        if self.team:
+            return self.team.team_name
         if not self.static_name:
-            self.static_name = GameTeam.BASIC_TEAM_NAMES[random.randint(0, len(GameTeam.BASIC_TEAM_NAMES))]
+            self.static_name = GameTeam.BASIC_TEAM_NAMES[random.randint(0, len(GameTeam.BASIC_TEAM_NAMES)-1)]
         return self.static_name
 
     def get_team_color(self):
         # Use this instead of .color
-        if self.team_inst:
-            return self.team_inst.team_color
+        if self.team:
+            return self.team.team_color
         if not self.static_color:
             self.static_color = random.randint(0, 66113)
         return self.static_color
+
+
+class GameCompromise(models.Model):
+    __desc__ = """
+        SBE Game Host Compromise
+
+        This will be created when a host is compromised.  Will store the compromises as start/end times
+        to easier facilitate the timespan that a host is compromised.
+    """
+    __historical__ = True
+
+    class Meta:
+        verbose_name = 'SBE Host Compromise'
+        verbose_name_plural = 'SBE Host Compromises'
+
+    game_host = models.ForeignKey('GameHost')
+    comp_player = models.ForeignKey('sbegame.Player')
+    comp_start = models.DateTimeField('Compromise Start', default=datetime.now)
+    comp_finish = models.DateTimeField('Compromise End', null=True, blank=True)
+
+    def __len__(self):
+        if self.comp_finish:
+            return (self.comp_finish - self.comp_start).seconds
+        return (timezone.now() - self.comp_start).seconds
+
+    def __str__(self):
+        return '%s (%d seconds)' % (self.comp_player.player_name, self.__len__())
+
+    def __bool__(self):
+        return self.comp_finish is None
+
+    def __nonzero__(self):
+        return self.__bool__()
 
 
 class GameHost(models.Model):
@@ -144,14 +174,14 @@ class GameHost(models.Model):
         verbose_name = 'SBE Game Host'
         verbose_name_plural = 'SBE Game Hosts'
 
+    game_team = models.ForeignKey(GameTeam)
     host_server = models.ForeignKey('sbegame.HostServer')
+    host_flags = models.ManyToManyField('sbehost.GameFlag')
     host_fqdn = models.CharField('Host Name', max_length=250)
+    host_tickets = models.ManyToManyField('sbehost.GameTicket')
     host_services = models.ManyToManyField('sbehost.GameService')
+    host_used = models.BooleanField('Host in Game', default=False)  # Trying to design a setup that dosent need this
     host_status = models.BooleanField('Host Online', default=False)
-    host_value = models.SmallIntegerField('Host Value', default=250)
-    host_flags = models.ManyToManyField('sbehost.GameFlag', blank=True)
-    host_tickets = models.ManyToManyField('sbehost.GameTicket', blank=True)
-    host_compromises = models.ManyToManyField('sbehost.GameCompromise', blank=True)
     host_ping_ratio = models.SmallIntegerField('Host Pingback Percentage', default=0)
     host_name = models.CharField('Host VM Name', max_length=250, null=True, blank=True)
 
@@ -159,7 +189,7 @@ class GameHost(models.Model):
         return 'Host %s (%s)' % (self.host_fqdn, '; '.join(['%d' % f.service_port for f in self.host_services.all()]))
 
     def __bool__(self):
-        if self.host_compromises.all().filter(comp_finish=None).count() > 0:
+        if GameCompromise.objects.filter(game_host__id=self.id).count() > 0:
             return True
         return False
 
@@ -317,7 +347,7 @@ class GameMonitor(models.Model):
     monitor_hosts = models.ManyToManyField('sbehost.GameHost')
 
     def __str__(self):
-        return self.monitor_inst.__str__()
+        return 'Montor %s (%s) Hosts' % (self.monitor_inst.monitor_name, self.monitor_hosts.all().count())
 
 
 class GameService(models.Model):
@@ -338,18 +368,16 @@ class GameService(models.Model):
         verbose_name = 'SBE Service'
         verbose_name_plural = 'SBE Services'
 
+    game_host = models.ForeignKey(GameHost)
     service_port = models.SmallIntegerField('Service Port')
     service_name = models.CharField('Service Name', max_length=128)
     service_value = models.SmallIntegerField('Service Value', default=50)
     service_status = models.SmallIntegerField('Service Status', default=0)
     service_bonus = models.BooleanField('Service is Bonus', default=False)
-    service_content = models.ForeignKey('sbehost.GameContent', null=True, blank=True)
     service_protocol = models.CharField('Service Protocol', max_length=4, default='tcp')
 
     def __str__(self):
-        ret_host = self.gamehost_set.first()
-        return 'SVC %s (%d/%s) %s [%s]' % (self.service_name, self.service_port, self.service_protocol,
-                                           self.service_value, ret_host.host_fqdn if ret_host else 'Unassigned')
+        return 'GAME %d HOST %d SVC %s (%d/%s) %s' % (self.game_host.game_team.game.id, self.game_host.host_server.id, self.service_name, self.service_port, self.service_protocol, self.service_value)
 
     def __bool__(self):
         return self.service_status == 0
@@ -358,7 +386,7 @@ class GameService(models.Model):
         return self.__bool__()
 
     def get_text_status(self):
-        for k, v in GameService.SERVICE_STATUS.items():
+        for k, v in GameService.SERVICE_STATUS:
             if self.service_status == v:
                 return k
         return 'UP'
@@ -376,6 +404,7 @@ class GameContent(models.Model):
         verbose_name = 'SBE Service Content'
         verbose_name_plural = 'SBE Service Contents'
 
+    game_service = models.ForeignKey(GameService)
     content_data = PickledObjectField()
     content_type = models.CharField('Content Type', max_length=75, default='string')
 
@@ -384,41 +413,3 @@ class GameContent(models.Model):
 
     def monitor_json(self):
         return '{ "content_type": "%s", "content_data": %s }' % (self.content_type, json.dumps(self.content_data))
-
-
-class GameCompromise(models.Model):
-    __desc__ = """
-        SBE Game Host Compromise
-
-        This will be created when a host is compromised.  Will store the compromises as start/end times
-        to easier facilitate the timespan that a host is compromised.
-    """
-    __historical__ = True
-
-    class Meta:
-        verbose_name = 'SBE Host Compromise'
-        verbose_name_plural = 'SBE Host Compromises'
-
-    comp_player = models.ForeignKey('sbegame.Player')
-    comp_start = models.DateTimeField('Compromise Start', auto_now_add=True)
-    comp_finish = models.DateTimeField('Compromise End', null=True, blank=True)
-
-    def __len__(self):
-        if self.comp_finish:
-            return (self.comp_finish - self.comp_start).seconds
-        return (timezone.now() - self.comp_start).seconds
-
-    def __str__(self):
-        return '%s (%d seconds)' % (self.comp_player.player_name, self.__len__())
-
-    def __bool__(self):
-        return self.comp_finish is None
-
-    def __nonzero__(self):
-        return self.__bool__()
-
-    def get_compromised_host(self):
-        try:
-            return self.host.first()
-        except GameHost.DoesNotExist:
-            return None

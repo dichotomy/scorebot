@@ -1,6 +1,6 @@
-import sbegame.models
-
 from django.contrib import admin
+
+import sbegame.models
 from scorebot.utils.general import all_models_for_mod
 from sbegame.forms.adminforms import AccessKeyAdminPanel
 

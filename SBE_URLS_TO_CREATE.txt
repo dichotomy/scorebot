@@ -1,0 +1,44 @@
+GET - Grab Data
+POST - Update Data
+PUT - Create Data
+DELETE - Delete Data
+
+/job/ | GET, POST
+
+/game/ | GET (PUT?)
+/game/<game_id>/ | GET, POST
+
+/team/ | GET, PUT
+/team/<team_id>/ | GET, POST
+
+/host/ | GET, PUT
+/host/<host_id>/ | GET, POST, DELETE
+
+/player/ | GET, PUT
+/player/<player_id>/ | GET, POST
+
+/game/<game_id>/player/ | GET, PUT
+/game/<game_id>/player/<player_id>/ | GET, POST, DELETE
+
+/game/<game_id>/team/ | GET, PUT
+/game/<game_id>/team/<team_id>/ | GET, POST, DELETE
+
+/game/<game_id>/host/ | GET, PUT
+/game/<game_id>/host/<host_id>/ | GET, POST, DELETE
+
+/game/<game_id>/host/<host_id>/service/ | GET, PUT
+/game/<game_id>/host/<host_id>/service/<service_id>/ | GET, POST, DELETE
+
+/game/<game_id>/host/<host_id>/service/<service_id>/content/ | GET, PUT, POST, DELETE
+
+/game/<game_id>/host/<host_id>/compromise/ | GET, PUT
+/game/<game_id>/host/<host_id>/compromise/<compromise_id>/ | GET, POST, DELETE
+
+/game/<game_id>/flag/ | GET, PUT
+/game/<game_id>/flag/<flag_id>/ | GET, POST, DELETE
+
+/game/<game_id>/ticket/ | GET, PUT
+/game/<game_id>/ticket/<ticket_id>/ | GET, POST, DELETE
+
+/game/<game_id>/monitor/ | GET, PUT
+/game/<game_id>/monitor/<monitor_id>/ | GET, (POST, DELETE?)
