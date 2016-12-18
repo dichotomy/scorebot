@@ -196,14 +196,14 @@ class JobFactory(WebCoreFactory):
 
 class WebCheckFactory(WebCoreFactory):
 
-    def __init__(self, job):
+    def __init__(self, service):
         WebCoreFactory.__init__(self)
-        self.job = job
-        self.url = self.job.get_url()
-        self.headers = self.job.get_headers()
-        self.ip = self.job.get_sb_ip()
-        self.port = self.job.get_sb_port()
-        self.timeout = self.job.get_timeout()
+        self.service = service
+        self.url = self.service.get_url()
+        self.headers = self.service.get_headers()
+        self.ip = self.service.get_sb_ip()
+        self.port = self.service.get_sb_port()
+        self.timeout = self.service.get_timeout()
 
     def clientConnectionFailed(self, connector, reason):
         self.end = time.time()
@@ -219,12 +219,12 @@ class WebCheckFactory(WebCoreFactory):
         if self.start:
             conn_time = self.end - self.start
         else:
-            self.job.fail_conn("client timeout", conn_time, \
+            self.service.fail_conn("client timeout", conn_time, \
                                     self.sent_bytes, self.recv_bytes)
             return
         if self.status:
-            self.job.add_status(self.status)
-        self.job.fail_conn(reason.getErrorMessage(), conn_time, \
+            self.service.add_status(self.status)
+        self.service.fail_conn(reason.getErrorMessage(), conn_time, \
                                 self.sent_bytes, self.recv_bytes)
 
     def clientConnectionLost(self, connector, reason):
@@ -239,18 +239,18 @@ class WebCheckFactory(WebCoreFactory):
             sys.stderr.write( "="*80 + "\n")
         conn_time = self.end - self.start
         if self.status:
-            self.job.add_status(self.status)
+            self.service.add_status(self.status)
         if self.fail and self.reason:
-            self.job.fail_conn(self.reason, conn_time, \
+            self.service.fail_conn(self.reason, conn_time, \
                                     self.sent_bytes, self.recv_bytes)
         elif self.fail and not self.reason:
-            self.job.fail_conn(reason.getErrorMessage(), conn_time, \
+            self.service.fail_conn(reason.getErrorMessage(), conn_time, \
                                     self.sent_bytes, self.recv_bytes)
         elif "non-clean" in reason.getErrorMessage():
-            self.job.fail_conn("other", conn_time, \
+            self.service.fail_conn("other", conn_time, \
                                     self.sent_bytes, self.recv_bytes)
         else:
-            self.job.fin_conn(reason.getErrorMessage(), \
+            self.service.fin_conn(reason.getErrorMessage(), \
                                    conn_time, self.sent_bytes, self.recv_bytes)
 
 if __name__ == "__main__":

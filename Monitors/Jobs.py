@@ -78,6 +78,9 @@ class Job(object):
     def get_dns(self):
         return self.json["fields"]["job_dns"]
 
+    def get_services(self):
+        return self.services
+
     def get_headers(self):
         header_txt = ""
         for header in self.headers:
@@ -151,6 +154,16 @@ class Service(object):
 
     def __init__(self, json):
         self.json = json
+        self.headers = {}
+        # Default values
+        self.headers["Connection"] = "keep-alive"
+        #self.headers["Host"] = self.sb_ip
+        self.headers["Accept-Encoding"] = "gzip, deflate"
+        self.headers["User-Agent"] = "Scorebot Monitor/3.0.0"
+        self.headers["SBE-AUTH"] = self.sbe_auth
+        self.headers["Accept"] = "*/*"
+        # temp variable until JSON is updated
+        self.url = "/index.html"
 
     def set_green(self):
         self.json["service_status"] = "green"
@@ -170,6 +183,10 @@ class Service(object):
     def status(self):
         return self.json["service_status"]
 
+    def get_url(self):
+        # TODO - replace with real code after the JSON is updated
+        return self.url
+
     def get_port(self):
         return self.json["service_port"]
 
@@ -178,6 +195,14 @@ class Service(object):
 
     def get_json(self):
         return self.json
+
+    def get_headers(self):
+        # Dummy function until the JSON structure is updated
+        # TODO - replace with real code
+        header_txt = ""
+        for header in self.headers:
+            header_txt += "%s: %s\r\n" % (header, self.headers[header])
+        return header_txt
 
 
 if __name__ == "__main__":
