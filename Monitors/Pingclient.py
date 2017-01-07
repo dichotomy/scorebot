@@ -11,9 +11,9 @@ class PingProtocol(protocol.ProcessProtocol):
         self.received_re = re.compile("(\d) received")
         self.transmitted_re = re.compile("(\d) packets transmitted")
         self.recv = 0
+        self.fail = 0
         self.trans = 0
         self.d = Deferred()
-        self.d.addCallback()
 
     def getDeferred(self):
         return self.d
@@ -24,22 +24,33 @@ class PingProtocol(protocol.ProcessProtocol):
     def outConnectionLost(self):
         self.recv = int(self.received_re.search(self.data).group(1))
         self.trans = int(self.transmitted_re.search(self.data).group(1))
-        self.d.callback()
+        self.fail = self.trans - self.recv
+        if self.recv > self.fail:
+            self.d.callback()
+        else:
+            self.d.errback()
 
     def get_recv(self):
         return self.recv
 
     def get_fail(self):
-        return self.trans - self.recv
+        return self.fail
 
 if __name__=="__main__":
+    def check_services(pingobj)
+        print "Got %s good pings" % pingobj.get_recv()
+        print "Got %s bad pings" % pingobj.get_fail()
+    def ping_fail()
+        print "It failed!!"
     import sys
     ping = "/usr/bin/ping"
     ipaddr = sys.argv[1]
     count = str(5)
-    pingproc = PingProtocol(ipaddr)
-    reactor.spawnProcess(pingproc, ping, [ping, "-c", count, ipaddr])
+    pingobj = PingProtocol(ipaddr)
+    ping_d = pingobj.getDeferred()
+    ping_d.addCallback(self.check_services, pingobj)
+    ping_d.addErrback(self.ping_fail)
+    reactor.spawnProcess(pingobj, ping, [ping, "-c", count, ipaddr])
     reactor.callLater(8, reactor.stop)
     reactor.run()
-    print "Got %s good pings" % pingproc.get_recv()
-    print "Got %s bad pings" % pingproc.get_fail()
+

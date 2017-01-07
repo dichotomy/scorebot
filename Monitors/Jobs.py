@@ -6,9 +6,9 @@ class Jobs(object):
     def __init__(self):
         # Jobs
         self.jobs = {}
-        # Todo list
+        # List of IDs of the jobs to be done
         self.todo = []
-        # Processing list
+        # List of IDs of the jobs being done
         self.proc = []
         # The oldest job ID
         self.latest_job_id = 0
@@ -16,16 +16,20 @@ class Jobs(object):
     def add(self, job_json_str):
         self.latest_job_id += 1
         self.jobs[self.latest_job_id] = Job(job_json_str)
+        self.jobs[self.latest_job_id].set_job_id(self.latest_job_id)
         self.todo.append(self.latest_job_id)
         return self.latest_job_id
 
-    def get_job(self):
-        if len(self.todo):
-            job = self.todo.pop(0)
-            self.proc.append(job)
-            return self.jobs[job]
+    def get_job(self, job_id=None):
+        if job_id:
+            return self.jobs[job_id]
         else:
-            raise Exception("No jobs to give!")
+            if len(self.todo):
+                job = self.todo.pop(0)
+                self.proc.append(job)
+                return self.jobs[job]
+            else:
+                return None
 
 class Job(object):
     """ json structure
@@ -53,7 +57,6 @@ class Job(object):
                 }
             }
         }
-
     """
 
     def __init__(self, job_json_str):
@@ -71,6 +74,13 @@ class Job(object):
         self.headers["Accept"] = "*/*"
         self.scheme = "http"
         self.timeout = 90
+        self.job_id = 0
+
+    def set_job_id(self, job_id):
+        self.job_id = job_id
+
+    def get_job_id(self):
+        return self.job_id
 
     def get_json_str(self):
         return json.dumps(self.json)
@@ -160,10 +170,16 @@ class Service(object):
         #self.headers["Host"] = self.sb_ip
         self.headers["Accept-Encoding"] = "gzip, deflate"
         self.headers["User-Agent"] = "Scorebot Monitor/3.0.0"
-        self.headers["SBE-AUTH"] = self.sbe_auth
         self.headers["Accept"] = "*/*"
         # temp variable until JSON is updated
         self.url = "/index.html"
+
+    def has_auth(self):
+        # TODO - write this code after the json is updated with service creds in SBE
+        return False
+
+    def set_data(self, data):
+        self.json["content_data_recv"] = data
 
     def set_green(self):
         self.json["service_status"] = "green"
@@ -174,7 +190,13 @@ class Service(object):
     def set_red(self):
         self.json["service_status"] = "red"
 
-    def set_conn_fail(self):
+    def fail_conn(self, reason, data):
+        self.set_data(data)
+        self.json["service_connect"] = False
+
+    def timeout(self, conn_time, data):
+        self.conn_time = conn_time
+        self.set_data(data)
         self.json["service_connect"] = False
 
     def set_conn_pass(self):
@@ -203,7 +225,6 @@ class Service(object):
         for header in self.headers:
             header_txt += "%s: %s\r\n" % (header, self.headers[header])
         return header_txt
-
 
 if __name__ == "__main__":
     test_json_str = """ {

@@ -11,6 +11,8 @@ class Parameters(object):
         self.sbe_auth = "0987654321"
         self.sb_ip = "10.200.100.50"
         self.sb_port = 80
+        #self.sb_ip = "10.200.100.97"
+        #self.sb_port = 8080
         self.job_url = "/job/"
         self.reason = ""
         self.headers = {}

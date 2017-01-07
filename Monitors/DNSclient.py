@@ -14,9 +14,11 @@ class DNSclient(object):
         self.job = job
         self.fqdn = self.job.get_hostname()
         self.dnssvr = self.job.get_dns()[0]
+        self.timeout = timeout
 
     def query(self):
-        self.d = self.proto.query((self.dnssvr, 53), [dns.Query(self.fqdn, dns.A)], timeout=timeout)
+        #print "Querying %s for %s" % (self.dnssvr, self.fqdn)
+        self.d = self.proto.query((self.dnssvr, 53), [dns.Query(self.fqdn, dns.A)], timeout=self.timeout)
         self.d.addCallback(self.getResults)
         return self.d
 
@@ -25,7 +27,7 @@ class DNSclient(object):
         ip_addr = answer_str.split(" ")[1].split("=")[1]
         self.job.set_ip(ip_addr)
         # todo make this a proper debug statement
-        #sys.stderr.write("DNS lookup for %s gave %s\n" % (res.answers[0].name, self.job.get_ip()))
+        sys.stderr.write("DNS lookup for %s gave %s\n" % (res.answers[0].name, self.job.get_ip()))
 
     def errorHandler(self, failure):
         # Need to implement error handling

@@ -14,7 +14,6 @@ class MonitorCore(object):
         self.ping = "/usr/bin/ping"
         self.ping_cnt = str(5)
 
-
     def get_job(self):
         factory = JobFactory(self.params, self.jobs)
         if self.params.get_scheme() == "https":
@@ -26,14 +25,18 @@ class MonitorCore(object):
                     self.params.get_timeout())
         else:
             raise Exception("Unknown scheme:  %s" % self.params.get_scheme())
+        # Keep looking for more work
+        reactor.callLater(5, self.get_job)
 
     def dns_fail(self, job):
         # Todo - add code to handle DNS check failure
         # Do this if the DNS check failed
+        pass
 
     def ping_fail(self, job):
-    # Todo - add code to handle ping failure
+        # Todo - add code to handle ping failure
         # Do this if the Ping check failed
+        pass
 
     def ping(self, job):
         # Ping
@@ -47,7 +50,10 @@ class MonitorCore(object):
     def check_services(self, job):
         # Service walk
         for service in job.get_services():
-            factory = WebCheckFactory(service)
+            if service.has_auth:
+                # TODO - write this code after the json is updated with service creds in SBE
+                pass
+            factory = WebCheckFactory(self.params, service)
             if "tcp" in service.get_proto():
                 reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
             elif "udp" in service.get_proto():
@@ -59,16 +65,23 @@ class MonitorCore(object):
     def start_job(self):
         # Get the next job started
         job = self.jobs.get_job()
-        # DNS
-        dnsobj = DNSclient(job)
-        # Execute the query
-        query_d = dnsobj.query()
-        # Handle a DNS failure - fail the host
-        query_d.addErrback(self.dns_fail, job)
-        # Handle a DNS success - move on to ping
-        query_d.addCallback(self.ping, job)
+        if job:
+            # DNS
+            dnsobj = DNSclient(job)
+            # Execute the query
+            query_d = dnsobj.query()
+            # Handle a DNS failure - fail the host
+            query_d.addErrback(self.dns_fail, job)
+            # Handle a DNS success - move on to ping
+            query_d.addCallback(self.ping, job)
+        reactor.callLater(5, self.start_job)
 
 
 if __name__=="__main__":
-    # TODO - add code to test the job
-
+    # Testing with an artificial job file
+    params = Parameters()
+    jobs = Jobs
+    monobj = MonitorCore(params, jobs)
+    reactor.callLater(5, monobj.get_job)
+    reactor.callLater(10, monobj.start_job)
+    reactor.run()
