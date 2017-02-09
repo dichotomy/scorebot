@@ -6,6 +6,7 @@ from http_parser.pyparser import HttpParser
 from Parameters import Parameters
 from Jobs import Jobs
 import time
+import base
 import re
 
 class WebClient(protocol.Protocol):
@@ -315,21 +316,31 @@ if __name__ == "__main__":
             deferred.addCallback(post_job)
             reactor.connectTCP(job.get_ip(), service.get_port(), factory, params.get_timeout())
 
-    def dns_fail(failure):
-        print "DNS Failed! %s" % failure
+    def dns_fail(failure, job):
+        jobid = job.get_job_id()
+        print "DNS Failed for job %s! %s" % (jobid, failure)
+        job.set_ip("fail")
+        raise Exception("Fail Host")
+
+    def job_fail(failure, job):
+        jobid = job.get_job_id()
+        print "job %s Failed! %s" % (jobid, failure)
+        print job.get_json_str()
+        post_job(jobid)
+        return True
 
     def check_job(params, jobs):
         job = jobs.get_job()
         if job:
             #DNS?
-            dnsobj = DNSclient(job)
+            dnsobj = DNSclient(job, 3)
             # Execute the query
             query_d = dnsobj.query()
             # Handle a DNS failure - fail the host
-            query_d.addErrback(dns_fail)
+            query_d.addErrback(dns_fail, job)
             # Handle a DNS success - move on to ping
             query_d.addCallback(check_web, params, job)
-            query_d.addErrback(dns_fail)
+            query_d.addErrback(job_fail, job)
 
     sys.stderr.write( "Testing %s\n" % sys.argv[0])
     params = Parameters()
@@ -338,4 +349,5 @@ if __name__ == "__main__":
     reactor.callLater(5, check_job, params, jobs)
     reactor.callLater(30, reactor.stop)
     reactor.run()
+    print "Finished normally"
 

@@ -29,9 +29,17 @@ class MonitorCore(object):
         reactor.callLater(5, self.get_job)
 
     def dns_fail(self, job):
-        # Todo - add code to handle DNS check failure
         # Do this if the DNS check failed
-        pass
+        jobid = job.get_job_id()
+        print "DNS Failed for job %s! %s" % (jobid, failure)
+        job.set_ip("fail")
+        raise Exception("Fail Host")
+
+    def post_job(self, job):
+        job_id = job.get_job_id()
+        factory = JobFactory(self.params, self.jobs, "put", job_id)
+        reactor.connectTCP(self.params.get_sb_ip(), self.params.get_sb_port(), factory, \
+                            self.params.get_timeout())
 
     def ping_fail(self, job):
         # Todo - add code to handle ping failure
@@ -53,9 +61,12 @@ class MonitorCore(object):
             if service.has_auth:
                 # TODO - write this code after the json is updated with service creds in SBE
                 pass
-            factory = WebCheckFactory(self.params, service)
             if "tcp" in service.get_proto():
-                reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
+                factory = None
+                if service.get_port() == 80:
+                    factory = WebCheckFactory(self.params, service)
+                if factory:
+                    reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
             elif "udp" in service.get_proto():
                 # TODO - write the code to handle UDP checks
                 pass
@@ -74,6 +85,8 @@ class MonitorCore(object):
             query_d.addErrback(self.dns_fail, job)
             # Handle a DNS success - move on to ping
             query_d.addCallback(self.ping, job)
+            # TODO - add an errback here?
+            query_d.addErrback(self.post_job, job)
         reactor.callLater(5, self.start_job)
 
 
