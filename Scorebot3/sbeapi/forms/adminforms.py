@@ -1,0 +1,58 @@
+from django import forms
+from sbegame.models import AccessKey
+
+
+class AccessKeyAdminPanel(forms.ModelForm):
+    class Meta:
+        model = AccessKey
+        fields = ['key_uuid']
+
+    key_perm_read_gameplayer = forms.BooleanField(label='GamePlayer.READ')
+    key_perm_update_gameplayer = forms.BooleanField(label='GamePlayer.UPDATE')
+    key_perm_create_gameplayer = forms.BooleanField(label='GamePlayer.CREATE')
+    key_perm_delete_gameplayer = forms.BooleanField(label='GamePlayer.DELETE')
+    key_perm_read_gamecompromise = forms.BooleanField(label='GameCompromise.READ')
+    key_perm_update_gamecompromise = forms.BooleanField(label='GameCompromise.UPDATE')
+    key_perm_create_gamecompromise = forms.BooleanField(label='GameCompromise.CREATE')
+    key_perm_delete_gamecompromise = forms.BooleanField(label='GameCompromise.DELETE')
+    key_perm_read_gamehost = forms.BooleanField(label='GameHost.READ')
+    key_perm_update_gamehost = forms.BooleanField(label='GameHost.UPDATE')
+    key_perm_create_gamehost = forms.BooleanField(label='GameHost.CREATE')
+    key_perm_delete_gamehost = forms.BooleanField(label='GameHost.DELETE')
+    key_perm_read_gameticket = forms.BooleanField(label='GameTicket.READ')
+    key_perm_update_gameticket = forms.BooleanField(label='GameTicket.UPDATE')
+    key_perm_create_gameticket = forms.BooleanField(label='GameTicket.CREATE')
+    key_perm_delete_gameticket = forms.BooleanField(label='GameTicket.DELETE')
+    key_perm_read_gamedns = forms.BooleanField(label='GameDNS.READ')
+    key_perm_update_gamedns = forms.BooleanField(label='GameDNS.UPDATE')
+    key_perm_create_gamedns = forms.BooleanField(label='GameDNS.CREATE')
+    key_perm_delete_gamedns = forms.BooleanField(label='GameDNS.DELETE')
+    key_perm_read_gamecontent = forms.BooleanField(label='GameContent.READ')
+    key_perm_update_gamecontent = forms.BooleanField(label='GameContent.UPDATE')
+    key_perm_create_gamecontent = forms.BooleanField(label='GameContent.CREATE')
+    key_perm_delete_gamecontent = forms.BooleanField(label='GameContent.DELETE')
+    key_perm_read_game = forms.BooleanField(label='Game.READ')
+    key_perm_update_game = forms.BooleanField(label='Game.UPDATE')
+    key_perm_create_game = forms.BooleanField(label='Game.CREATE')
+    key_perm_delete_game = forms.BooleanField(label='Game.DELETE')
+    key_perm_read_gameservice = forms.BooleanField(label='GameService.READ')
+    key_perm_update_gameservice = forms.BooleanField(label='GameService.UPDATE')
+    key_perm_create_gameservice = forms.BooleanField(label='GameService.CREATE')
+    key_perm_delete_gameservice = forms.BooleanField(label='GameService.DELETE')
+    key_perm_read_gameteam = forms.BooleanField(label='GameTeam.READ')
+    key_perm_update_gameteam = forms.BooleanField(label='GameTeam.UPDATE')
+    key_perm_create_gameteam = forms.BooleanField(label='GameTeam.CREATE')
+    key_perm_delete_gameteam = forms.BooleanField(label='GameTeam.DELETE')
+    key_perm_read_gameflag = forms.BooleanField(label='GameFlag.READ')
+    key_perm_update_gameflag = forms.BooleanField(label='GameFlag.UPDATE')
+    key_perm_create_gameflag = forms.BooleanField(label='GameFlag.CREATE')
+    key_perm_delete_gameflag = forms.BooleanField(label='GameFlag.DELETE')
+    key_perm_read_player = forms.BooleanField(label='Player.READ')
+    key_perm_update_player = forms.BooleanField(label='Player.UPDATE')
+    key_perm_create_player = forms.BooleanField(label='Player.CREATE')
+    key_perm_delete_player = forms.BooleanField(label='Player.DELETE')
+    key_perm_read_team = forms.BooleanField(label='Team.READ')
+    key_perm_update_team = forms.BooleanField(label='Team.UPDATE')
+    key_perm_create_team = forms.BooleanField(label='Team.CREATE')
+    key_perm_delete_team = forms.BooleanField(label='Team.DELETE')
+

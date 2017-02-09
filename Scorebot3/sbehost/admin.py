@@ -1,11 +1,16 @@
 import sbehost.models
 
 from django.contrib import admin
-from django.db import models
 from scorebot.utils.general import all_models_for_mod
+from sbegame.forms.adminforms import GameContentAdminPanel
+
+
+class GameContentAdmin(admin.ModelAdmin):
+    form = GameContentAdminPanel
 
 
 for mod in all_models_for_mod(sbehost.models):
-    if type(mod) is type:
-        continue
-    admin.site.register(mod)
+    if 'GameContent' in mod.__name__:
+        admin.site.register(mod, GameContentAdmin)
+    else:
+        admin.site.register(mod)
