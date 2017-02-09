@@ -52,7 +52,7 @@ DATABASES = {
         'NAME': 'scorebotv3',
         'HOST': 'localhost',
         'USER': 'scorebot_user',
-        'PASSWORD': 'Gtf7F67F8V865DFr6cf57YGT87H7YF8tfrE568T6drS34DR~547F687TF547fCR5DyugT667fdr57',
+        'PASSWORD': '',
     }
 }
 AUTH_PASSWORD_VALIDATORS = [
