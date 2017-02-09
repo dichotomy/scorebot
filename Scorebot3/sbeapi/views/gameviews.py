@@ -3,13 +3,14 @@ import random
 import scorebot.utils.log as logger
 
 from django.core import serializers
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseForbidden
-
 from sbehost.models import Game, GameTeam, GameHost, GameService, GameCompromise, GameContent
 from sbegame.models import Team
-from scorebot.utils.general import val_auth, get_object_with_id, get_object_by_filter, get_json, save_json_or_error
+from scorebot.utils.general import val_auth, get_object_with_id, get_object_by_filter, get_json, save_json_or_error, get_object_by_query
+
+
 """
     Methods supported
 
@@ -64,18 +65,15 @@ class GameViews:
             return HttpResponseBadRequest('SBE [API]: A game ID must be provided!')
 
         if request.method == 'GET':
-            r = None
             if not team_id:
-                game = get_object_with_id(request, Game, game_id, object_response=False)
-                r = HttpResponse(get_json(GameTeam.objects.filter(game=game)))
+                game_teams = Game.objects.get(game_id=game_id).game_teams.all()
+                return get_object_by_query(request, game_teams)
             else:
-                filter_obj = {'team__id': team_id, 'game__id': game_id}
-                r = get_object_by_filter(request, GameTeam, filter_obj)
-            return r
+                game_team = Game.objects.get(game_id=game_id).game_teams.get(team_id=team_id)
+                return get_object_by_query(request, game_team)
         elif request.method == 'POST':
             if not team_id:
                 return HttpResponseBadRequest('SBE [API]: A team ID must be provided!')
-
             filter_obj = {'team__id': team_id, 'game__id': game_id}
             r = get_object_by_filter(request, GameTeam, filter_obj, object_response=False)
             return save_json_or_error(request, r[0].id)
