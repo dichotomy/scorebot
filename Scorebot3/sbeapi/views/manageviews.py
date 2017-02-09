@@ -1,7 +1,10 @@
 import random
 import scorebot.utils.log as logger
 
+from ipware.ip import get_real_ip
+from scorebot.utils.json import translator
 from django.views.decorators.csrf import csrf_exempt
+from sbehost.models import Game, GameHost, GameTeam, GameMonitor
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 
 from sbegame.models import Player, Team, MonitorJob, MonitorServer
@@ -22,6 +25,25 @@ from scorebot.utils.general import val_auth, get_object_with_id, save_json_or_er
 
 
 class ManageViews:
+    """
+        SBE Team API
+
+        Methods: GET, PUT, POST
+
+        GET  |  /team/
+        GET  |  /team/<game_id>/
+        PUT  |  /team/
+        POST |  /team/<player_id>/
+
+        Returns Team info.  Deletes are not allowed
+
+        JSON Example:
+
+
+
+        Permissions:
+            Team.(READ | UPDATE | CREATE | DELETE)
+    """
     @staticmethod
     @csrf_exempt
     @val_auth
@@ -43,6 +65,25 @@ class ManageViews:
 
         return HttpResponseBadRequest()
 
+    """
+        SBE Player API
+
+        Methods: GET, PUT, POST
+
+        GET  |  /player/
+        GET  |  /player/<game_id>/
+        PUT  |  /player/
+        POST |  /player/<player_id>/
+
+        Returns Player info.  Deletes are not allowed
+
+        JSON Example:
+
+
+
+        Permissions:
+            Player.(READ | UPDATE | CREATE | DELETE)
+    """
     @staticmethod
     @csrf_exempt
     @val_auth
@@ -64,6 +105,34 @@ class ManageViews:
 
         return HttpResponseBadRequest()
 
+    """
+        SBE Job API
+
+        Methods: GET, POST
+
+        GET  | /job/
+        POST | /job/
+
+        Requests a Job (GET) and submits a completed Job (POST)
+
+        How it works
+
+        1. Check if AccessKey is tied to MonitorServer
+            -> if not return 403
+        2. List Games that are Running (Not Done & Paused) and have the requesting Monitor Server assigned
+        3. Randomly select a game (if > 1)
+        4. Check if Monitor Server is assigned to any specific hosts for that game
+            -> if goto 5
+            -> if not goto 6
+        5. Set list of available hosts to the host list that is set. goto 7
+        6. Query the GameTeams through the Game object and enumerate all hosts in the game, store in list
+        7. Enumerate each host in the list randomly and check if a running Job is open for that host.
+            -> if goto 7, repeat until empty, goto 10
+            -> if not goto 8
+        8. Create a Job for that host.
+        9. Return 201 (Job Created) and Job JSON
+        10. Return 204 (No Jobs) and Job wait JSON
+    """
     @staticmethod
     @csrf_exempt
     @val_auth
@@ -116,9 +185,9 @@ class ManageViews:
                                                                                  mon_sel.game_name))
                     if mon_opt.monitor_hosts.all().count() > 0:     # Do we have assigned hosts?
                         logger.debug(__name__, 'Monitor "%s" has an assigned host list!' % monitor.monitor_name)
-                        mon_hosts = mon_opt.monitor_hosts.all()     # Save list of assigned hosts
+                        mon_hosts = mon_opt.monitor_hosts.all().filter(game=mon_sel)   # Save list of assigned hosts
                     else:
-                        mon_hosts = GameHost.objects.filter(gameteam__in=GameTeam.objects.filter(game=mon_sel))
+                        mon_hosts = GameHost.objects.filter(game__isnull=False, game=mon_sel)
                     logger.debug(__name__, 'Monitor "%s" has "%d" hosts to choose from!' % (monitor.monitor_name,
                                                                                             len(mon_hosts)))
                     mon_count = len(mon_hosts)
@@ -126,6 +195,10 @@ class ManageViews:
                     while mon_tries < mon_count:
                         host = mon_hosts[random.randint(0, mon_count - 1)]
                         try:
+                            # If you need to test job functions nuke this try:except, excepts will pass.
+                            # Uncommenting the next line will work
+                            # MonitorJob.objects.get(job_start__isnull=True)
+                            # - idf
                             MonitorJob.objects.get(job_finish__isnull=True, job_host=host)
                         except MonitorJob.DoesNotExist:
                             # We got a host!
@@ -152,6 +225,6 @@ class ManageViews:
                 pass
             except UnicodeDecodeError:
                 pass
-            logger.error(__name__, 'Invalid Job response by Monitor "%s"!' % monitor.monitor_name)
+            logger.error(__name__, 'Invalid Job response by Monitor "%s"!' % monitor.monitor_name, exec_info=True)
             return HttpResponseBadRequest('SBE [API]: Invalid POST data!')
         return HttpResponseBadRequest('SBE [API]: Job only supports GET and POST!')
