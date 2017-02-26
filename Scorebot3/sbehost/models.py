@@ -47,7 +47,7 @@ class Game(models.Model):
     game_host_default_ping_ratio = models.SmallIntegerField('Game Host Pinback Percent', default=50)
     game_options_ticket_wait = models.SmallIntegerField('Game Ticket First Hold Time (Sec)', default=180)
     game_offensive = models.ManyToManyField('sbegame.Player', through='sbehost.GamePlayer',
-                                            through_fields=('player_game', 'player_inst'))
+                                            through_fields=('player_game', 'player'))
 
     def __str__(self):
         return '%s Game %s (%s-%s) %d Teams' % (('[Running]' if not self.game_paused else '[Paused]'),
