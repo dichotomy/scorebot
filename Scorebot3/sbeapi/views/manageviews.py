@@ -3,9 +3,12 @@ import scorebot.utils.log as logger
 
 from django.views.decorators.csrf import csrf_exempt
 from sbegame.models import Player, Team, MonitorJob, MonitorServer
+from sbehost.models import Game, GameMonitor, GameHost
 from scorebot.utils.general import val_auth, get_object_with_id, save_json_or_error
+from scorebot.utils.json2 import translator
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from ipware.ip import get_real_ip
+
 
 """
     Methods supported
