@@ -133,15 +133,18 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit()
 
-    data = '''
-[
+    data = '''[
     {
-        "pk": 2,
-        "model": "sbehost.gamecompromise",
+        "model": "sbehost.gameticket", 
         "fields": {
-            "game_host": 2,
-            "comp_player": 1,
-            "comp_finish": "2016-11-17T21:08:04Z"
+            "ticket_expired": false, 
+            "game_team": 2, 
+            "ticket_expires": null, 
+            "ticket_name": "ticket 2", 
+            "ticket_value": 300, 
+            "ticket_started": "2016-11-21T21:55:59Z", 
+            "ticket_completed": null, 
+            "ticket_content": "ticket 2"
         }
     }
 ]
