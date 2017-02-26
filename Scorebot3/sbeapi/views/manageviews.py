@@ -5,7 +5,7 @@ import scorebot.utils.log as logger
 from django.core import serializers
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from sbegame.models import Player, Team, MonitorJob
+from sbegame.models import Player, Team, MonitorJob, MonitorServer
 from scorebot.utils.general import val_auth, get_object_with_id, save_json_or_error
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest, HttpResponseForbidden
 
