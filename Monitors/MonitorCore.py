@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 # requires:  https://pypi.python.org/pypi/http-parser
 from twisted.internet import reactor, protocol, ssl
+from twisted.python import log
 from http_parser.pyparser import HttpParser
 from WebClient import WebCheckFactory, JobFactory
 from DNSclient import DNSclient
@@ -33,6 +34,9 @@ class MonitorCore(object):
         jobid = job.get_job_id()
         print "DNS Failed for job %s! %s" % (jobid, failure)
         job.set_ip("fail")
+        # Raise an exception to continue on the errback chain for the DNS deffered.
+        # Returning here would go to the next callback in the chain, which will try
+        # and ping the host.
         raise Exception("Fail Host")
 
     def post_job(self, job):
@@ -85,9 +89,9 @@ class MonitorCore(object):
             query_d.addErrback(self.dns_fail, job)
             # Handle a DNS success - move on to ping
             query_d.addCallback(self.ping, job)
-            # TODO - add an errback here?
+            # Either the ping failed, or we continue from the DNS failure.
             query_d.addErrback(self.post_job, job)
-        reactor.callLater(5, self.start_job)
+        reactor.callLater(1, self.start_job)
 
 
 if __name__=="__main__":

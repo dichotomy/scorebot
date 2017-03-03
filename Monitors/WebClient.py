@@ -6,7 +6,6 @@ from http_parser.pyparser import HttpParser
 from Parameters import Parameters
 from Jobs import Jobs
 import time
-import base
 import re
 
 class WebClient(protocol.Protocol):
@@ -16,11 +15,14 @@ class WebClient(protocol.Protocol):
         self.factory = factory
         self.verb = self.factory.get_verb()
         if "POST" in self.verb:
-            self.request = "%s %s HTTP/1.0\r\n%s\r\n%s\r\n" % \
-                           (self.verb, self.factory.get_url(), \
-                            self.factory.get_headers(), self.factory.get_postdata())
+            data = self.factory.get_postdata()
+            headers = self.factory.get_headers()
+            length = len(data)
+            headers += "Content-Length: %s\r\n" % str(length)
+            self.request = "%s %s HTTP/1.0\r\n%s\r\n%s\r\n\r\n" % \
+                           (self.verb, self.factory.get_url(), headers, data)
         else:
-            self.request = "%s %s HTTP/1.0\r\n%s\r\n" % \
+            self.request = "%s %s HTTP/1.0\r\n%s\r\n\r\n" % \
                        (self.verb, self.factory.get_url(), self.factory.get_headers())
         self.recv = ""
         self.body = ""
@@ -61,6 +63,8 @@ class WebClient(protocol.Protocol):
             if "Location" in headers:
                 location = headers["Location"]
             self.factory.set_server_headers(self.parser.get_headers())
+            if "POST" in self.verb:
+                self.transport.loseConnection()
         self.factory.proc_body(self.parser.recv_body())
         if self.parser.is_partial_body():
             self.body += self.parser.recv_body()
@@ -99,7 +103,7 @@ class WebCoreFactory(protocol.ClientFactory):
         return self.postdata
 
     def get_verb(self):
-        return self.verb
+       return self.verb
 
     def buildProtocol(self, addr):
         self.addr = addr

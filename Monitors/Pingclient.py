@@ -14,6 +14,11 @@ class PingProtocol(protocol.ProcessProtocol):
         self.fail = 0
         self.trans = 0
         self.d = Deferred()
+        self.ping_prog = "/usr/bin/ping"
+
+    def ping(self):
+        reactor.spawnProcess(self, self.ping_prog, [self.ping_prog, "-c", count, ipaddr])
+
 
     def getDeferred(self):
         return self.d
@@ -26,7 +31,7 @@ class PingProtocol(protocol.ProcessProtocol):
         self.trans = int(self.transmitted_re.search(self.data).group(1))
         self.fail = self.trans - self.recv
         if self.recv > self.fail:
-            self.d.callback()
+            self.d.callback(self)
         else:
             self.d.errback()
 
@@ -37,10 +42,15 @@ class PingProtocol(protocol.ProcessProtocol):
         return self.fail
 
 if __name__=="__main__":
-    def check_services(pingobj)
-        print "Got %s good pings" % pingobj.get_recv()
-        print "Got %s bad pings" % pingobj.get_fail()
-    def ping_fail()
+    from twisted.python import log
+    log.startLogging(open('log/pingtest.log', 'w'))
+    def check_services(result, pingobj):
+        try:
+            print "Got %d good pings" % pingobj.get_recv()
+            print "Got %d bad pings" % pingobj.get_fail()
+        except:
+            log.err()
+    def ping_fail(failure):
         print "It failed!!"
     import sys
     ping = "/usr/bin/ping"
@@ -48,9 +58,10 @@ if __name__=="__main__":
     count = str(5)
     pingobj = PingProtocol(ipaddr)
     ping_d = pingobj.getDeferred()
-    ping_d.addCallback(self.check_services, pingobj)
-    ping_d.addErrback(self.ping_fail)
-    reactor.spawnProcess(pingobj, ping, [ping, "-c", count, ipaddr])
+    ping_d.addCallback(check_services, pingobj)
+    ping_d.addErrback(ping_fail)
+    pingobj.ping()
+    #reactor.spawnProcess(pingobj, ping, [ping, "-c", count, ipaddr])
     reactor.callLater(8, reactor.stop)
     reactor.run()
 

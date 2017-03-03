@@ -83,6 +83,7 @@ class Job(object):
         return self.job_id
 
     def get_json_str(self):
+        #TODO - should this call self.get_json()?
         return json.dumps(self.json)
 
     def get_dns(self):
