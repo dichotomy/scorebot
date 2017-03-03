@@ -1,4 +1,3 @@
-import json
 import random
 import scorebot.utils.log as logger
 
@@ -6,10 +5,10 @@ from ipware.ip import get_real_ip
 from scorebot.utils.json import translator
 from django.views.decorators.csrf import csrf_exempt
 from sbehost.models import Game, GameHost, GameTeam, GameMonitor
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+
 from sbegame.models import Player, Team, MonitorJob, MonitorServer
 from scorebot.utils.general import val_auth, get_object_with_id, save_json_or_error
-from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest, HttpResponseForbidden
-
 """
     Methods supported
 
@@ -49,10 +48,21 @@ class ManageViews:
     @csrf_exempt
     @val_auth
     def team(request, team_id=None):
+        """
+            SBE Team API
+
+            Methods: GET, PUT, POST
+
+            GET, PUT  |  /team/
+            GET, POST |  /team/<team_id>/
+
+            Returns team info.
+        """
         if request.method == 'GET':
             return get_object_with_id(request, Team, team_id)
         elif request.method == 'POST' or request.method == 'PUT':
             return save_json_or_error(request, team_id)
+
         return HttpResponseBadRequest()
 
     """
@@ -78,10 +88,21 @@ class ManageViews:
     @csrf_exempt
     @val_auth
     def player(request, player_id=None):
+        """
+            SBE Player API
+
+            Methods: GET, PUT, POST
+
+            GET, PUT  |  /player/
+            GET, POST |  /player/<player_id>/
+
+            Returns player info.  Deletes are not allowed
+        """
         if request.method == 'GET':
             return get_object_with_id(request, Player, player_id)
         elif request.method == 'POST' or request.method == 'PUT':
             return save_json_or_error(request, player_id)
+
         return HttpResponseBadRequest()
 
     """
@@ -115,13 +136,42 @@ class ManageViews:
     @staticmethod
     @csrf_exempt
     @val_auth
-    def job(request):
+    def job(request, job_id=None):
+        """
+            SBE Job API
+
+            Methods: GET, POST
+
+            GET  | /job/
+            POST | /job/
+
+            Requests a Job (GET) and submits a completed Job (POST)
+
+            How it works
+
+            1. Check if AccessKey is tied to MonitorServer
+                -> if not return 403
+            2. List Games that are Running (Not Done & Paused) and have the requesting Monitor Server assigned
+            3. Randomly select a game (if > 1)
+            4. Check if Monitor Server is assigned to any specific hosts for that game
+                -> if goto 5
+                -> if not goto 6
+            5. Set list of available hosts to the host list that is set. goto 7
+            6. Query the GameTeams through the Game object and enumerate all hosts in the game, store in list
+            7. Enumerate each host in the list randomly and check if a running Job is open for that host.
+                -> if goto 7, repeat until empty, goto 10
+                -> if not goto 8
+            8. Create a Job for that host.
+            9. Return 201 (Job Created) and Job JSON
+            10. Return 204 (No Jobs) and Job wait JSON
+        """
         try:
             monitor = MonitorServer.objects.get(monitor_key_id=request.authkey.id)
         except MonitorServer.DoesNotExist:
             logger.warning(__name__, '"%s" attempted to request a job, but is not assigned as a Monitor!' %
                            get_real_ip(request))
             return HttpResponseForbidden('SBE [API]: You do not have permission to request a job!')
+
         monitor.monitor_address = get_real_ip(request)
         monitor.save()
         if request.method == 'GET':
@@ -175,6 +225,6 @@ class ManageViews:
                 pass
             except UnicodeDecodeError:
                 pass
-            logger.error(__name__, 'Invalid Job response by Monitor "%s"!' % monitor.monitor_name)
+            logger.error(__name__, 'Invalid Job response by Monitor "%s"!' % monitor.monitor_name, exec_info=True)
             return HttpResponseBadRequest('SBE [API]: Invalid POST data!')
         return HttpResponseBadRequest('SBE [API]: Job only supports GET and POST!')

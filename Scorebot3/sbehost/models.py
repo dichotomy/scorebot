@@ -1,5 +1,7 @@
 import json
 import random
+from datetime import datetime
+from dateutil import tz
 
 from django.db import models
 from django.utils import timezone
@@ -45,7 +47,7 @@ class Game(models.Model):
     game_host_default_ping_ratio = models.SmallIntegerField('Game Host Pinback Percent', default=50)
     game_options_ticket_wait = models.SmallIntegerField('Game Ticket First Hold Time (Sec)', default=180)
     game_offensive = models.ManyToManyField('sbegame.Player', through='sbehost.GamePlayer',
-                                            through_fields=('player_game', 'player_inst'))
+                                            through_fields=('player_game', 'player'))
 
     def __str__(self):
         return '%s Game %s (%s-%s) %d Teams' % (('[Running]' if not self.game_paused else '[Paused]'),
@@ -99,7 +101,6 @@ class GameTeam(models.Model):
 
     # game = models.ForeignKey(Game) # Accessible via (self.game_set.all())
     team_dns = models.ManyToManyField('sbehost.GameDNS')
-    team_flags = models.ManyToManyField('sbehost.GameFlag')
     team_tickets = models.ManyToManyField('sbehost.GameTicket')
     team = models.ForeignKey('sbegame.Team', blank=True, null=True)  # Reference to existing team, null if auto
     team_score_flags = models.IntegerField('Team Score (Flags)', default=0)
@@ -184,6 +185,13 @@ class GameHost(models.Model):
 
 
 class GameFlag(models.Model):
+    FLAG_VALUES = (
+        (1, 'FLAG_TAKEN'),
+        (2, 'FLAG_ENABLED'),
+        (3, 'FLAG_HIDDEN'),
+        (4, 'FLAG_PERMA'),
+    )
+
     __desc__ = """
         SBE Game Flag
 
@@ -195,10 +203,8 @@ class GameFlag(models.Model):
         verbose_name = 'SBE Game Flag'
         verbose_name_plural = 'SBE Game Flags'
 
-    flag_taken = models.BooleanField('Flag Taken')
-    flag_hidden = models.BooleanField('Flag Hidden')
-    flag_enabled = models.BooleanField('Flag Enabled')
-    flag_perma = models.BooleanField('Flag Permanent')
+    game = models.ForeignKey(Game)
+    game_team = models.ForeignKey(GameTeam)
     flag_name = models.CharField('Flag Name', max_length=250)
     flag_answer = models.CharField('Flag Answer', max_length=500)
     # ^
@@ -210,14 +216,15 @@ class GameFlag(models.Model):
     # where to find the flag, like 'root of mail server', etc. -idf
     #
     flag_value = models.SmallIntegerField('Flag Value', default=100)
-    flag_owner = models.ForeignKey('sbegame.Player', null=True, blank=True)
-    flag_points = models.ForeignKey('sbehost.GameFlag', null=True, blank=True)
+    flag_option = models.SmallIntegerField('Flag Options', choices=FLAG_VALUES, default=2)
+    flag_owner = models.ForeignKey('sbegame.Player', null=True, blank=True, related_name='flag_owner')
+    flag_stealer = models.ForeignKey('sbegame.Player', null=True, blank=True, related_name='flag_stealer')
 
     def __str__(self):
         return 'Flag %s (%d)' % (self.flag_name, self.flag_value)
 
     def __bool__(self):
-        return self.flag_taken is False and self.flag_enabled
+        return self.flag_option != 1 and self.flag_online
 
     def __nonzero__(self):
         return self.__bool__()
@@ -254,6 +261,7 @@ class GameTicket(models.Model):
         verbose_name = 'SBE Ticket'
         verbose_name_plural = 'SBE Tickets'
 
+    game_team = models.ForeignKey(GameTeam)
     ticket_name = models.CharField('Ticket Name', max_length=250)
     ticket_value = models.SmallIntegerField('Ticket Value', default=500)
     ticket_expired = models.BooleanField('Ticket Expired', default=False)
@@ -267,7 +275,11 @@ class GameTicket(models.Model):
             return 0
         if self.ticket_completed:
             return (self.ticket_completed - self.ticket_started).seconds
-        return (self.ticket_expires - self.ticket_started).seconds
+        if self.ticket_expires:
+            return (self.ticket_expires - self.ticket_started).seconds
+
+        tzapp = tz.tzoffset('UTC', 0)
+        return (datetime.now(tzapp) - self.ticket_started).seconds
 
     def __str__(self):
         return 'Ticket %s (%d) %d sec' % (self.ticket_name, self.ticket_value, self.__len__())
