@@ -179,7 +179,7 @@ class GameHost(models.Model):
     host_flags = models.ManyToManyField('sbehost.GameFlag')
     host_fqdn = models.CharField('Host Name', max_length=250)
     host_tickets = models.ManyToManyField('sbehost.GameTicket')
-    host_services = models.ManyToManyField('sbehost.GameService')
+    host_services = models.ManyToManyField('sbehost.GameService', blank=True)
     host_used = models.BooleanField('Host in Game', default=False)  # Trying to design a setup that dosent need this
     host_status = models.BooleanField('Host Online', default=False)
     host_ping_ratio = models.SmallIntegerField('Host Pingback Percentage', default=0)
