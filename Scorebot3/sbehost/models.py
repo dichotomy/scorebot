@@ -368,7 +368,6 @@ class GameService(models.Model):
         verbose_name = 'SBE Service'
         verbose_name_plural = 'SBE Services'
 
-    game_host = models.ForeignKey(GameHost)
     service_port = models.SmallIntegerField('Service Port')
     service_name = models.CharField('Service Name', max_length=128)
     service_value = models.SmallIntegerField('Service Value', default=50)
@@ -377,7 +376,8 @@ class GameService(models.Model):
     service_protocol = models.CharField('Service Protocol', max_length=4, default='tcp')
 
     def __str__(self):
-        return 'GAME %d HOST %d SVC %s (%d/%s) %s' % (self.game_host.game_team.game.id, self.game_host.host_server.id, self.service_name, self.service_port, self.service_protocol, self.service_value)
+        return '%s (%d/%s) %s' % (self.service_name, self.service_port, self.service_protocol, self.service_value)
+        #return 'GAME %d HOST %d SVC %s (%d/%s) %s' % (self.game_host.game_team.game.id, self.game_host.host_server.id, self.service_name, self.service_port, self.service_protocol, self.service_value)
 
     def __bool__(self):
         return self.service_status == 0
