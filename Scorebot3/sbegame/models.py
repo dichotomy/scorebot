@@ -239,7 +239,7 @@ class MonitorJob(models.Model):
         return 'Job %d [%s]' % (self.id, 'Done' if self.__bool__() else 'Running')
 
     def __bool__(self):
-        return self.job_end is not None
+        return self.job_finish is not None
 
     def __nonzero__(self):
         return self.__bool__()
