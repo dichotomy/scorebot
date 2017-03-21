@@ -1,12 +1,15 @@
 #!/usr/bin/env python2
 from twisted.internet import reactor, protocol
 from twisted.internet.defer import Deferred
+from Jobs import Jobs
+import sys
 import re
 
 class PingProtocol(protocol.ProcessProtocol):
 
-    def __init__(self, ipaddr):
-        self.ipaddr = ipaddr
+    def __init__(self, job, count=str(5)):
+        self.job = job
+        self.ipaddr = self.job.get_ip()
         self.data = ""
         self.received_re = re.compile("(\d) received")
         self.transmitted_re = re.compile("(\d) packets transmitted")
@@ -15,10 +18,10 @@ class PingProtocol(protocol.ProcessProtocol):
         self.trans = 0
         self.d = Deferred()
         self.ping_prog = "/usr/bin/ping"
+        self.count = count
 
     def ping(self):
-        reactor.spawnProcess(self, self.ping_prog, [self.ping_prog, "-c", count, ipaddr])
-
+        reactor.spawnProcess(self, self.ping_prog, [self.ping_prog, "-c", self.count, self.ipaddr])
 
     def getDeferred(self):
         return self.d
@@ -29,8 +32,10 @@ class PingProtocol(protocol.ProcessProtocol):
     def outConnectionLost(self):
         self.recv = int(self.received_re.search(self.data).group(1))
         self.trans = int(self.transmitted_re.search(self.data).group(1))
-        self.fail = self.trans - self.recv
-        if self.recv > self.fail:
+        self.lost = self.trans - self.recv
+        self.job.set_ping_recv(self.recv)
+        self.job.set_ping_lost(self.recv)
+        if self.recv > self.lost:
             self.d.callback(self)
         else:
             self.d.errback()
@@ -38,12 +43,16 @@ class PingProtocol(protocol.ProcessProtocol):
     def get_recv(self):
         return self.recv
 
-    def get_fail(self):
-        return self.fail
+    def get_lost(self):
+        return self.lost
 
 if __name__=="__main__":
-    from twisted.python import log
-    log.startLogging(open('log/pingtest.log', 'w'))
+    # Plain logfile writing
+    #from twisted.python import log
+    #log.startLogging(open('log/pingtest.log', 'w'))
+    # Syslog FTW
+    from twisted.python import syslog
+    syslog.startLogging()
     def check_services(result, pingobj):
         try:
             print "Got %d good pings" % pingobj.get_recv()
@@ -53,10 +62,15 @@ if __name__=="__main__":
     def ping_fail(failure):
         print "It failed!!"
     import sys
-    ping = "/usr/bin/ping"
     ipaddr = sys.argv[1]
     count = str(5)
-    pingobj = PingProtocol(ipaddr)
+    sys.stderr.write( "Testing %s\n" % sys.argv[0])
+    json_str1 = '{"pk": 120, "model": "scorebot.job", "fields": {"job_dns": ["10.100.101.60"], "job_host": {"host_services": [{"service_protocol": "tcp", "service_port": 80, "service_connect": "ERROR", "service_content": {}}], "host_ping_ratio": 50, "host_fqdn": "www.alpha.net"}}, "status": "job"}'
+    jobs_obj = Jobs()
+    jobs_obj.add(json_str1)
+    job = jobs_obj.get_job()
+    job.set_ip("10.100.101.60")
+    pingobj = PingProtocol(job, count)
     ping_d = pingobj.getDeferred()
     ping_d.addCallback(check_services, pingobj)
     ping_d.addErrback(ping_fail)

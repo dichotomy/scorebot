@@ -6,6 +6,7 @@ from http_parser.pyparser import HttpParser
 from Parameters import Parameters
 from Jobs import Jobs
 import time
+import sys
 import re
 
 class WebClient(protocol.Protocol):
@@ -98,6 +99,14 @@ class WebCoreFactory(protocol.ClientFactory):
         self.verb = "GET"
         self.addr = None
         self.postdata = ""
+        self.deferred = Deferred()
+
+    def get_deferred(self):
+        return self.deferred
+
+    def startedConnecting(self, connector):
+        if self.job:
+            sys.stderr.write("Starting connection test for %s" % self.job.get_job_id())
 
     def get_postdata(self):
         return self.postdata
@@ -162,7 +171,7 @@ class WebCoreFactory(protocol.ClientFactory):
 
 class JobFactory(WebCoreFactory):
 
-    def __init__(self, params, jobs, op, job_id=None):
+    def __init__(self, params, jobs, op, job=None):
         WebCoreFactory.__init__(self)
         self.params = params
         self.jobs = jobs
@@ -173,43 +182,30 @@ class JobFactory(WebCoreFactory):
         self.timeout = self.params.get_timeout()
         self.debug = self.params.get_debug()
         self.op = op
-        self.job = None
+        self.job = job
         if "get" in self.op:
             self.verb = "GET"
         elif "put" in self.op:
             self.verb = "POST"
-            if job_id:
-                self.job = self.jobs.get_job(job_id)
-                self.postdata = self.job.get_json_str()
-            else:
-                raise Exception("put operation requested without accompanying Job ID")
+            self.postdata = self.job.get_json_str()
+            sys.stderr.write("Starting Post for JobID %s\n" % self.job.get_job_id())
         else:
             raise Exception("Unknown operation %s" % op)
 
     def clientConnectionFailed(self, connector, reason):
-        self.end = time.time()
         if self.params.debug:
             sys.stderr.write( "="*80 + "\n")
-            sys.stderr.write( "clientConnectionFailed\n")
+            sys.stderr.write( "JobFactoryClientConnectionFailed\n")
+            if "put" in self.op:
+                sys.stderr.write("Job ID %s\n" % self.job.get_job_id())
             sys.stderr.write( "given reason: %s\n" % reason)
             sys.stderr.write( "self.reason: %s\n" % self.reason)
             sys.stderr.write( "Received:\n")
             sys.stderr.write( self.get_server_headers())
             sys.stderr.write( "="*80 + "\n")
-        conn_time = None
-        if self.start:
-            conn_time = self.end - self.start
-        else:
-            self.params.fail_conn("client timeout", conn_time, \
-                               self.sent_bytes, self.recv_bytes)
-            return
-        if self.status:
-            self.job.add_status(self.status)
-        self.params.fail_conn(reason.getErrorMessage(), conn_time, \
-                           self.sent_bytes, self.recv_bytes)
+        self.params.fail_conn("connection failed", reason.getErrorMessage(), self.get_server_headers())
 
     def clientConnectionLost(self, connector, reason):
-        self.end = time.time()
         if self.params.debug:
             sys.stderr.write( "="*80 + "\n")
             sys.stderr.write( "clientConnectionLost\n")
@@ -218,49 +214,38 @@ class JobFactory(WebCoreFactory):
             sys.stderr.write( "Received:\n")
             sys.stderr.write(self.get_server_headers())
             sys.stderr.write( "="*80 + "\n")
-        conn_time = self.end - self.start
-        if self.fail and self.reason:
-            self.params.fail_conn(self.status, self.reason, self.get_server_headers(), \
-                                  conn_time, self.sent_bytes, self.recv_bytes)
+        if "put" in self.op:
+            pass
+        elif self.fail and self.reason:
+            self.params.fail_conn(self.status, self.reason, self.get_server_headers())
         elif self.fail and not self.reason:
-            self.params.fail_conn(self.status, reason.getErrorMessage(), self.get_server_headers(), \
-                                  conn_time, self.sent_bytes, self.recv_bytes)
+            self.params.fail_conn(self.status, reason.getErrorMessage(), self.get_server_headers())
         elif "non-clean" in reason.getErrorMessage():
-            self.params.fail_conn(self.status, "other", self.get_server_headers(),
-                                  conn_time, self.sent_bytes, self.recv_bytes)
+            self.params.fail_conn(self.status, "other", self.get_server_headers())
         else:
             #Connection closed cleanly, process the results
             self.jobs.add(self.body)
 
-class WebCheckFactory(WebCoreFactory):
+class WebServiceCheckFactory(WebCoreFactory):
 
-    def __init__(self, params, job, service):
+    def __init__(self, params, job, service, url="/index.html"):
         WebCoreFactory.__init__(self)
         self.job = job
         self.params = params
         self.service = service
-        self.url = self.service.get_url()
+        self.url = url
         self.headers = self.service.get_headers()
         self.ip = job.get_ip()
         self.port = self.service.get_port()
         self.timeout = self.params.get_timeout()
-        self.deferred = Deferred()
-
-    def get_deferred(self):
-        return self.deferred
-
-    def startedConnecting(self, connector):
-        # TODO - log this
-        pass
 
     def add_fail(self, reason):
         if "timeout" in reason:
-            self.service.connect("timeout")
+            self.service.timeout("%s\r\n%s" % (self.get_server_headers(), self.body))
         else:
-            self.service.connect("undefined reason received: %s" % reason)
+            self.service.fail_conn(reason, "%s\r\n%s" % (self.get_server_headers(), self.body))
 
     def clientConnectionFailed(self, connector, reason):
-        # TODO - implement handling of failure to connect.  Should it retry?
         self.end = time.time()
         if self.params.debug:
             sys.stderr.write( "="*80 + "\n")
@@ -279,6 +264,7 @@ class WebCheckFactory(WebCoreFactory):
         if self.status:
             self.service.add_status(self.status)
         self.service.fail_conn(reason.getErrorMessage(), self.data)
+        self.deferred.errback(reason)
 
     def clientConnectionLost(self, connector, reason):
         self.end = time.time()
@@ -300,12 +286,78 @@ class WebCheckFactory(WebCoreFactory):
         elif "non-clean" in reason.getErrorMessage():
             self.service.fail_conn("other", self.data)
         else:
-            self.service.set_green()
+            self.service.pass_conn()
+            self.deferred.callback(self.job.get_job_id())
+
+class WebContentCheckFactory(WebCoreFactory):
+
+    def __init__(self, params, job, service, content):
+        WebCoreFactory.__init__(self)
+        self.job = job
+        self.params = params
+        self.service = service
+        self.content = content
+        self.url = url
+        self.headers = self.service.get_headers()
+        self.ip = job.get_ip()
+        self.port = self.service.get_port()
+        self.timeout = self.params.get_timeout()
+
+    def add_fail(self, reason):
+        if "timeout" in reason:
+            self.content.timeout("%s\r\n%s" % (self.get_server_headers(), self.body))
+        else:
+            self.content.fail_conn(reason, "%s\r\n%s" % (self.get_server_headers(), self.body))
+
+    def clientConnectionFailed(self, connector, reason):
+        # TODO - implement handling of failure to connect.  Should it retry?
+        self.end = time.time()
+        if self.params.debug:
+            sys.stderr.write( "="*80 + "\n")
+            sys.stderr.write( "clientConnectionFailed\n")
+            sys.stderr.write( "given reason: %s\n" % reason)
+            sys.stderr.write( "self.reason: %s\n" % self.reason)
+            sys.stderr.write( "Received:\n")
+            sys.stderr.write( self.get_server_headers())
+            sys.stderr.write( "="*80 + "\n")
+        conn_time = None
+        if self.start:
+            conn_time = self.end - self.start
+        else:
+            self.content.timeout(conn_time, self.data)
+            return
+        if self.status:
+            self.content.add_status(self.status)
+        self.content.fail_conn(reason.getErrorMessage(), self.data)
+
+    def clientConnectionLost(self, connector, reason):
+        self.end = time.time()
+        if self.params.debug:
+            sys.stderr.write( "="*80 + "\n")
+            sys.stderr.write( "clientConnectionLost\n")
+            sys.stderr.write( "given reason: %s\n" % reason)
+            sys.stderr.write( "self.reason: %s\n" % self.reason)
+            sys.stderr.write( "Received:\n")
+            sys.stderr.write( self.get_server_headers())
+            sys.stderr.write( "="*80 + "\n")
+        conn_time = self.end - self.start
+        if self.data:
+            self.content.set_data(self.data)
+        if self.fail and self.reason:
+            self.content.fail_conn(self.reason, self.data)
+        elif self.fail and not self.reason:
+            self.content.fail_conn(reason.getErrorMessage(), self.data)
+        elif "non-clean" in reason.getErrorMessage():
+            self.content.fail_conn("other", self.data)
+        else:
+            self.content.pass_conn()
             self.deferred.callback(self.job.get_job_id())
 
 if __name__ == "__main__":
+    from twisted.python import log
     from DNSclient import DNSclient
     import sys
+    log.startLogging(open('log/webtest.log', 'w'))
     jobs = Jobs()
     def post_job(job_id):
         factory = JobFactory(params, jobs, "put", job_id)
@@ -315,7 +367,7 @@ if __name__ == "__main__":
         print "Got %s %s %s" % (result, params, job)
         print "Checking services for %s" % job.get_ip()
         for service in job.get_services():
-            factory = WebCheckFactory(params, job, service)
+            factory = WebServiceCheckFactory(params, job, service)
             deferred = factory.get_deferred()
             deferred.addCallback(post_job)
             reactor.connectTCP(job.get_ip(), service.get_port(), factory, params.get_timeout())

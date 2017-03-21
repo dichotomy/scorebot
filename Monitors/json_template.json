@@ -1,0 +1,40 @@
+{
+    "status": "job",
+    "model": "apicore.job",
+    "pk": "71",
+    "fields": {
+        "job_timeout":  300,
+        "job_dns": [
+            "10.100.101.100",
+            "10.100.101.50"
+        ],
+        "job_host": {
+            "fqdn": "mail.gamma.net",
+            "ip_address":  "",
+            "ping_lost": "100",
+            "ping_received": "100",
+            "services": [{
+                "port": "443",
+                "application": "http"|"https"|"ssh"|"telnet"|"ftp",
+                "protocol": "tcp",
+                "connect": "success"|"reset"|"timeout",
+                "auth":  [{
+                    "login_url": "http://www.gamma.net/login",
+                    "auth_type": "<type>",
+                    "username": "bob",
+                    "username_field": "username",
+                    "password": "password",
+                    "password_field": "password",
+                    "login": "pass"|"fail"
+                }],
+                "content": [{
+                    "verb": "GET"|"POST"|"POST",
+                    "url": "",
+                    "type": "text",
+                    "connect": "success"|"reset"|"timeout",
+                    "data": ""
+                }]
+            }]
+        }
+    }
+}

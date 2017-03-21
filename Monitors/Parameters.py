@@ -9,10 +9,11 @@ class Parameters(object):
         self.debug = True
         self.timeout = 90
         self.sbe_auth = "0987654321"
-        self.sb_ip = "10.200.100.50"
-        self.sb_port = 80
-        #self.sb_ip = "10.200.100.97"
-        #self.sb_port = 8080
+        #self.sb_ip = "10.200.100.50"
+        #self.sb_port = 80
+        #self.sb_ip = "10.200.100.205"
+        self.sb_ip = "172.25.20.211"
+        self.sb_port = 8080
         self.job_url = "/job/"
         self.reason = ""
         self.headers = {}
@@ -51,7 +52,7 @@ class Parameters(object):
             header_txt += "%s: %s\r\n" % (header, self.headers[header])
         return header_txt
 
-    def fail_conn(self, status, reason, server_headers, conn_time, sent_bytes, recv_bytes):
+    def fail_conn(self, status, reason, server_headers):
         sys.stderr.write("="*80 + "\n")
         sys.stderr.write("clientConnectionLost\n")
         sys.stderr.write("given reason: %s\n" % reason)
