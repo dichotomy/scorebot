@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 
+import scorebot.utils.log as logger
+
 
 class Team(models.Model):
     __desc__ = """
@@ -225,21 +227,69 @@ class MonitorJob(models.Model):
         verbose_name = 'SBE Monitor Job'
         verbose_name_plural = 'SBE Monitor Jobs'
 
-    job_host = models.ForeignKey('sbehost.GameHost')
-    job_monitor = models.ForeignKey('sbegame.MonitorServer')
-    job_start = models.DateTimeField('Job Start', auto_now_add=True)
-    job_finish = models.DateTimeField('Job End', blank=True, null=True)
+    host = models.ForeignKey('sbehost.GameHost')
+    monitor = models.ForeignKey('sbegame.MonitorServer')
+    start = models.DateTimeField('Job Start', auto_now_add=True)
+    finish = models.DateTimeField('Job End', blank=True, null=True)
+
+    @staticmethod
+    def json_get_job_status(data):
+        try:
+            return data['status']
+        except Exception:
+            logger.exception(__name__, 'job status key does not exist.')
+            return None
+
+    @staticmethod
+    def json_get_host_ip_address(data):
+        try:
+            return data['fields']['job_host']['status']['ip_address']
+        except Exception:
+            logger.exception(__name__, 'ip_address key does not exists.')
+            return None
+
+    @staticmethod
+    def json_get_host_status(data):
+        try:
+            return data['fields']['job_host']['status']
+        except Exception:
+            logger.exception(__name__, 'job_host => status key does not exist.')
+            return None
+
+    @staticmethod
+    def json_get_ping_received(data):
+        try:
+            return data['fields']['job_host']['status']['ping_received']
+        except Exception:
+            logger.exception(__name__, 'ping_received key does not exist.')
+            return 0
+
+    @staticmethod
+    def json_get_ping_lost(data):
+        try:
+            return data['fields']['job_host']['status']['ping_lost']
+        except Exception:
+            logger.exception(__name__, 'ping_lost key does not exist.')
+            return 100
+
+    @staticmethod
+    def json_get_host_services(data):
+        try:
+            return data['fields']['job_host']['host_services']
+        except Exception:
+            logger.exception(__name__, 'host_services key does not exist.')
+            return []
 
     def __len__(self):
-        if self.job_finish:
-            return (self.job_finish - self.job_start).seconds
-        return (timezone.now() - self.job_start).seconds
+        if self.finish:
+            return (self.finish - self.start).seconds
+        return (timezone.now() - self.start).seconds
 
     def __str__(self):
         return 'Job %d [%s]' % (self.id, 'Done' if self.__bool__() else 'Running')
 
     def __bool__(self):
-        return self.job_finish is not None
+        return self.finish is not None
 
     def __nonzero__(self):
         return self.__bool__()

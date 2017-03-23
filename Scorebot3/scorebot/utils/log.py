@@ -29,3 +29,7 @@ def debug(module_name, log_data):
 
 def warning(module_name, log_data):
     return get_logger(module_name).warning(log_data)
+
+
+def exception(module_name, log_data):
+    return get_logger(module_name).exception(log_data)

@@ -108,7 +108,9 @@ class ManageViews:
         monitor.save()
         if request.method == 'GET':
             logger.info(__name__, 'Job requested by monitor "%s"!' % monitor.monitor_name)
-            mon_games = Game.objects.filter(game_paused=False, game_finish__isnull=True, game_monitors__id=monitor.id)
+            mon_games = Game.objects.filter(game_paused=False,
+                                            game_finish__isnull=True,
+                                            game_monitors__id=monitor.id)
             if len(mon_games) > 0:
                 for x in range(0, min(len(mon_games) * 2, 10)):
                     mon_sel = mon_games[random.randint(0, len(mon_games) - 1)]  # random pick a game
@@ -131,16 +133,16 @@ class ManageViews:
                             # Uncommenting the next line will work
                             # MonitorJob.objects.get(job_start__isnull=True)
                             # - idf
-                            MonitorJob.objects.get(job_finish__isnull=True, job_host=host)
+                            MonitorJob.objects.get(job_finish__isnull=True, host=host)
                         except MonitorJob.DoesNotExist:
                             # We got a host!
-                            mon_job = MonitorJob()
-                            mon_job.job_host = host
-                            mon_job.job_monitor = monitor
-                            mon_job.save()
-                            logger.debug(__name__, 'Job id "%d" given to monitor "%s"!' % (mon_job.id,
+                            job = MonitorJob()
+                            job.host = host
+                            job.monitor = monitor
+                            job.save()
+                            logger.debug(__name__, 'Job id "%d" given to monitor "%s"!' % (job.id,
                                                                                            monitor.monitor_name))
-                            return HttpResponse(content=translator.to_job_json(mon_job), status=201)
+                            return HttpResponse(content=translator.to_job_json(job), status=201)
                         mon_tries += 1
                 logger.debug(__name__, 'Monitor "%s" told to wait due to no available hosts!' % monitor.monitor_name)
                 return HttpResponse(content='{ "status": "wait" }', status=204)

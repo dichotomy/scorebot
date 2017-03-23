@@ -4,7 +4,6 @@ from datetime import datetime
 
 from django.db import models
 from django.utils import timezone
-from picklefield.fields import PickledObjectField
 
 """
     SBE Host Models
@@ -175,18 +174,21 @@ class GameHost(models.Model):
         verbose_name_plural = 'SBE Game Hosts'
 
     game_team = models.ForeignKey(GameTeam)
-    host_server = models.ForeignKey('sbegame.HostServer')
-    host_flags = models.ManyToManyField('sbehost.GameFlag')
-    host_fqdn = models.CharField('Host Name', max_length=250)
-    host_tickets = models.ManyToManyField('sbehost.GameTicket')
-    host_services = models.ManyToManyField('sbehost.GameService', blank=True)
-    host_used = models.BooleanField('Host in Game', default=False)  # Trying to design a setup that dosent need this
-    host_status = models.BooleanField('Host Online', default=False)
-    host_ping_ratio = models.SmallIntegerField('Host Pingback Percentage', default=0)
-    host_name = models.CharField('Host VM Name', max_length=250, null=True, blank=True)
+    server = models.ForeignKey('sbegame.HostServer')
+    flags = models.ManyToManyField('sbehost.GameFlag')
+    fqdn = models.CharField('Host Name', max_length=250)
+    tickets = models.ManyToManyField('sbehost.GameTicket')
+    # Trying to design a setup that dosen't need this
+    used = models.BooleanField('Host in Game', default=False)
+    status = models.BooleanField('Host Online', default=False)
+    ping_ratio = models.SmallIntegerField('Host Pingback Percentage', default=0)
+    name = models.CharField('Host VM Name', max_length=250, null=True, blank=True)
 
     def __str__(self):
-        return 'Host %s (%s)' % (self.host_fqdn, '; '.join(['%d' % f.service_port for f in self.host_services.all()]))
+        return 'Host %s (%s)' % (self.fqdn,
+                                 '; '.join(
+                                     ['%d' % f.port
+                                      for f in self.game_service_set.all()]))
 
     def __bool__(self):
         if GameCompromise.objects.filter(game_host__id=self.id).count() > 0:
@@ -197,8 +199,8 @@ class GameHost(models.Model):
         return self.__bool__()
 
     def get_pinback_percent(self):
-        if self.host_ping_ratio > 0:
-            return self.host_ping_ratio
+        if self.ping_ratio > 0:
+            return self.ping_ratio
         try:
             # Look up the stack!
             return self.gameteam_set.all().first().game_set.all().first().game_host_default_ping_ratio
@@ -350,44 +352,59 @@ class GameMonitor(models.Model):
         return 'Montor %s (%s) Hosts' % (self.monitor_inst.monitor_name, self.monitor_hosts.all().count())
 
 
-class GameService(models.Model):
-    SERVICE_STATUS = {
-        'UP': 0,        # Green
-        'DOWN': 1,      # Red
-        'ERROR': 2,     # Yellow
-        'UNKNOWN': 4,   # ?? (Hot pink lol)
-    }
+class ServiceApplication(models.Model):
+    __desc__ = """
+        SBE Service Application
 
+        The SBE Application describes the port, L4 protocol, and
+        application level protocol
+    """
+
+    class Meta:
+        verbose_name = 'SBE Application'
+        verbose_name_plural = 'SBE Applications'
+
+    port = models.SmallIntegerField('Service Port')
+    application_protocol = models.CharField('Application Protocol',
+                                            max_length=64)
+    layer4_protocol = models.CharField('Service Protocol',
+                                       max_length=4,
+                                       default='tcp')
+
+
+class GameService(models.Model):
     __desc__ = """
         SBE Game Service
 
-        The SBE Service contains the port/protocol status and configuration for services for each host.
+        The SBE Service contains the port/protocol status and
+        configuration for a host service.
     """
 
     class Meta:
         verbose_name = 'SBE Service'
         verbose_name_plural = 'SBE Services'
 
-    service_port = models.SmallIntegerField('Service Port')
-    service_name = models.CharField('Service Name', max_length=128)
-    service_value = models.SmallIntegerField('Service Value', default=50)
-    service_status = models.SmallIntegerField('Service Status', default=0)
-    service_bonus = models.BooleanField('Service is Bonus', default=False)
-    service_protocol = models.CharField('Service Protocol', max_length=4, default='tcp')
+    name = models.CharField('Service Name', max_length=128)
+    value = models.SmallIntegerField('Service Value', default=50)
+    status = models.SmallIntegerField('Service Status', default=0)
+    bonus = models.BooleanField('Service is Bonus', default=False)
+    application = models.ForeignKey(ServiceApplication)
+    game_host = models.ForeignKey(GameHost)
 
     def __str__(self):
-        return '%s (%d/%s) %s' % (self.service_name, self.service_port, self.service_protocol, self.service_value)
-        #return 'GAME %d HOST %d SVC %s (%d/%s) %s' % (self.game_host.game_team.game.id, self.game_host.host_server.id, self.service_name, self.service_port, self.service_protocol, self.service_value)
+        return '%s (%d/%s) %s' % (self.name, self.application.port,
+                                  self.application.application_protocol,
+                                  self.value)
 
     def __bool__(self):
-        return self.service_status == 0
+        return self.status == 0
 
     def __nonzero__(self):
         return self.__bool__()
 
     def get_text_status(self):
         for k, v in GameService.SERVICE_STATUS:
-            if self.service_status == v:
+            if self.status == v:
                 return k
         return 'UP'
 
@@ -396,20 +413,43 @@ class GameContent(models.Model):
     __desc___ = """
         SBE Service Content
 
-        Contains the content for a service (if any). Content is stored in a pickled field and and can be a string
-        or even a dict.  Plugins are stored in dicts.  Content type determines if a plugin is used.
+        Contains the content for a service (if any).
+        Content is stored in a text field and can be text or binary.
+        Content type is used to understand the data type
     """
 
     class Meta:
         verbose_name = 'SBE Service Content'
         verbose_name_plural = 'SBE Service Contents'
 
-    game_service = models.ForeignKey(GameService)
-    content_data = PickledObjectField()
-    content_type = models.CharField('Content Type', max_length=75, default='string')
+    HTTP_VERB_CHOICES = (
+        'GET',
+        'POST'
+    )
+
+    CONNECT_STATUS_CHOICES = (
+        'success',
+        'reset',
+        'timeout'
+    )
+
+    service = models.ForeignKey(GameService)
+    data = models.TextField('Data')
+    content_type = models.CharField('Content Type', max_length=75,
+                                    default='text')
+    http_verb = models.CharField(max_length=16, choices=HTTP_VERB_CHOICES)
+    url = models.URLField()
+    connect_status = models.CharField(max_length=16,
+                                      choices=CONNECT_STATUS_CHOICES)
 
     def __str__(self):
-        return 'Content (%s)' % self.content_type
+        return 'Content (%s=%s)' % (self.content_type, self.data)
 
     def monitor_json(self):
-        return '{ "content_type": "%s", "content_data": %s }' % (self.content_type, json.dumps(self.content_data))
+        return '{ "content_type": "%s", "content_data": %s }' % (
+            self.content_type,
+            json.dumps(self.data)
+        )
+
+
+

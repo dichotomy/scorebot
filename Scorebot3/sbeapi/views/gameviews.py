@@ -1,15 +1,11 @@
-import json
-import random
-import scorebot.utils.log as logger
-
-from django.core import serializers
-from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseNotFound,\
+    HttpResponseBadRequest, HttpResponseNotAllowed
 
-from sbehost.models import Game, GameTeam, GameHost, GameService, GameCompromise, GameContent
-from sbegame.models import Team
-from scorebot.utils.general import val_auth, get_object_with_id, get_object_by_filter, get_json, save_json_or_error
+from sbehost.models import Game, GameTeam, GameHost, GameService,\
+    GameCompromise, GameContent
+from scorebot.utils.general import val_auth, get_object_with_id,\
+    get_object_by_filter, get_json, save_json_or_error
 """
     Methods supported
 
@@ -197,7 +193,10 @@ class GameViews:
                     'game_service__game_host_id': host_id,
                     'game_service_id': service_id
             }
-            game_content = get_object_by_filter(request, GameContent, filter_obj, object_response=False)
+            game_content = get_object_by_filter(request,
+                                                GameContent,
+                                                filter_obj,
+                                                object_response=False)
             if not game_content or not len(game_content):
                 return HttpResponseNotFound()
 
