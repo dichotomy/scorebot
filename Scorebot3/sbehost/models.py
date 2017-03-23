@@ -32,25 +32,25 @@ class Game(models.Model):
         verbose_name = 'SBE Game'
         verbose_name_plural = 'SBE Games'
 
-    game_name = models.CharField('Game Name', max_length=250)
-    game_mode = models.SmallIntegerField('Game Mode', default=0)
-    game_paused = models.BooleanField('Game Pause', default=False)
-    game_start = models.DateTimeField('Game Start', auto_now_add=True)
-    game_finish = models.DateTimeField('Game Finish', blank=True, null=True)
-    game_options_cool = models.SmallIntegerField('Game Cool Down', default=300)
-    game_options_flag_percent = models.SmallIntegerField('Game Flag Percentage', default=60)
-    game_options_ticket_percent = models.SmallIntegerField('Game Ticket Percentage', default=65)
-    game_monitors = models.ManyToManyField('sbegame.MonitorServer', through='sbehost.GameMonitor')
-    game_host_default_ping_ratio = models.SmallIntegerField('Game Host Pinback Percent', default=50)
-    game_options_ticket_wait = models.SmallIntegerField('Game Ticket First Hold Time (Sec)', default=180)
-    game_offensive = models.ManyToManyField('sbegame.Player', through='sbehost.GamePlayer',
-                                            through_fields=('player_game', 'player_inst'))
+    name = models.CharField('Game Name', max_length=250)
+    mode = models.SmallIntegerField('Game Mode', default=0)
+    paused = models.BooleanField('Game Pause', default=False)
+    start = models.DateTimeField('Game Start', auto_now_add=True)
+    finish = models.DateTimeField('Game Finish', blank=True, null=True)
+    options_cool = models.SmallIntegerField('Game Cool Down', default=300)
+    options_flag_percent = models.SmallIntegerField('Game Flag Percentage', default=60)
+    options_ticket_percent = models.SmallIntegerField('Game Ticket Percentage', default=65)
+    monitors = models.ManyToManyField('sbegame.MonitorServer', through='sbehost.GameMonitor')
+    host_default_ping_ratio = models.SmallIntegerField('Game Host Pinback Percent', default=50)
+    options_ticket_wait = models.SmallIntegerField('Game Ticket First Hold Time (Sec)', default=180)
+    offensive = models.ManyToManyField('sbegame.Player', through='sbehost.GamePlayer',
+                                            through_fields=('game', 'player'))
 
     def __str__(self):
-        return '%s Game %s (%s-%s) %d Teams' % (('[Running]' if not self.game_paused else '[Paused]'),
-                                               self.game_name, self.game_start.strftime('%m/%d/%y %H:%M'),
-                                               (self.game_finish.strftime('%m/%d/%y %H:%M')
-                                                if self.game_finish else 'Present'), self.gameteam_set.all().count())
+        return '%s Game %s (%s-%s) %d Teams' % (('[Running]' if not self.paused else '[Paused]'),
+                                               self.name, self.start.strftime('%m/%d/%y %H:%M'),
+                                               (self.finish.strftime('%m/%d/%y %H:%M')
+                                                if self.finish else 'Present'), self.gameteam_set.all().count())
 
 
 class GameDNS(models.Model):
@@ -64,7 +64,7 @@ class GameDNS(models.Model):
         verbose_name = 'SBE DNS Server'
         verbose_name_plural = 'SBE DNS Servers'
 
-    dns_address = models.CharField('DNS Server Address', max_length=140)
+    address = models.CharField('DNS Server Address', max_length=140)
 
 
 class GameTeam(models.Model):
@@ -94,35 +94,35 @@ class GameTeam(models.Model):
         verbose_name_plural = 'SBE Game Team'
 
     game = models.ForeignKey(Game)
-    team_dns = models.ManyToManyField('sbehost.GameDNS')
-    team_flags = models.ManyToManyField('sbehost.GameFlag')
-    team_tickets = models.ManyToManyField('sbehost.GameTicket')
+    dns = models.ManyToManyField('sbehost.GameDNS')
+    flags = models.ManyToManyField('sbehost.GameFlag')
+    tickets = models.ManyToManyField('sbehost.GameTicket')
     team = models.ForeignKey('sbegame.Team', blank=True, null=True)  # Reference to existing team, null if auto
-    team_score_flags = models.IntegerField('Team Score (Flags)', default=0)
-    team_score_basic = models.IntegerField('Team Score (Uptime)', default=0)
-    team_score_beacons = models.IntegerField('Team Score (Becons)', default=0)
-    team_score_tickets = models.IntegerField('Team Score (Tickets)', default=0)
-    team_players = models.ManyToManyField('sbegame.Player', through='sbehost.GamePlayer',
-                                          through_fields=('player_team', 'player_inst'))
+    score_flags = models.IntegerField('Team Score (Flags)', default=0)
+    score_basic = models.IntegerField('Team Score (Uptime)', default=0)
+    score_beacons = models.IntegerField('Team Score (Becons)', default=0)
+    score_tickets = models.IntegerField('Team Score (Tickets)', default=0)
+    players = models.ManyToManyField('sbegame.Player', through='sbehost.GamePlayer',
+                                          through_fields=('team', 'player'))
 
     def __len__(self):
-        return self.team_score_basic + self.team_score_beacons + self.team_score_flags + self.team_score_tickets
+        return self.score_basic + self.score_beacons + self.score_flags + self.score_tickets
 
     def __str__(self):
-        return 'GameTeam (%s:%d) %s' % (self.get_team_name(), self.get_team_color(), self.__len__())
+        return 'GameTeam (%s:%d) %s' % (self.get_name(), self.get_color(), self.__len__())
 
-    def get_team_name(self):
+    def get_name(self):
         # Use this instead of .name
         if self.team:
-            return self.team.team_name
+            return self.team.name
         if not self.static_name:
             self.static_name = GameTeam.BASIC_TEAM_NAMES[random.randint(0, len(GameTeam.BASIC_TEAM_NAMES)-1)]
         return self.static_name
 
-    def get_team_color(self):
+    def get_color(self):
         # Use this instead of .color
         if self.team:
-            return self.team.team_color
+            return self.team.color
         if not self.static_color:
             self.static_color = random.randint(0, 66113)
         return self.static_color
@@ -141,21 +141,21 @@ class GameCompromise(models.Model):
         verbose_name = 'SBE Host Compromise'
         verbose_name_plural = 'SBE Host Compromises'
 
-    game_host = models.ForeignKey('GameHost')
-    comp_player = models.ForeignKey('sbegame.Player')
-    comp_start = models.DateTimeField('Compromise Start', default=datetime.now)
-    comp_finish = models.DateTimeField('Compromise End', null=True, blank=True)
+    game_host = models.ForeignKey('GameHost', null=True)
+    player = models.ForeignKey('sbegame.Player', null=True)
+    start = models.DateTimeField('Compromise Start', default=datetime.now)
+    finish = models.DateTimeField('Compromise End', null=True, blank=True)
 
     def __len__(self):
-        if self.comp_finish:
-            return (self.comp_finish - self.comp_start).seconds
-        return (timezone.now() - self.comp_start).seconds
+        if self.finish:
+            return (self.finish - self.start).seconds
+        return (timezone.now() - self.start).seconds
 
     def __str__(self):
-        return '%s (%d seconds)' % (self.comp_player.player_name, self.__len__())
+        return '%s (%d seconds)' % (self.player.name, self.__len__())
 
     def __bool__(self):
-        return self.comp_finish is None
+        return self.finish is None
 
     def __nonzero__(self):
         return self.__bool__()
@@ -228,17 +228,17 @@ class GameFlag(models.Model):
         verbose_name = 'SBE Game Flag'
         verbose_name_plural = 'SBE Game Flags'
 
-    flag_name = models.CharField('Flag Name', max_length=250)
-    flag_answer = models.CharField('Flag Answer', max_length=500)
-    flag_value = models.SmallIntegerField('Flag Value', default=100)
-    flag_options = models.SmallIntegerField('Flag Options', default=2)
-    flag_owner = models.ForeignKey('sbegame.Player', null=True, blank=True)
+    name = models.CharField('Flag Name', max_length=250)
+    answer = models.CharField('Flag Answer', max_length=500)
+    value = models.SmallIntegerField('Flag Value', default=100)
+    options = models.SmallIntegerField('Flag Options', default=2)
+    owner = models.ForeignKey('sbegame.Player', null=True, blank=True)
 
     def __str__(self):
-        return 'Flag %s (%d)' % (self.flag_name, self.flag_value)
+        return 'Flag %s (%d)' % (self.name, self.value)
 
     def __bool__(self):
-        return self.get_option(1) is False and self.flag_online
+        return self.get_option(1) is False and self.online
 
     def __nonzero__(self):
         return self.__bool__()
@@ -253,7 +253,7 @@ class GameFlag(models.Model):
                 raise IndexError('The option value "%s" does not exist!' % option)
         else:
             raise TypeError('Must be an integer or key option string!')
-        return (self.flag_options & (1 << level)) > 0
+        return (self.options & (1 << level)) > 0
 
     def __getitem__(self, item):
         return self.check_rule(item)
@@ -269,9 +269,9 @@ class GameFlag(models.Model):
         else:
             raise TypeError('Must be an integer or key option string!')
         if value:
-            self.flag_options = (self.flag_options | (1 << level))
+            self.options = (self.options | (1 << level))
         else:
-            self.flag_options = (self.flag_options & (~(1 << level)))
+            self.options = (self.options & (~(1 << level)))
 
     def __setitem__(self, key, value):
         self.set_rule(key, value)
@@ -288,13 +288,13 @@ class GamePlayer(models.Model):
         verbose_name = 'SBE Game Player'
         verbose_name_plural = 'SBE Game Players'
 
-    player_inst = models.ForeignKey('sbegame.Player')
-    player_score = models.IntegerField('Player Current Score', default=0)
-    player_game = models.ForeignKey('sbehost.Game', null=True, blank=True)      # Only Red Players
-    player_team = models.ForeignKey('sbehost.GameTeam', null=True, blank=True)  # Only Blue Players
+    player = models.ForeignKey('sbegame.Player')
+    score = models.IntegerField('Player Current Score', default=0)
+    game = models.ForeignKey('sbehost.Game', null=True, blank=True)      # Only Red Players
+    team = models.ForeignKey('sbehost.GameTeam', null=True, blank=True)  # Only Blue Players
 
     def __str__(self):
-        return '%s (Score: %d)' % (self.player_inst.player_name, self.player_score)
+        return '%s (Score: %d)' % (self.player.name, self.score)
 
 
 class GameTicket(models.Model):
@@ -308,26 +308,26 @@ class GameTicket(models.Model):
         verbose_name = 'SBE Ticket'
         verbose_name_plural = 'SBE Tickets'
 
-    ticket_name = models.CharField('Ticket Name', max_length=250)
-    ticket_value = models.SmallIntegerField('Ticket Value', default=500)
-    ticket_expired = models.BooleanField('Ticket Expired', default=False)
-    ticket_content = models.CharField('Ticket Body Content', max_length=1000)
-    ticket_expires = models.DateTimeField('Ticket Expires', blank=True, null=True)
-    ticket_started = models.DateTimeField('Ticket Assigned', blank=True, null=True)
-    ticket_completed = models.DateTimeField('Ticket Completed', blank=True, null=True)
+    name = models.CharField('Ticket Name', max_length=250)
+    value = models.SmallIntegerField('Ticket Value', default=500)
+    expired = models.BooleanField('Ticket Expired', default=False)
+    content = models.CharField('Ticket Body Content', max_length=1000)
+    expires = models.DateTimeField('Ticket Expires', blank=True, null=True)
+    started = models.DateTimeField('Ticket Assigned', blank=True, null=True)
+    completed = models.DateTimeField('Ticket Completed', blank=True, null=True)
 
     def __len__(self):
-        if not self.ticket_started:
+        if not self.started:
             return 0
-        if self.ticket_completed:
-            return (self.ticket_completed - self.ticket_started).seconds
-        return (self.ticket_expires - self.ticket_started).seconds
+        if self.completed:
+            return (self.completed - self.started).seconds
+        return (self.expires - self.started).seconds
 
     def __str__(self):
-        return 'Ticket %s (%d) %d sec' % (self.ticket_name, self.ticket_value, self.__len__())
+        return 'Ticket %s (%d) %d sec' % (self.name, self.value, self.__len__())
 
     def __bool__(self):
-        return self.ticket_completed or self.ticket_expired
+        return self.completed or self.expired
 
     def __nonzero__(self):
         return self.__bool__()
@@ -344,12 +344,12 @@ class GameMonitor(models.Model):
         verbose_name = 'SBE Game Monitor'
         verbose_name_plural = 'SBE Game Monitors'
 
-    monitor_game = models.ForeignKey('sbehost.Game')
-    monitor_inst = models.ForeignKey('sbegame.MonitorServer')
-    monitor_hosts = models.ManyToManyField('sbehost.GameHost')
+    game = models.ForeignKey('sbehost.Game')
+    server = models.ForeignKey('sbegame.MonitorServer')
+    hosts = models.ManyToManyField('sbehost.GameHost')
 
     def __str__(self):
-        return 'Montor %s (%s) Hosts' % (self.monitor_inst.monitor_name, self.monitor_hosts.all().count())
+        return 'Montor %s (%s) Hosts' % (self.server.monitor_name, self.hosts.all().count())
 
 
 class ServiceApplication(models.Model):
@@ -364,9 +364,10 @@ class ServiceApplication(models.Model):
         verbose_name = 'SBE Application'
         verbose_name_plural = 'SBE Applications'
 
-    port = models.SmallIntegerField('Service Port')
+    port = models.SmallIntegerField('Service Port', default=0)
     application_protocol = models.CharField('Application Protocol',
-                                            max_length=64)
+                                            max_length=64,
+                                            default='http')
     layer4_protocol = models.CharField('Service Protocol',
                                        max_length=4,
                                        default='tcp')
@@ -388,8 +389,8 @@ class GameService(models.Model):
     value = models.SmallIntegerField('Service Value', default=50)
     status = models.SmallIntegerField('Service Status', default=0)
     bonus = models.BooleanField('Service is Bonus', default=False)
-    application = models.ForeignKey(ServiceApplication)
-    game_host = models.ForeignKey(GameHost)
+    application = models.ForeignKey(ServiceApplication, null=True)
+    game_host = models.ForeignKey(GameHost, null=True)
 
     def __str__(self):
         return '%s (%d/%s) %s' % (self.name, self.application.port,
@@ -423,22 +424,24 @@ class GameContent(models.Model):
         verbose_name_plural = 'SBE Service Contents'
 
     HTTP_VERB_CHOICES = (
-        'GET',
-        'POST'
+        ('1', 'GET'),
+        ('2', 'POST'),
     )
 
     CONNECT_STATUS_CHOICES = (
-        'success',
-        'reset',
-        'timeout'
+        ('1', 'success'),
+        ('2', 'reset'),
+        ('3', 'timeout'),
     )
 
     service = models.ForeignKey(GameService)
-    data = models.TextField('Data')
+    data = models.TextField('Data', null=True)
     content_type = models.CharField('Content Type', max_length=75,
                                     default='text')
-    http_verb = models.CharField(max_length=16, choices=HTTP_VERB_CHOICES)
-    url = models.URLField()
+    http_verb = models.CharField(max_length=16,
+                                 choices=HTTP_VERB_CHOICES,
+                                 null=True)
+    url = models.URLField(null=True)
     connect_status = models.CharField(max_length=16,
                                       choices=CONNECT_STATUS_CHOICES)
 
