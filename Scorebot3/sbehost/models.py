@@ -11,6 +11,12 @@ from django.utils import timezone
     Contains all Models that would be considered in game
 """
 
+CONNECT_STATUS_CHOICES = (
+    ('1', 'success'),
+    ('2', 'reset'),
+    ('3', 'timeout'),
+)
+
 
 class Game(models.Model):
     GAME_MODES = {
@@ -141,8 +147,8 @@ class GameCompromise(models.Model):
         verbose_name = 'SBE Host Compromise'
         verbose_name_plural = 'SBE Host Compromises'
 
-    game_host = models.ForeignKey('GameHost', null=True)
-    player = models.ForeignKey('sbegame.Player', null=True)
+    game_host = models.ForeignKey('GameHost', null=True, blank=True)
+    player = models.ForeignKey('sbegame.Player', null=True, blank=True)
     start = models.DateTimeField('Compromise Start', default=datetime.now)
     finish = models.DateTimeField('Compromise End', null=True, blank=True)
 
@@ -188,7 +194,7 @@ class GameHost(models.Model):
         return 'Host %s (%s)' % (self.fqdn,
                                  '; '.join(
                                      ['%d' % f.port
-                                      for f in self.game_service_set.all()]))
+                                      for f in self.gameservice_set.all()]))
 
     def __bool__(self):
         if GameCompromise.objects.filter(game_host__id=self.id).count() > 0:
@@ -372,6 +378,11 @@ class ServiceApplication(models.Model):
                                        max_length=4,
                                        default='tcp')
 
+    def __str__(self):
+        return 'Application %s:%d using %s' % (self.application_protocol,
+                                               self.port,
+                                               self.layer4_protocol)
+
 
 class GameService(models.Model):
     __desc__ = """
@@ -387,10 +398,11 @@ class GameService(models.Model):
 
     name = models.CharField('Service Name', max_length=128)
     value = models.SmallIntegerField('Service Value', default=50)
-    status = models.SmallIntegerField('Service Status', default=0)
+    status = models.CharField('Service Status', max_length=16, default='1',
+                              choices=CONNECT_STATUS_CHOICES)
     bonus = models.BooleanField('Service is Bonus', default=False)
-    application = models.ForeignKey(ServiceApplication, null=True)
-    game_host = models.ForeignKey(GameHost, null=True)
+    application = models.ForeignKey(ServiceApplication)
+    game_host = models.ForeignKey(GameHost)
 
     def __str__(self):
         return '%s (%d/%s) %s' % (self.name, self.application.port,
@@ -428,20 +440,15 @@ class GameContent(models.Model):
         ('2', 'POST'),
     )
 
-    CONNECT_STATUS_CHOICES = (
-        ('1', 'success'),
-        ('2', 'reset'),
-        ('3', 'timeout'),
-    )
-
     service = models.ForeignKey(GameService)
-    data = models.TextField('Data', null=True)
+    data = models.TextField('Data', null=True, blank=True)
     content_type = models.CharField('Content Type', max_length=75,
                                     default='text')
     http_verb = models.CharField(max_length=16,
                                  choices=HTTP_VERB_CHOICES,
-                                 null=True)
-    url = models.URLField(null=True)
+                                 null=True,
+                                 blank=True)
+    url = models.URLField(null=True, blank=True)
     connect_status = models.CharField(max_length=16,
                                       choices=CONNECT_STATUS_CHOICES)
 
