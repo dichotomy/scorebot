@@ -17,32 +17,32 @@ class Team(models.Model):
         verbose_name = 'SBE Team'
         verbose_name_plural = 'SBE Teams'
 
-    team_players = models.ManyToManyField('sbegame.Player')
-    team_score = models.BigIntegerField('Team Overall Score', default=0)
-    team_name = models.CharField('Team Name', max_length=250, unique=True)
-    team_color = models.IntegerField('Team Color', default=int('FFFFFF', 16))
-    team_registered = models.DateField('Team Registration Date', auto_now_add=True)
-    team_last_played = models.DateTimeField('Team Last Played', null=True, blank=True)
+    players = models.ManyToManyField('sbegame.Player')
+    score = models.BigIntegerField('Team Overall Score', default=0)
+    name = models.CharField('Team Name', max_length=250, unique=True)
+    color = models.IntegerField('Team Color', default=int('FFFFFF', 16))
+    registered = models.DateField('Team Registration Date', auto_now_add=True)
+    last_played = models.DateTimeField('Team Last Played', null=True, blank=True)
 
     def __len__(self):
-        return self.team_players.all().count()
+        return self.players.all().count()
 
     def __str__(self):
-        return '%s (Score: %d)' % (self.team_name, self.team_score)
+        return '%s (Score: %d)' % (self.name, self.score)
 
     def get_color(self):
-        return hex(self.team_color)
+        return hex(self.color)
 
     def __getitem__(self, item):
         if isinstance(item, int):
             val = int(item)
-            if 0 < val < len(self.team_players.all().count()):
-                return self.team_players.all()[val]
+            if 0 < val < len(self.players.all().count()):
+                return self.players.all()[val]
             else:
                 raise IndexError(val)
         elif isinstance(item, str):
             try:
-                return self.team_players.all().filter(player_name=item).first()
+                return self.players.all().filter(name=item).first()
             except Player.DoesNotExist:
                 raise KeyError(item)
         raise TypeError(item)
@@ -61,24 +61,24 @@ class Player(models.Model):
         verbose_name = 'SBE Player'
         verbose_name_plural = 'SBE Players'
 
-    player_user = models.ForeignKey(User, null=True, blank=True)
-    player_score = models.BigIntegerField('Player Overall Score', default=0)
-    player_name = models.CharField('Player Display Name', max_length=150, unique=True)
+    user = models.ForeignKey(User, null=True, blank=True)
+    score = models.BigIntegerField('Player Overall Score', default=0)
+    name = models.CharField('Player Display Name', max_length=150, unique=True)
 
     def __len__(self):
-        return self.player_score
+        return self.score
 
     def __str__(self):
-        return '%s (Score: %d)' % (self.player_name, self.player_score)
+        return '%s (Score: %d)' % (self.name, self.score)
 
     def __lt__(self, other):
-        return isinstance(other, Player) and other.player_score > self.player_score
+        return isinstance(other, Player) and other.score > self.score
 
     def __gt__(self, other):
-        return isinstance(other, Player) and other.player_score < self.player_score
+        return isinstance(other, Player) and other.score < self.score
 
     def __eq__(self, other):
-        return isinstance(other, Player) and other.player_score == self.player_score
+        return isinstance(other, Player) and other.score == self.score
 
 
 class AccessKey(models.Model):
@@ -208,11 +208,11 @@ class HostServer(models.Model):
         verbose_name = 'SBE Host Server'
         verbose_name_plural = 'SBE Host Servers'
 
-    server_name = models.CharField('Host Server Name', max_length=250)
-    server_address = models.CharField('Host Server Address', max_length=150)
+    name = models.CharField('Host Server Name', max_length=250)
+    address = models.CharField('Host Server Address', max_length=150)
 
     def __str__(self):
-        return 'Host %s (%s)' % (self.server_name, self.server_address)
+        return 'Host %s (%s)' % (self.name, self.address)
 
 
 class MonitorJob(models.Model):
@@ -315,9 +315,9 @@ class MonitorServer(models.Model):
         verbose_name = 'SBE Monitor'
         verbose_name_plural = 'SBE Monitors'
 
-    monitor_key = models.ForeignKey('sbegame.AccessKey')
-    monitor_name = models.CharField('Monitor Name', max_length=250)
-    monitor_address = models.CharField('Monitor Last IP', max_length=140, blank=True, null=True)
+    key = models.ForeignKey('sbegame.AccessKey')
+    name = models.CharField('Monitor Name', max_length=250)
+    address = models.CharField('Monitor Last IP', max_length=140, blank=True, null=True)
 
     def __str__(self):
-        return 'Monitor %s' % self.monitor_name
+        return 'Monitor %s' % self.name
