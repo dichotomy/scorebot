@@ -280,6 +280,14 @@ class MonitorJob(models.Model):
             logger.exception(__name__, 'host_services key does not exist.')
             return []
 
+    @staticmethod
+    def json_has_connect_status(service_data):
+        try:
+            return service_data['connect']
+        except Exception:
+            logger.exception(__name__, 'service <%d>: has no connect status' % service_data['id'])
+            return False
+
     def __len__(self):
         if self.finish:
             return (self.finish - self.start).seconds
