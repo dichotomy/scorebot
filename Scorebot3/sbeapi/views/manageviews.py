@@ -1,9 +1,8 @@
-import random
 import scorebot.utils.log as logger
 
 from django.views.decorators.csrf import csrf_exempt
 from sbegame.models import Player, Team, MonitorJob, MonitorServer
-from sbehost.models import Game, GameMonitor, GameHost
+from sbehost.models import GameService
 from scorebot.utils.general import val_auth, get_object_with_id, save_json_or_error
 from scorebot.utils.json2 import translator
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
@@ -23,6 +22,21 @@ from ipware.ip import get_real_ip
 
     API Backend for SBE Management related stuff
 """
+
+
+def get_job_from_queue(monitor):
+    job = None
+    try:
+        job = MonitorJob.get_job_pending(monitor=monitor)
+    except Exception:
+        logger.exception(__name__,
+                         'Exception while selecting pending jobs')
+    if job is None:
+        services = GameService.get_current_services()
+        MonitorJob.create_new_jobs(services)
+        job = MonitorJob.get_job_pending(monitor=monitor)
+
+    return job
 
 
 class ManageViews:
@@ -64,7 +78,6 @@ class ManageViews:
     def bakjob(request):
         return HttpResponse(request.authkey.key_uuid)
 
-
     @staticmethod
     @csrf_exempt
     @val_auth
@@ -98,22 +111,36 @@ class ManageViews:
             10. Return 204 (No Jobs) and Job wait JSON
         """
         try:
-            monitor = MonitorServer.objects.get(monitor_key_id=request.authkey.id)
+            monitor = MonitorServer.objects.get(key__id=request.authkey.id)
         except MonitorServer.DoesNotExist:
             logger.warning(__name__, '"%s" attempted to request a job, but is not assigned as a Monitor!' %
                            get_real_ip(request))
             return HttpResponseForbidden('SBE [API]: You do not have permission to request a job!')
 
+        # TODO: Do we need this every time or at all?
+        #
         monitor.monitor_address = get_real_ip(request)
         monitor.save()
+
         if request.method == 'GET':
-            logger.info(__name__, 'Job requested by monitor "%s"!' % monitor.monitor_name)
-            mon_games = Game.objects.filter(game_paused=False,
-                                            game_finish__isnull=True,
-                                            game_monitors__id=monitor.id)
-            if len(mon_games) > 0:
-                for x in range(0, min(len(mon_games) * 2, 10)):
-                    mon_sel = mon_games[random.randint(0, len(mon_games) - 1)]  # random pick a game
+            logger.info(__name__,
+                        'Job requested by monitor <%d>!' % monitor.id)
+            ''' TODO:
+                1. Create queue of necessary checks or pull from current queue
+                2. For every GET request,
+                        pop a job off the queue
+            '''
+            job = get_job_from_queue(monitor=monitor)
+
+            return HttpResponse(content=translator.to_job_json(job), status=201)
+
+            '''
+            monitor_games = Game.objects.filter(paused=False,
+                                                finish__isnull=True,
+                                                monitors__id=monitor.id)
+            if len(monitor_games):
+                for x in range(0, min(len(monitor_games) * 2, 10)):
+                    mon_sel = monitor_games[random.randint(0, len(monitor_games) - 1)]  # random pick a game
                     mon_opt = GameMonitor.objects.get(monitor_game=mon_sel, monitor_inst_id=monitor.id)   # get options
                     logger.debug(__name__, 'Monitor "%s" selected game "%s"!' % (monitor.monitor_name,
                                                                                  mon_sel.game_name))
@@ -149,6 +176,7 @@ class ManageViews:
             else:
                 logger.debug(__name__, 'Monitor "%s" told to wait due to no games!' % monitor.monitor_name)
                 return HttpResponse(content='{ "status": "wait" }', status=204)
+            '''
         elif request.method == 'POST':
             try:
                 job_response = translator.from_job_json(monitor, request.body.decode('utf-8'))

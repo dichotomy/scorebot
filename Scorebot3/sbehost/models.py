@@ -3,6 +3,7 @@ import random
 from datetime import datetime
 
 from django.db import models
+from django.db.models import Max, Min
 from django.utils import timezone
 
 """
@@ -87,8 +88,8 @@ class GameTeam(models.Model):
     __desc__ = """
         SBE Game Team
 
-        The Game Team object is a reference to the players on a team and the data that keeps together the game
-        during play, specified by the team.
+        The Game Team object is a reference to the players on a team and the
+        data that keeps together the game during play, specified by the team.
     """
     __historical__ = True
 
@@ -193,7 +194,7 @@ class GameHost(models.Model):
     def __str__(self):
         return 'Host %s (%s)' % (self.fqdn,
                                  '; '.join(
-                                     ['%d' % f.port
+                                     ['%d' % f.application.port
                                       for f in self.gameservice_set.all()]))
 
     def __bool__(self):
@@ -204,7 +205,7 @@ class GameHost(models.Model):
     def __nonzero__(self):
         return self.__bool__()
 
-    def get_pinback_percent(self):
+    def get_pingback_percent(self):
         if self.ping_ratio > 0:
             return self.ping_ratio
         try:
@@ -415,6 +416,20 @@ class GameService(models.Model):
     def __nonzero__(self):
         return self.__bool__()
 
+    @classmethod
+    def get_random(cls):
+        max_min = cls.objects.filter(game_host__finished__isnull=True).\
+                              aggregate(Max('id'), Min('id'))
+        max = max_min['id__max']
+        min = max_min['id__min']
+        return random.randint(min, max)
+
+    @classmethod
+    def get_current_services(cls):
+        return cls.objects.filter(
+            game_host__game_team__game__finish__isnull=True
+        )
+
     def get_text_status(self):
         for k, v in GameService.SERVICE_STATUS:
             if self.status == v:
@@ -450,7 +465,9 @@ class GameContent(models.Model):
                                  blank=True)
     url = models.URLField(null=True, blank=True)
     connect_status = models.CharField(max_length=16,
-                                      choices=CONNECT_STATUS_CHOICES)
+                                      choices=CONNECT_STATUS_CHOICES,
+                                      null=True,
+                                      blank=True)
 
     def __str__(self):
         return 'Content (%s=%s)' % (self.content_type, self.data)

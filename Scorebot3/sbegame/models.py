@@ -1,8 +1,11 @@
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.contrib.auth.models import User
 
+from random import shuffle
+
 import scorebot.utils.log as logger
+
 
 
 class Team(models.Model):
@@ -200,7 +203,8 @@ class HostServer(models.Model):
     __desc__ = """
         SBE Host Server
 
-        A Host Server is a baremetal VM that hosts the game hosts.  This model enables SBE to send a command through
+        A Host Server is a bare metal VM that hosts the game hosts.
+        This model enables SBE to send a command through
         the Monitors to start/stop/revert hosts on demand.
     """
 
@@ -219,7 +223,8 @@ class MonitorJob(models.Model):
     __desc__ = """
         SBE Monitor Job
 
-        SBE Monitor Jobs keep track of all the on-goings on the monitors.  The jobs allow fast and efficent scheduling
+        SBE Monitor Jobs keep track of all the on-goings on the monitors.
+        The jobs allow fast and efficient scheduling
         and sync between monitors.
     """
 
@@ -227,10 +232,60 @@ class MonitorJob(models.Model):
         verbose_name = 'SBE Monitor Job'
         verbose_name_plural = 'SBE Monitor Jobs'
 
-    host = models.ForeignKey('sbehost.GameHost')
-    monitor = models.ForeignKey('sbegame.MonitorServer')
-    start = models.DateTimeField('Job Start', auto_now_add=True)
+    monitor = models.ForeignKey('sbegame.MonitorServer', null=True, blank=True)
+    start = models.DateTimeField('Job Start', blank=True, null=True)
     finish = models.DateTimeField('Job End', blank=True, null=True)
+    service = models.ForeignKey('sbehost.GameService')
+
+    @staticmethod
+    def get_jobs_pending():
+        return MonitorJob.objects.filter(
+            service__game_host__game_team__game__finish__isnull=True,
+            start__isnull=True,
+            finish__isnull=True,
+            monitor__isnull=True
+        )
+
+    @staticmethod
+    def get_job_pending(monitor, service_id=None):
+        job = None
+        if service_id is None:
+            #  Get single pending job randomly
+            with transaction.atomic():
+                jobs = MonitorJob.get_jobs_pending()
+
+                if len(jobs):
+                    job = MonitorJob.create_pending_job(jobs, monitor)
+        else:
+            try:
+                job = MonitorJob.objects.get(start__isnull=True,
+                                             finish__isnull=True,
+                                             service__id=service_id)
+            except MonitorJob.DoesNotExist:
+                logger.warning(__name__,
+                               'Job for service <%d> is not pending' % service_id)
+        return job
+
+    @staticmethod
+    def create_pending_job(jobs, monitor):
+        jobs = [j for j in jobs]
+        shuffle(jobs)
+        job = jobs.pop()
+        job.monitor = monitor
+        job.start = timezone.now()
+        job.save()
+
+        return job
+
+    @staticmethod
+    def create_new_jobs(services):
+        jobs = []
+        for s in services:
+            job = MonitorJob(service=s)
+            job.save()
+            jobs.append(job)
+
+        return jobs
 
     @staticmethod
     def json_get_job_status(data):
@@ -294,13 +349,7 @@ class MonitorJob(models.Model):
         return (timezone.now() - self.start).seconds
 
     def __str__(self):
-        return 'Job %d [%s]' % (self.id, 'Done' if self.__bool__() else 'Running')
-
-    def __bool__(self):
-        return self.finish is not None
-
-    def __nonzero__(self):
-        return self.__bool__()
+        return 'Job %d [%s]' % (self.id, 'Done' if self.finish else 'Running')
 
 
 class MonitorServer(models.Model):
