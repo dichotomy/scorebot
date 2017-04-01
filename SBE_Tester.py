@@ -161,9 +161,9 @@ if __name__ == '__main__':
 
     r = b.content.decode('utf-8')
     try:
-        print json.dumps(json.loads(r), indent=4)
+        print(json.dumps(json.loads(r), indent=4))
     except:
-        print r
+        print(r)
     '''
     j = json.loads(r) if r else {}
     print json.dumps(j, indent=4)
