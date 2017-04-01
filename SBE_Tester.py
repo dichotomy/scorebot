@@ -151,13 +151,13 @@ if __name__ == '__main__':
     path = args.path
 
     if args.post:
-        b = a.post('http://localhost:%d%s' % (path, HOST_PORT), data=data)
+        b = a.post('http://localhost:%d%s' % (HOST_PORT, path), data=data)
     elif args.put:
-        b = a.put('http://localhost:%d%s' % (path, HOST_PORT), data=data)
+        b = a.put('http://localhost:%d%s' % (HOST_PORT, path), data=data)
     elif args.delete:
-        b = a.delete('http://localhost:%d%s' % (path, HOST_PORT))
+        b = a.delete('http://localhost:%d%s' % (HOST_PORT, path))
     else:
-        b = a.get('http://localhost:%d%s'% (path, HOST_PORT))
+        b = a.get('http://localhost:%d%s'% (HOST_PORT, parser))
 
     r = b.content.decode('utf-8')
     try:
