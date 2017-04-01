@@ -157,7 +157,7 @@ if __name__ == '__main__':
     elif args.delete:
         b = a.delete('http://localhost:%d%s' % (HOST_PORT, path))
     else:
-        b = a.get('http://localhost:%d%s'% (HOST_PORT, parser))
+        b = a.get('http://localhost:%d%s'% (HOST_PORT, path))
 
     r = b.content.decode('utf-8')
     try:
