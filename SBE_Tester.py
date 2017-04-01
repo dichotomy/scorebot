@@ -120,6 +120,7 @@ if __name__ == '__main__':
     a.headers['SBE-AUTH'] = 'gambite' # auth key for a monitor with all hosts enabled
     #a.headers['SBE-AUTH'] = 'BBBBBBBBBBBBBBBBBBBBBBBBBBB' # auth key for a monitor with 2 assigned hosts (mailsvr, domain2)
     #a.headers['SBE-AUTH'] = 'CCCCCCCCCCCCCCCCCCCCCCCCCCC' # auth key for a monitor with 3 assigned hosts (filesvr, domain, mailsvr)
+    HOST_PORT = 8000
 
     parser = argparse.ArgumentParser(
         description='Test ScoreBot API calls'
@@ -150,13 +151,13 @@ if __name__ == '__main__':
     path = args.path
 
     if args.post:
-        b = a.post('http://localhost:8000%s'%path, data=data)
+        b = a.post('http://localhost:%d%s' % (path, HOST_PORT), data=data)
     elif args.put:
-        b = a.put('http://localhost:8000%s'%path, data=data)
+        b = a.put('http://localhost:%d%s' % (path, HOST_PORT), data=data)
     elif args.delete:
-        b = a.delete('http://localhost:8000%s'%path)
+        b = a.delete('http://localhost:%d%s' % (path, HOST_PORT))
     else:
-        b = a.get('http://localhost:8000%s'%path)
+        b = a.get('http://localhost:%d%s'% (path, HOST_PORT))
 
     r = b.content.decode('utf-8')
     try:
