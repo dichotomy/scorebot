@@ -73,6 +73,9 @@ class GameDNS(models.Model):
 
     address = models.CharField('DNS Server Address', max_length=140)
 
+    def __str__(self):
+        return 'Game DNS (%s)' % self.address
+
 
 class GameTeam(models.Model):
     BASIC_TEAM_NAMES = [

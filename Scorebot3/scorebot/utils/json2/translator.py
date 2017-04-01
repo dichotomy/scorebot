@@ -10,6 +10,7 @@ def to_job_json(job):
         'status': 'job',
         'model': 'scorebot.job',
         'pk': job.id,
+        'game_id': job.service.game_host.game_team.game.id,
         'fields': {}
     }
 
