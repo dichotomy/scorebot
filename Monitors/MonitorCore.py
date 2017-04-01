@@ -3,7 +3,7 @@
 from twisted.internet import reactor, protocol, ssl
 from twisted.python import log
 from http_parser.pyparser import HttpParser
-from WebClient import WebServiceCheckFactory, JobFactory
+from WebClient import WebContentCheckFactory, WebServiceCheckFactory, JobFactory
 from DNSclient import DNSclient
 from Pingclient import PingProtocol
 from twisted.python import log
@@ -62,6 +62,8 @@ class MonitorCore(object):
 
     def post_job(self, job):
         factory = JobFactory(self.params, self.jobs, "put", job)
+        # Todo - how to handle errors here?!
+        defered = factory.get_deferred()
         reactor.connectTCP(self.params.get_sb_ip(), self.params.get_sb_port(), factory, \
                            self.params.get_timeout())
         # Todo - handle the issue of inability to connect to SBE
@@ -128,8 +130,8 @@ class MonitorCore(object):
         for content in service.get_contents():
             factory = WebContentCheckFactory(self.params, job, service, content)
             deferred = factory.get_deferred()
-            deferred.addCallBack(self.web_content_pass, job, service, content)
-            deferred.addErrBack(self.web_content_fail, job, service, content)
+            deferred.addCallback(self.web_content_pass, job, service, content)
+            deferred.addErrback(self.web_content_fail, job, service, content)
             reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
 
     def web_service_connect_fail(self, failure, job, service):
@@ -149,7 +151,11 @@ class MonitorCore(object):
 
     def web_content_fail(self, failure, job, service, content):
         # What to do here?
-        pass
+        job_id = job.get_job_id()
+        port = service.get_port()
+        proto = service.get_proto()
+        url = content.get_url()
+        sys.stdout.write("Finished content check with result %s for job %s:  %s/%s | %s\n" % (failure, job_id, port, proto, url))
 
 if __name__=="__main__":
     # Testing with an artificial job file

@@ -6,7 +6,7 @@ import json
 class Parameters(object):
 
     def __init__(self):
-        self.debug = True
+        self.debug = False
         self.timeout = 90
         self.sbe_auth = "0987654321"
         #self.sb_ip = "10.200.100.50"

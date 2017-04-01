@@ -1,10 +1,13 @@
 #!/usr/bin/env python2.7
 import sys
+import time
 import json
+import base64
+import pprint
 
 class Jobs(object):
 
-    def __init__(self):
+    def __init__(self, debug=False):
         # Jobs
         self.jobs = {}
         # List of IDs of the jobs to be done
@@ -15,10 +18,11 @@ class Jobs(object):
         self.done = []
         # The oldest job ID
         self.latest_job_id = 0
+        self.debug = debug
 
     def add(self, job_json_str):
         self.latest_job_id += 1
-        self.jobs[self.latest_job_id] = Job(job_json_str)
+        self.jobs[self.latest_job_id] = Job(job_json_str, self.debug)
         self.jobs[self.latest_job_id].set_job_id(self.latest_job_id)
         self.todo.append(self.latest_job_id)
         return self.latest_job_id
@@ -34,13 +38,13 @@ class Jobs(object):
     def finish_job(self, job_id, reason):
         if job_id in self.done:
             self.done.remove(job_id)
-            sys.stdout.write("Closing out finished job %s because %s" % (job_id, reason))
+            sys.stdout.write("Job %s: Closing out finished job because %s\n" % (job_id, reason))
         elif job_id in self.proc:
             self.proc.remove(job_id)
-            sys.stdout.write("Prematurely closing out job %s while in process because %s!" % (job_id, reason))
+            sys.stdout.write("Job %s: Prematurely closing out job while in process because %s!\n" % (job_id, reason))
         elif job_id in self.todo:
             self.todo.remove(job_id)
-            sys.stdout.write("Prematurely closing out job %s before starting it because %s!" % (job_id, reason))
+            sys.stdout.write("Job %s: Prematurely closing out job before starting it because %s!\n" % (job_id, reason))
         job = self.jobs[job_id]
         del(self.jobs[job_id])
         return job
@@ -101,13 +105,13 @@ class Job(object):
         }
     """
 
-    def __init__(self, job_json_str):
+    def __init__(self, job_json_str, debug=False):
         # todo make this debug
         print "Attempting to parse json: %s" % job_json_str
         self.json = json.loads(job_json_str)
         self.services = []
         for service in self.json["fields"]["job_host"]["services"]:
-            self.services.append(Service(service))
+            self.services.append(Service(service, self, debug))
         self.headers = {}
         self.headers["Connection"] = "keep-alive"
         #self.headers["Host"] = self.sb_ip
@@ -117,6 +121,7 @@ class Job(object):
         self.scheme = "http"
         self.timeout = 90
         self.job_id = 0
+        self.debug = debug
 
     def get_timeout(self):
         return self.json["job_timeout"]
@@ -129,6 +134,7 @@ class Job(object):
 
     def get_json_str(self):
         #TODO - should this call self.get_json()?
+        sys.stderr.write("Job %s: Converting to JSON" % self.job_id)
         return json.dumps(self.get_json())
 
     def get_dns(self):
@@ -190,6 +196,10 @@ class Job(object):
         for service in self.services:
             json_services.append(service.get_json())
         self.json["fields"]["job_host"]["services"] = json_services
+        sys.stderr.write("Job %s: converting to json:")
+        if self.debug:
+            pp = pprint.PrettyPrinter(depth=4)
+            pp.pprint(self.json)
         return self.json
 
     def is_done(self):
@@ -227,11 +237,13 @@ class Service(object):
 
     """
 
-    def __init__(self, json):
+    def __init__(self, json, job, debug=False):
         self.json = json
         self.contents = []
+        self.job = job
+        self.debug = debug
         for content in self.json["content"]:
-            content_obj = Content(content)
+            content_obj = Content(content, self.job)
             self.contents.append(content_obj)
         # todo - handle headers centrally somewhere, not here.
         self.headers = {}
@@ -283,12 +295,16 @@ class Service(object):
     def pass_conn(self):
         self.json["connect"] = "success"
 
-    def fail_conn(self, reason, data):
+    def fail_conn(self, failure, data=None):
         self.set_data(data)
-        self.json["connect"] = reason
+        self.json["connect"] = failure
 
     def set_data(self, data):
-        self.json["content"] = data
+        today = time.strftime("%Y%m%d" ,time.gmtime())
+        data_file = open("raw/%s_Job_%s_data" % (today, self.job.get_job_id()), "w")
+        self.json["content"] = base64.b64encode(data)
+        data_file.write(base64.b64encode(data))
+        data_file.close()
 
     def get_url(self):
         # TODO - replace with real code after the JSON is updated
@@ -308,6 +324,9 @@ class Service(object):
         for content in self.contents:
             json_content.append(content.get_json())
         self.json["content"] = json_content
+        if self.debug:
+            pp = pprint.PrettyPrinter(depth=4)
+            pp.pprint(self.json)
         return self.json
 
     def get_headers(self):
@@ -329,7 +348,8 @@ class Content(object):
                 }]
     """
 
-    def __init__(self, json):
+    def __init__(self, json, job):
+        self.job = job
         self.json = json
         # todo - handle headers centrally somewhere, not here.
         self.headers = {}
@@ -349,7 +369,11 @@ class Content(object):
         return self.json["type"]
 
     def set_data(self, data):
-        self.json["data"] = data
+        today = time.strftime("%Y%m%d" ,time.gmtime())
+        data_file = open("raw/%s_Job_%s_data" % (today, self.job.get_job_id()), "w")
+        self.json["data"] = base64.b64encode(data)
+        data_file.write(base64.b64encode(data))
+        data_file.close()
 
     def has_data(self):
         if self.json["data"]:

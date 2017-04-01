@@ -23,12 +23,15 @@ class DNSclient(object):
         return self.d
 
     def getResults(self, res):
-        answer_str = '%s' % res.answers[0].payload
-        ip_addr = answer_str.split(" ")[1].split("=")[1]
-        self.job.set_ip(ip_addr)
-        # todo make this a proper debug statement
-        sys.stderr.write("Job %s:  DNS lookup for %s gave %s\n" % \
-                            (self.job.get_job_id(), res.answers[0].name, self.job.get_ip()))
+        if len(res.answers):
+            answer_str = '%s' % res.answers[0].payload
+            ip_addr = answer_str.split(" ")[1].split("=")[1]
+            self.job.set_ip(ip_addr)
+            # todo make this a proper debug statement
+            sys.stderr.write("Job %s:  DNS lookup for %s gave %s\n" % \
+                                (self.job.get_job_id(), res.answers[0].name, self.job.get_ip()))
+        else:
+            raise Exception("No results obtained")
 
     def errorHandler(self, failure):
         # Need to implement error handling

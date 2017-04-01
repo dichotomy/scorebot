@@ -23,6 +23,7 @@ class myHandler(BaseHTTPRequestHandler):
     #jsons = []
     #jsons.append(json_str1)
     #jsons.append(json_str2)
+    which = 0
 
     def do_GET(self):
         if self.path == "/job/":
@@ -33,10 +34,13 @@ class myHandler(BaseHTTPRequestHandler):
                 # Open the static file requested and send it
                 self.send_response(200)
                 self.end_headers()
-                which = random.randrange(len(self.jsons))
-                self.wfile.write(self.jsons[which])
+                self.which = random.randrange(len(self.jsons))
+                self.wfile.write(self.jsons[self.which])
+                #self.which += 1
+                #if self.which > len(self.jsons):
+                #   self.which = 0
                 print "GET REQUEST FOR %s" % self.path
-                print "SENT %s" % self.jsons[which]
+                print "SENT %s" % self.jsons[self.which]
                 #self.send_header('Content-type', mimetype)
                 #self.end_headers()
                 return
