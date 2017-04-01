@@ -21,6 +21,9 @@ urlpatterns = [
     url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/service/(?P<service_id>[0-9]+)/content/$', GameViews.game_content, name='game_content'),
     url(r'^game/(?P<game_id>[0-9]+)/host/(?P<host_id>[0-9]+)/service/(?P<service_id>[0-9]+)/content/(?P<content_id>[0-9]+)/$', GameViews.game_content, name='game_content'),
 
+
+    #url(r'^parse$', GameViews.parse, name='parse'),
+
 #
 #    url(r'^job/$', views.SBE_Management.job_request, name='jobs'),
 #    url(r'^game/(?P<game_id>[0-9]+)/$', views.SBE_Game.game, name='game'),
