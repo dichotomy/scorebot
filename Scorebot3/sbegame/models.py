@@ -344,13 +344,21 @@ class MonitorJob(models.Model):
             )
         return val
 
+    def get_status(self):
+        status = 'Queued'
+        if self.finish:
+            status = 'Done'
+        elif self.start:
+            status = 'Running'
+        return status
+
     def __len__(self):
         if self.finish:
             return (self.finish - self.start).seconds
         return (timezone.now() - self.start).seconds
 
     def __str__(self):
-        return 'Job %d [%s]' % (self.id, 'Done' if self.finish else 'Running')
+        return 'Job %d [%s]' % (self.id, self.get_status())
 
 
 class MonitorServer(models.Model):
