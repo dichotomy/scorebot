@@ -22,6 +22,7 @@ def to_job_json(job):
     except GameTeam.DoesNotExist:
         return None
 
+    job_header['fields']['job_duration'] = 60
     job_header['fields']['job_dns'] = []
     job_dns = job_team.dns.all()
     for dns_server in job_dns:
@@ -30,7 +31,7 @@ def to_job_json(job):
     job_header['fields']['job_host'] = {
         'fqdn': game_host.fqdn,
         'services': [],
-        'host_ping_ratio': game_host.get_pingback_percent()
+        'host_ping_ratio': game_host.ping_ratio
     }
 
     for service in game_host.gameservice_set.all():
@@ -79,27 +80,18 @@ def from_job_json(monitor, jsond):
         logger.exception(__name__, 'Primary key is invalid')
         return None
 
+    host = job.service.game_host
     if MonitorJob.json_get_host_status(data):
         logger.debug(__name__, 'Host "%s" was reported as IP %s' % (
-            job.job_host.fqdn,
+            host.fqdn,
             MonitorJob.json_get_host_ip_address(data)
         ))
 
-        try:
-            ping_pass = int(MonitorJob.json_get_ping_received(data))
-            ping_fail = int(MonitorJob.json_get_ping_lost(data))
-        except TypeError: # None returned by exception
-            ping_pass = 0
-            ping_fail = 100
+    if MonitorJob.json_get_ping_ratio(data) == 0:
+        logger.info(__name__, 'Host "%s" was reported as down!' % host)
 
-        logger.debug(__name__,
-                     'Host "%s" eas reported as %d passed and %d failed pings!' %
-                     (job.job_host.host_fqdn, ping_pass, ping_fail)
-        )
-
-    if ping_pass / (ping_pass + ping_fail) < job.host.get_pingback_percent():
-        logger.info(__name__, 'Host "%s" was reported as down!' % job.host.fqdn)
-        job.host.status = False
+        host.status = False
+        host.save()
 
     for json_service in MonitorJob.json_get_host_services(data):
         '''
@@ -117,9 +109,8 @@ def from_job_json(monitor, jsond):
 
             service.save()
         except Exception:
-            pass
+            logger.exception(__name__, 'Job JSON failed')
 
-    job.host.save()
     return job
 
 

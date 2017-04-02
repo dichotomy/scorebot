@@ -289,59 +289,60 @@ class MonitorJob(models.Model):
 
     @staticmethod
     def json_get_job_status(data):
+        val = None
         try:
-            return data['status']
-        except Exception:
+            val = data['status']
+        except KeyError:
             logger.exception(__name__, 'job status key does not exist.')
-            return None
+        return val
 
     @staticmethod
     def json_get_host_ip_address(data):
+        val = None
         try:
-            return data['fields']['job_host']['status']['ip_address']
-        except Exception:
+            val = data['fields']['job_host']['ip_address']
+        except KeyError:
             logger.exception(__name__, 'ip_address key does not exists.')
-            return None
+        return val
 
     @staticmethod
     def json_get_host_status(data):
+        val = None
         try:
-            return data['fields']['job_host']['status']
-        except Exception:
+            val = data['status']
+        except KeyError:
             logger.exception(__name__, 'job_host => status key does not exist.')
-            return None
-
-    @staticmethod
-    def json_get_ping_received(data):
-        try:
-            return data['fields']['job_host']['status']['ping_received']
-        except Exception:
-            logger.exception(__name__, 'ping_received key does not exist.')
-            return 0
-
-    @staticmethod
-    def json_get_ping_lost(data):
-        try:
-            return data['fields']['job_host']['status']['ping_lost']
-        except Exception:
-            logger.exception(__name__, 'ping_lost key does not exist.')
-            return 100
+        return val
 
     @staticmethod
     def json_get_host_services(data):
+        val = None
         try:
-            return data['fields']['job_host']['host_services']
-        except Exception:
+            val = data['fields']['job_host']['services']
+        except KeyError:
             logger.exception(__name__, 'host_services key does not exist.')
-            return []
+        return val
+
+    @staticmethod
+    def json_get_ping_ratio(data):
+        val = None
+        try:
+            val = data['fields']['job_host']['host_ping_ratio']
+        except KeyError:
+            logger.exception(__name__, 'host_ping_ratio does not exist')
+        return val
 
     @staticmethod
     def json_has_connect_status(service_data):
+        val = False
         try:
-            return service_data['connect']
-        except Exception:
-            logger.exception(__name__, 'service <%d>: has no connect status' % service_data['id'])
-            return False
+            val = service_data['connect']
+        except KeyError:
+            logger.exception(
+                __name__,
+                'service <%d>: has no connect status' % service_data['id']
+            )
+        return val
 
     def __len__(self):
         if self.finish:

@@ -208,16 +208,6 @@ class GameHost(models.Model):
     def __nonzero__(self):
         return self.__bool__()
 
-    def get_pingback_percent(self):
-        if self.ping_ratio > 0:
-            return self.ping_ratio
-        try:
-            # Look up the stack!
-            return self.gameteam_set.all().first().game_set.all().first().game_host_default_ping_ratio
-        except (AttributeError, ValueError, GameTeam.DoesNotExist, GameHost.DoesNotExist, Game.DoesNotExist):
-            pass
-        return 50
-
 
 class GameFlag(models.Model):
     FLAG_VALUES = {

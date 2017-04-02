@@ -187,6 +187,10 @@ class ManageViews:
                 pass
             except UnicodeDecodeError:
                 pass
-            logger.error(__name__, 'Invalid Job response by Monitor "%s"!' % monitor.monitor_name, exec_info=True)
-            return HttpResponseBadRequest('SBE [API]: Invalid POST data!')
+            except Exception:
+                logger.exception(
+                    __name__,
+                    'Invalid Job response by Monitor "%s"!' % monitor.monitor_name
+                )
+                return HttpResponseBadRequest('SBE [API]: Invalid POST data!')
         return HttpResponseBadRequest('SBE [API]: Job only supports GET and POST!')
