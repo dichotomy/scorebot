@@ -142,14 +142,14 @@ class ManageViews:
                 for x in range(0, min(len(monitor_games) * 2, 10)):
                     mon_sel = monitor_games[random.randint(0, len(monitor_games) - 1)]  # random pick a game
                     mon_opt = GameMonitor.objects.get(monitor_game=mon_sel, monitor_inst_id=monitor.id)   # get options
-                    logger.debug(__name__, 'Monitor "%s" selected game "%s"!' % (monitor.monitor_name,
+                    logger.debug(__name__, 'Monitor "%s" selected game "%s"!' % (monitor.name,
                                                                                  mon_sel.game_name))
                     if mon_opt.monitor_hosts.all().count() > 0:     # Do we have assigned hosts?
-                        logger.debug(__name__, 'Monitor "%s" has an assigned host list!' % monitor.monitor_name)
+                        logger.debug(__name__, 'Monitor "%s" has an assigned host list!' % monitor.name)
                         mon_hosts = mon_opt.monitor_hosts.all().filter(game=mon_sel)   # Save list of assigned hosts
                     else:
                         mon_hosts = GameHost.objects.filter(game__isnull=False, game=mon_sel)
-                    logger.debug(__name__, 'Monitor "%s" has "%d" hosts to choose from!' % (monitor.monitor_name,
+                    logger.debug(__name__, 'Monitor "%s" has "%d" hosts to choose from!' % (monitor.name,
                                                                                             len(mon_hosts)))
                     mon_count = len(mon_hosts)
                     mon_tries = 0
@@ -168,20 +168,20 @@ class ManageViews:
                             job.monitor = monitor
                             job.save()
                             logger.debug(__name__, 'Job id "%d" given to monitor "%s"!' % (job.id,
-                                                                                           monitor.monitor_name))
+                                                                                           monitor.name))
                             return HttpResponse(content=translator.to_job_json(job), status=201)
                         mon_tries += 1
-                logger.debug(__name__, 'Monitor "%s" told to wait due to no available hosts!' % monitor.monitor_name)
+                logger.debug(__name__, 'Monitor "%s" told to wait due to no available hosts!' % monitor.name)
                 return HttpResponse(content='{ "status": "wait" }', status=204)
             else:
-                logger.debug(__name__, 'Monitor "%s" told to wait due to no games!' % monitor.monitor_name)
+                logger.debug(__name__, 'Monitor "%s" told to wait due to no games!' % monitor.name)
                 return HttpResponse(content='{ "status": "wait" }', status=204)
             '''
         elif request.method == 'POST':
             try:
                 job_response = translator.from_job_json(monitor, request.body.decode('utf-8'))
                 if job_response:
-                    logger.info(__name__, 'Successful Job response by Monitor "%s"!' % monitor.monitor_name)
+                    logger.info(__name__, 'Successful Job response by Monitor "%s"!' % monitor.name)
                     return HttpResponse(content='{ "status": "completed" }', status=202)
             except ValueError:
                 pass
@@ -190,7 +190,7 @@ class ManageViews:
             except Exception:
                 logger.exception(
                     __name__,
-                    'Invalid Job response by Monitor "%s"!' % monitor.monitor_name
+                    'Invalid Job response by Monitor "%s"!' % monitor.name
                 )
                 return HttpResponseBadRequest('SBE [API]: Invalid POST data!')
         return HttpResponseBadRequest('SBE [API]: Job only supports GET and POST!')
