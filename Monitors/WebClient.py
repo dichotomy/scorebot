@@ -30,7 +30,7 @@ class WebClient(protocol.Protocol):
         self.body = ""
 
     def no_unicode(self, text):
-        sys.stderr.write("Job %s: Converting %s" % (self.job_id, text))
+        sys.stderr.write("\nJob %s: Converting %s" % (self.job_id, text))
         if isinstance(text, unicode):
             return text.encode('utf-8')
         else:
@@ -213,25 +213,22 @@ class JobFactory(WebCoreFactory):
         self.params.fail_conn("Job %s connection failed" % (self.op), reason.getErrorMessage(), self.get_server_headers())
 
     def clientConnectionLost(self, connector, reason):
-        if self.params.debug:
-            if "put" in self.op:
-                sys.stderr.write( "Job %s: clientConnectionLost\t" % self.job.get_job_id())
-            else:
-                sys.stderr.write( "Job GET request clientConnectionLost\t")
+        if "put" in self.op:
+            sys.stderr.write( "Job %s: clientConnectionLost\t" % self.job.get_job_id())
+        elif "get" in self.op:
+            sys.stderr.write( "Job GET request clientConnectionLost\n")
+        else:
+            raise Exception("Unknown op: %s\n" % self.op)
+        if self.debug:
+            sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
+        if self.fail:
+            sys.stderr.write("Fail bit set\n")
             sys.stderr.write( "given reason: %s\t" % reason)
             sys.stderr.write( "self.reason: %s\t" % self.reason)
-            if self.debug:
-                sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
-        if "put" in self.op:
-            pass
-        elif self.fail and self.reason:
-            self.params.fail_conn(self.status, self.reason, self.get_server_headers())
-        elif self.fail and not self.reason:
-            self.params.fail_conn(self.status, reason.getErrorMessage(), self.get_server_headers())
-        elif "non-clean" in reason.getErrorMessage():
-            self.params.fail_conn(self.status, "other", self.get_server_headers())
+            sys.stderr.write("error message:\n%s\n\n" % reason.getErrorMessage())
         else:
             #Connection closed cleanly, process the results
+            #sys.stderr.write("Adding job %s\n" % self.body)
             self.jobs.add(self.body)
 
 class WebServiceCheckFactory(WebCoreFactory):

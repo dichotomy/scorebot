@@ -7,6 +7,7 @@ from WebClient import WebContentCheckFactory, WebServiceCheckFactory, JobFactory
 from DNSclient import DNSclient
 from Pingclient import PingProtocol
 from twisted.python import log
+import traceback
 import sys
 
 class MonitorCore(object):
@@ -36,8 +37,13 @@ class MonitorCore(object):
         # Get the next job started
         job = self.jobs.get_job()
         if job:
+            job_id = job.get_job_id()
             # DNS
-            dnsobj = DNSclient(job)
+            try:
+                dnsobj = DNSclient(job)
+            except:
+                sys.stderr.write("Job %s: Failure starting job %s:\n" % (job_id, job.get_json_str()))
+                traceback.print_tb()
             # Execute the query
             query_d = dnsobj.query()
             # Handle a DNS success - move on to ping
@@ -113,7 +119,9 @@ class MonitorCore(object):
                     deferred.addErrback(self.web_service_connect_fail, job, service)
                     reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
                 else:
-                    raise Exception("Unexpected service %s/%s" % (service.get_port(), service.get_proto()))
+                    service.fail_conn(failure)
+                    jobid = job.get_job_id()
+                    sys.stderr.write(("Job %s: Unexpected service %s/%s" % (jobid, service.get_port(), service.get_proto())))
             else:
                 # todo - handle the error by reporting the problem with the job in the json
                 # and sending that back with the job report back.
@@ -139,7 +147,7 @@ class MonitorCore(object):
         proto = service.get_proto()
         port = service.get_port()
         jobid = job.get_job_id()
-        print "Job %s:  Service %s/%s failed:\n\t%s\n" % (jobid, proto, port, failure)
+        sys.stderr.write("Job %s:  Service %s/%s failed:\n\t%s\n" % (jobid, proto, port, failure))
 
     def web_content_pass(self, result, job, service, content):
         # What to do here?

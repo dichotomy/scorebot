@@ -1,6 +1,7 @@
 {
     "status": "job",
     "model": "apicore.job",
+    "game_id": 1,
     "pk": "71",
     "fields": {
         "job_timeout":  300,

@@ -9,11 +9,11 @@ class Parameters(object):
         self.debug = False
         self.timeout = 90
         self.sbe_auth = "0987654321"
-        #self.sb_ip = "10.200.100.50"
-        #self.sb_port = 80
+        self.sb_ip = "10.200.100.50"
+        self.sb_port = 80
         #self.sb_ip = "10.200.100.205"
-        self.sb_ip = "172.25.20.211"
-        self.sb_port = 8080
+        #self.sb_ip = "172.25.20.211"
+        #self.sb_port = 8080
         self.job_url = "/job/"
         self.reason = ""
         self.headers = {}
@@ -51,18 +51,6 @@ class Parameters(object):
         for header in self.headers:
             header_txt += "%s: %s\r\n" % (header, self.headers[header])
         return header_txt
-
-    def fail_conn(self, status, reason, server_headers):
-        sys.stderr.write("="*80 + "\n")
-        sys.stderr.write("clientConnectionLost\n")
-        sys.stderr.write("given reason: %s\n" % reason)
-        sys.stderr.write("Status: %s\n" % status)
-        sys.stderr.write("self.reason: %s\n" % self.reason)
-        sys.stderr.write("Received:\n")
-        sys.stderr.write(server_headers)
-        sys.stderr.write("Connection time: %s\n" % conn_time)
-        sys.stderr.write("Bytes Sent: %s Bytes Recv: %s\n" % (sent_bytes, recv_bytes))
-        sys.stderr.write( "="*80 + "\n")
 
     def fin_conn(self, status, errmsg, headers, body):
         #sys.stderr.write("Got status:\n%s\n" % status)

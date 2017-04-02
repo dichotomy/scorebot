@@ -51,7 +51,7 @@ class myHandler(BaseHTTPRequestHandler):
 
     # Handler for the POST requests
     def do_POST(self):
-        if self.path == "/job":
+        if self.path == "/job/":
             print "POST DATA FOR %s" % self.path
             data = self.rfile.read()
             print "RECEIVED %s" % data

@@ -25,6 +25,7 @@ class Jobs(object):
         self.jobs[self.latest_job_id] = Job(job_json_str, self.debug)
         self.jobs[self.latest_job_id].set_job_id(self.latest_job_id)
         self.todo.append(self.latest_job_id)
+        sys.stderr.write("Job %s added\n" % self.latest_job_id)
         return self.latest_job_id
 
     def find_done_jobs(self):
@@ -65,6 +66,7 @@ class Job(object):
     """ json structure
         {
             "status": "job",
+            "game_id": 1,
             "model": "apicore.job",
             "pk": "71",
             "fields": {
@@ -128,6 +130,9 @@ class Job(object):
 
     def set_job_id(self, job_id):
         self.job_id = job_id
+
+    def get_game_id(self):
+        return self.json["game_id"]
 
     def get_job_id(self):
         return self.job_id
