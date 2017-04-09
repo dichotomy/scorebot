@@ -30,8 +30,10 @@ def to_job_json(job):
 
     job_header['fields']['job_host'] = {
         'fqdn': game_host.fqdn,
+        'ip_address': game_host.server.address,
         'services': [],
-        'host_ping_ratio': game_host.ping_ratio
+        'ping_received': 0,
+        'ping_lost': 0
     }
 
     for service in game_host.gameservice_set.all():

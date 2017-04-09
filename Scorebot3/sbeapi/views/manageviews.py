@@ -96,26 +96,22 @@ class ManageViews:
 
             1. Check if AccessKey is tied to MonitorServer
                 -> if not return 403
-            2. List Games that are Running (Not Done & Paused) and have the requesting Monitor Server assigned
-            3. Randomly select a game (if > 1)
-            4. Check if Monitor Server is assigned to any specific hosts for that game
-                -> if goto 5
-                -> if not goto 6
-            5. Set list of available hosts to the host list that is set. goto 7
-            6. Query the GameTeams through the Game object and enumerate all hosts in the game, store in list
-            7. Enumerate each host in the list randomly and check if a running Job is open for that host.
-                -> if goto 7, repeat until empty, goto 10
-                -> if not goto 8
-            8. Create a Job for that host.
-            9. Return 201 (Job Created) and Job JSON
-            10. Return 204 (No Jobs) and Job wait JSON
+            2. Get a pending MonitorJob or create a queue of jobs then pick one
+            3. If no hosts are available
+                Return 204 (No Jobs) and Job wait JSON
+            4. Return 201 (Job Provided) and Job JSON
         """
         try:
             monitor = MonitorServer.objects.get(key__id=request.authkey.id)
         except MonitorServer.DoesNotExist:
-            logger.warning(__name__, '"%s" attempted to request a job, but is not assigned as a Monitor!' %
-                           get_real_ip(request))
-            return HttpResponseForbidden('SBE [API]: You do not have permission to request a job!')
+            logger.warning(
+                __name__,
+                '"%s" attempted to request a job, but is not a Monitor!' %
+                get_real_ip(request)
+            )
+            return HttpResponseForbidden(
+                'SBE [API]: You do not have permission to request a job!'
+            )
 
         # TODO: Do we need this every time or at all?
         #
@@ -132,51 +128,12 @@ class ManageViews:
             '''
             job = get_job_from_queue(monitor=monitor)
 
-            return HttpResponse(content=translator.to_job_json(job), status=201)
-
-            '''
-            monitor_games = Game.objects.filter(paused=False,
-                                                finish__isnull=True,
-                                                monitors__id=monitor.id)
-            if len(monitor_games):
-                for x in range(0, min(len(monitor_games) * 2, 10)):
-                    mon_sel = monitor_games[random.randint(0, len(monitor_games) - 1)]  # random pick a game
-                    mon_opt = GameMonitor.objects.get(monitor_game=mon_sel, monitor_inst_id=monitor.id)   # get options
-                    logger.debug(__name__, 'Monitor "%s" selected game "%s"!' % (monitor.name,
-                                                                                 mon_sel.game_name))
-                    if mon_opt.monitor_hosts.all().count() > 0:     # Do we have assigned hosts?
-                        logger.debug(__name__, 'Monitor "%s" has an assigned host list!' % monitor.name)
-                        mon_hosts = mon_opt.monitor_hosts.all().filter(game=mon_sel)   # Save list of assigned hosts
-                    else:
-                        mon_hosts = GameHost.objects.filter(game__isnull=False, game=mon_sel)
-                    logger.debug(__name__, 'Monitor "%s" has "%d" hosts to choose from!' % (monitor.name,
-                                                                                            len(mon_hosts)))
-                    mon_count = len(mon_hosts)
-                    mon_tries = 0
-                    while mon_tries < mon_count:
-                        host = mon_hosts[random.randint(0, mon_count - 1)]
-                        try:
-                            # If you need to test job functions nuke this try:except, excepts will pass.
-                            # Uncommenting the next line will work
-                            # MonitorJob.objects.get(job_start__isnull=True)
-                            # - idf
-                            MonitorJob.objects.get(job_finish__isnull=True, host=host)
-                        except MonitorJob.DoesNotExist:
-                            # We got a host!
-                            job = MonitorJob()
-                            job.host = host
-                            job.monitor = monitor
-                            job.save()
-                            logger.debug(__name__, 'Job id "%d" given to monitor "%s"!' % (job.id,
-                                                                                           monitor.name))
-                            return HttpResponse(content=translator.to_job_json(job), status=201)
-                        mon_tries += 1
-                logger.debug(__name__, 'Monitor "%s" told to wait due to no available hosts!' % monitor.name)
-                return HttpResponse(content='{ "status": "wait" }', status=204)
+            if job:
+                return HttpResponse(content=translator.to_job_json(job), status=201)
             else:
                 logger.debug(__name__, 'Monitor "%s" told to wait due to no games!' % monitor.name)
+                logger.debug(__name__, 'Monitor "%s" told to wait due to no available hosts!' % monitor.name)
                 return HttpResponse(content='{ "status": "wait" }', status=204)
-            '''
         elif request.method == 'POST':
             try:
                 job_response = translator.from_job_json(monitor, request.body.decode('utf-8'))

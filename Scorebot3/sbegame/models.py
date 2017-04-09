@@ -7,7 +7,6 @@ from random import shuffle
 import scorebot.utils.log as logger
 
 
-
 class Team(models.Model):
     __desc__ = """
         SBE Team Object
@@ -327,7 +326,9 @@ class MonitorJob(models.Model):
     def json_get_ping_ratio(data):
         val = None
         try:
-            val = data['fields']['job_host']['host_ping_ratio']
+            ping_lost = data['fields']['job_host']['ping_lost']
+            ping_received = data['fields']['job_host']['ping_received']
+            val = (ping_received * 1.0)/((ping_received * 1.0) + (ping_lost * 1.0))
         except KeyError:
             logger.exception(__name__, 'host_ping_ratio does not exist')
         return val

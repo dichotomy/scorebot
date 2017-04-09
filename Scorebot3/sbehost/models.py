@@ -192,6 +192,8 @@ class GameHost(models.Model):
     used = models.BooleanField('Host in Game', default=False)
     status = models.BooleanField('Host Online', default=False)
     ping_ratio = models.SmallIntegerField('Host Pingback Percentage', default=0)
+    ping_lost = models.IntegerField(default=0)
+    ping_received = models.IntegerField(default=0)
     name = models.CharField('Host VM Name', max_length=250, null=True, blank=True)
 
     def __str__(self):
@@ -315,6 +317,7 @@ class GameTicket(models.Model):
     expires = models.DateTimeField('Ticket Expires', blank=True, null=True)
     started = models.DateTimeField('Ticket Assigned', blank=True, null=True)
     completed = models.DateTimeField('Ticket Completed', blank=True, null=True)
+    reopened_count = models.IntegerField(default=0)
 
     def __len__(self):
         if not self.started:
