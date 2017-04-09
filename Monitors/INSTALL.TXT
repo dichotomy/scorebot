@@ -1,0 +1,6 @@
+Installation on an Arch Linux system
+
+Requirements:
+ pacman -S python2 python2-pip openssl python2-pyopenssl
+ pip2 install twisted
+ pip2 install http_parser

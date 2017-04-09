@@ -8,7 +8,6 @@ from scorebot.utils.json2 import translator
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from ipware.ip import get_real_ip
 
-
 """
     Methods supported
 
@@ -41,6 +40,46 @@ def get_job_from_queue(monitor):
 
 class ManageViews:
     """
+        SBE Team API
+
+        Methods: GET, PUT, POST
+
+        GET  |  /team/
+        GET  |  /team/<game_id>/
+        PUT  |  /team/
+        POST |  /team/<player_id>/
+
+        Returns Team info.  Deletes are not allowed
+
+        JSON Example:
+
+
+
+        Permissions:
+            Team.(READ | UPDATE | CREATE | DELETE)
+    """
+    @staticmethod
+    @csrf_exempt
+    @val_auth
+    def team(request, team_id=None):
+        """
+            SBE Team API
+
+            Methods: GET, PUT, POST
+
+            GET, PUT  |  /team/
+            GET, POST |  /team/<team_id>/
+
+            Returns team info.
+        """
+        if request.method == 'GET':
+            return get_object_with_id(request, Team, team_id)
+        elif request.method == 'POST' or request.method == 'PUT':
+            return save_json_or_error(request, team_id)
+
+        return HttpResponseBadRequest()
+
+    """
         SBE Player API
 
         Methods: GET, PUT, POST
@@ -50,34 +89,64 @@ class ManageViews:
         PUT  |  /player/
         POST |  /player/<player_id>/
 
-        Returns player info.  Deletes are not allowed
+        Returns Player info.  Deletes are not allowed
+
+        JSON Example:
+
+
+
+        Permissions:
+            Player.(READ | UPDATE | CREATE | DELETE)
     """
     @staticmethod
     @csrf_exempt
     @val_auth
-    def team(request, team_id=None):
-        if request.method == 'GET':
-            return get_object_with_id(request, Team, team_id)
-        elif request.method == 'POST' or request.method == 'PUT':
-            return save_json_or_error(request, team_id)
-        return HttpResponseBadRequest()
-
-    @staticmethod
-    @csrf_exempt
-    @val_auth
     def player(request, player_id=None):
+        """
+            SBE Player API
+
+            Methods: GET, PUT, POST
+
+            GET, PUT  |  /player/
+            GET, POST |  /player/<player_id>/
+
+            Returns player info.  Deletes are not allowed
+        """
         if request.method == 'GET':
             return get_object_with_id(request, Player, player_id)
         elif request.method == 'POST' or request.method == 'PUT':
             return save_json_or_error(request, player_id)
+
         return HttpResponseBadRequest()
 
-    @staticmethod
-    @csrf_exempt
-    @val_auth
-    def bakjob(request):
-        return HttpResponse(request.authkey.key_uuid)
+    """
+        SBE Job API
 
+        Methods: GET, POST
+
+        GET  | /job/
+        POST | /job/
+
+        Requests a Job (GET) and submits a completed Job (POST)
+
+        How it works
+
+        1. Check if AccessKey is tied to MonitorServer
+            -> if not return 403
+        2. List Games that are Running (Not Done & Paused) and have the requesting Monitor Server assigned
+        3. Randomly select a game (if > 1)
+        4. Check if Monitor Server is assigned to any specific hosts for that game
+            -> if goto 5
+            -> if not goto 6
+        5. Set list of available hosts to the host list that is set. goto 7
+        6. Query the GameTeams through the Game object and enumerate all hosts in the game, store in list
+        7. Enumerate each host in the list randomly and check if a running Job is open for that host.
+            -> if goto 7, repeat until empty, goto 10
+            -> if not goto 8
+        8. Create a Job for that host.
+        9. Return 201 (Job Created) and Job JSON
+        10. Return 204 (No Jobs) and Job wait JSON
+    """
     @staticmethod
     @csrf_exempt
     @val_auth
@@ -96,6 +165,7 @@ class ManageViews:
 
             1. Check if AccessKey is tied to MonitorServer
                 -> if not return 403
+<<<<<<< HEAD
             2. Get a pending MonitorJob or create a queue of jobs then pick one
             3. If no hosts are available
                 Return 204 (No Jobs) and Job wait JSON

@@ -49,10 +49,10 @@ WSGI_APPLICATION = 'scorebot.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'scorebot3',
+        'NAME': 'scorebotv3',
         'HOST': 'localhost',
-        'USER': 'root',
-        'PASSWORD': 'Ma12sona',
+        'USER': 'scorebot_user',
+        'PASSWORD': '',
     }
 }
 AUTH_PASSWORD_VALIDATORS = [

@@ -1,6 +1,7 @@
 import json
 import random
 from datetime import datetime
+from dateutil import tz
 
 from django.db import models
 from django.db.models import Max, Min
@@ -75,6 +76,9 @@ class GameDNS(models.Model):
 
     def __str__(self):
         return 'Game DNS (%s)' % self.address
+
+    def __str__(self):
+        return 'DNS %s' % self.dns_address
 
 
 class GameTeam(models.Model):
@@ -203,7 +207,7 @@ class GameHost(models.Model):
                                       for f in self.gameservice_set.all()]))
 
     def __bool__(self):
-        if GameCompromise.objects.filter(game_host__id=self.id).count() > 0:
+        if self.host_compromises.all().filter(comp_finish=None).count() > 0:
             return True
         return False
 
@@ -212,12 +216,12 @@ class GameHost(models.Model):
 
 
 class GameFlag(models.Model):
-    FLAG_VALUES = {
-        'FLAG_TAKEN': 1,
-        'FLAG_ENABLED': 2,
-        'FLAG_HIDDEN': 3,
-        'FLAG_PERMA': 4,
-    }
+    FLAG_VALUES = (
+        (1, 'FLAG_TAKEN'),
+        (2, 'FLAG_ENABLED'),
+        (3, 'FLAG_HIDDEN'),
+        (4, 'FLAG_PERMA'),
+    )
 
     __desc__ = """
         SBE Game Flag
@@ -427,7 +431,7 @@ class GameService(models.Model):
         )
 
     def get_text_status(self):
-        for k, v in GameService.SERVICE_STATUS:
+        for k, v in GameService.SERVICE_STATUS.items():
             if self.status == v:
                 return k
         return 'UP'
@@ -473,6 +477,3 @@ class GameContent(models.Model):
             self.content_type,
             json.dumps(self.data)
         )
-
-
-

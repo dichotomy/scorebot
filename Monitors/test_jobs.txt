@@ -1,0 +1,65 @@
+[
+    {"status": "job", "model": "apicore.job", "pk": "71",
+        "fields": {
+            "job_timeout":  300,
+            "job_dns": [ "10.100.103.60" ],
+            "job_host": {
+                "fqdn": "mail.gamma.net", "ip_address":  "",
+                "ping_lost": "",
+                "ping_received": "",
+                "services": [{
+                    "port": "80",
+                    "application": "http", "protocol": "tcp",
+                    "connect": "",
+                    "content": [{
+                        "verb": "GET", "url": "/index.html", "type": "text",
+                        "connect": "",
+                        "data": ""
+                    }]
+                }]
+            }
+        }
+    },
+    {"status": "job", "model": "apicore.job", "pk": "71",
+        "fields": {
+            "job_timeout":  300,
+            "job_dns": [ "10.100.103.60" ],
+            "job_host": {
+                "fqdn": "www.gamma.net", "ip_address":  "",
+                "ping_lost": "",
+                "ping_received": "",
+                "services": [{
+                    "port": "80",
+                    "application": "http", "protocol": "tcp",
+                    "connect": "",
+                    "content": [{
+                        "verb": "GET", "url": "/index.html", "type": "text",
+                        "connect": "",
+                        "data": ""
+                    }]
+                }]
+            }
+        }
+    },
+    {"status": "job", "model": "apicore.job", "pk": "72",
+        "fields": {
+            "job_timeout":  300,
+            "job_dns": [ "10.100.103.60" ],
+            "job_host": {
+                "fqdn": "domain.gamma.net", "ip_address":  "",
+                "ping_lost": "",
+                "ping_received": "",
+                "services": [{
+                    "port": "80",
+                    "application": "http", "protocol": "tcp",
+                    "connect": "",
+                    "content": [{
+                        "verb": "GET", "url": "/index.html", "type": "text",
+                        "connect": "",
+                        "data": ""
+                    }]
+                }]
+            }
+        }
+    }
+]

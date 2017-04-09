@@ -1,6 +1,6 @@
+#!/usr/bin/python2
 import json
 import requests
-import argparse
 
 
 class Job:
@@ -11,35 +11,33 @@ class Job:
         self.host = None
 
     def json(self):
-        return '{ "status": "job", "model": "apicore.job", "pk": "%d", "fields": { "job_host": %s } }' % (
-            self.id, self.host.json()
-        )
+        json_str = '{ "status": "job", "model": "apicore.job", "pk": "%d", "fields": { "job_host": %s } }' % (
+            self.id, self.host.json())
+        json_data = json.loads(json_str)
+        return json.dumps(json_data, indent=4)
 
     @staticmethod
     def from_json(json_dict):
         jd = Job()
-        try:
+        if jd:
             jd.id = int(json_dict['pk'])
             for dns in json_dict['fields']['job_dns']:
                 jd.dns.append(dns)
             jd.host = Host()
             jda = json_dict['fields']['job_host']
-            jd.host.id = int(jda['host_id'])
-            jd.host.name = jda['host_name']
+            jd.host.name = jda['host_fqdn']
             for svc in jda['host_services']:
                 jsa = Service()
-                jsa.id = int(svc['service_id'])
-                jsa.name = svc['service_name']
+                jsa.name = svc['service_connect']
                 jsa.port = int(svc['service_port'])
                 jsa.protocol = svc['service_protocol']
-                jsa.status = int(svc['service_status_int'])
-                if len(svc['service_credentials']) > 0:
-                    for cred in svc['service_credentials']:
-                        jca = ServiceCredentials()
-                        jca.id = int(cred['cred_id'])
-                        jca.username = cred['cred_username']
-                        jca.password = cred['cred_password']
-                        jsa.credentials.append(jca)
+                if 'service_credentials' in svc:
+                    if len(svc['service_credentials']) > 0:
+                        for cred in svc['service_credentials']:
+                            jca = ServiceCredentials()
+                            jca.username = cred['cred_username']
+                            jca.password = cred['cred_password']
+                            jsa.credentials.append(jca)
                 if len(svc['service_content']) > 0:
                     try:
                         jsa.content = json.loads(svc['service_content'])
@@ -47,39 +45,41 @@ class Job:
                         pass
                 jd.host.services.append(jsa)
             return jd
-        except Exception as E:
-            print(str(E))
+        #except Exception as E:
+        #    print(str(E))
         return None
 
 
 class Host:
-    id = 0
     name = None
+    ping_pass = 100
+    ping_fail = 100
+    host_ip = ""
 
     def __init__(self):
         self.services = []
 
     def json(self):
-        return '{ "host_id": "%d", "host_name": "%s", "host_services": [ %s ] }' % (
-            self.id, self.name, ', '.join([f.json() for f in self.services])
+        return '{ "host_fqdn": "%s", "status": { "ip_address": "%s", "ping_received": "%d", "ping_lost": "%d"}, "host_services": [ %s ] }' % (
+        	self.name, self.host_ip, self.ping_pass, self.ping_fail, ', '.join([f.json() for f in self.services])
         )
 
 
 class Service:
-    id = 0
     port = 0
     status = 0
     name = None
     content = None
     protocol = None
+    
 
     def __init__(self):
         self.credentials = []
 
     def json(self):
-        return '{ "service_id": "%d", "service_port": "%d", "service_protocol": "%s", "service_status": "%s", ' \
-               '"service_status_int": "%d" }' % (
-                   self.id, self.port, self.protocol, self.get_service_color(), self.status
+        return '{ "service_port": "%d", "service_protocol": "%s", "service_status": "%s", ' \
+               '"service_connect": "%s" }' % (
+                   self.port, self.protocol, self.get_service_color(), self.name
                )
 
     def get_service_color(self):
@@ -106,7 +106,6 @@ class Service:
 
 
 class ServiceCredentials:
-    id = 0
     username = None
     password = None
 
@@ -115,63 +114,15 @@ class ServiceCredentials:
 
 
 if __name__ == '__main__':
-    import sys
     a = requests.session()
-    a.headers['SBE-AUTH'] = 'gambite' # auth key for a monitor with all hosts enabled
+    a.headers['SBE-AUTH'] = '0987654321' #AAAAAAAAAAAAAAAAAAAAAAAAAAA' # auth key for a monitor with all hosts enabled
     #a.headers['SBE-AUTH'] = 'BBBBBBBBBBBBBBBBBBBBBBBBBBB' # auth key for a monitor with 2 assigned hosts (mailsvr, domain2)
     #a.headers['SBE-AUTH'] = 'CCCCCCCCCCCCCCCCCCCCCCCCCCC' # auth key for a monitor with 3 assigned hosts (filesvr, domain, mailsvr)
-    HOST_PORT = 8000
+    url = 'http://10.200.100.50/job/'
+    print url
+    print a.headers
 
-    parser = argparse.ArgumentParser(
-        description='Test ScoreBot API calls'
-    )
-    parser.add_argument('path', nargs='?', help='API path')
-    parser.add_argument('-p', '--post', help='use POST request', action='store_true')
-    parser.add_argument('-P', '--put', help='use PUT request', action='store_true')
-    parser.add_argument('-d', '--delete', help='use DELETE request', action='store_true')
-    args = parser.parse_args()
-    if not args.path:
-        parser.print_help()
-        sys.exit()
-
-    data = '''[
-    {
-        "model": "sbehost.gameticket", 
-        "fields": {
-            "ticket_expired": false, 
-            "game_team": 2, 
-            "ticket_expires": null, 
-            "ticket_name": "ticket 2", 
-            "ticket_value": 300, 
-            "ticket_started": "2016-11-21T21:55:59Z", 
-            "ticket_completed": null, 
-            "ticket_content": "ticket 2"
-        }
-    }
-]
-    '''
-
-    path = args.path
-
-    if args.post:
-        b = a.post('http://localhost:%d%s' % (HOST_PORT, path), data=data)
-    elif args.put:
-        b = a.put('http://localhost:%d%s' % (HOST_PORT, path), data=data)
-    elif args.delete:
-        b = a.delete('http://localhost:%d%s' % (HOST_PORT, path))
-    else:
-        b = a.get('http://localhost:%d%s'% (HOST_PORT, path))
-
-    r = b.content.decode('utf-8')
-    try:
-        print(json.dumps(json.loads(r), indent=4))
-    except:
-        print(r)
-    '''
-    j = json.loads(r) if r else {}
-    print json.dumps(j, indent=4)
-    '''
-    """"
+    b = a.get(url)
     if b.status_code == 201:
         f = open('json-receive.json', 'w')
         f.write(b.content.decode('utf-8'))
@@ -196,4 +147,5 @@ if __name__ == '__main__':
         print('Writing error to file [`pwd`\error.html]!')
         f = open('json-response.json', 'w')
         f.write(b.content.decode('utf-8'))
-        f.close()"""
+        f.close()
+

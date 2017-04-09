@@ -123,18 +123,15 @@ class GameViews:
             return HttpResponseBadRequest('SBE [API]: A game ID must be provided!')
 
         if request.method == 'GET':
-            r = None
             if not team_id:
-                game = get_object_with_id(request, Game, game_id, object_response=False)
-                r = HttpResponse(get_json(GameTeam.objects.filter(game=game)))
+                game_teams = Game.objects.get(game_id=game_id).game_teams.all()
+                return get_object_by_query(request, game_teams)
             else:
-                filter_obj = {'team__id': team_id, 'game__id': game_id}
-                r = get_object_by_filter(request, GameTeam, filter_obj)
-            return r
+                game_team = Game.objects.get(game_id=game_id).game_teams.get(team_id=team_id)
+                return get_object_by_query(request, game_team)
         elif request.method == 'POST':
             if not team_id:
                 return HttpResponseBadRequest('SBE [API]: A team ID must be provided!')
-
             filter_obj = {'team__id': team_id, 'game__id': game_id}
             r = get_object_by_filter(request, GameTeam, filter_obj, object_response=False)
             return save_json_or_error(request, r[0].id)
@@ -222,7 +219,7 @@ class GameViews:
 
             Methods: GET, POST, PUT, DELETE
 
-            GET, PUT        | /game/<game_id>/host/<host_id>/service/<service_id>/content/
+            GET             | /game/<game_id>/host/<host_id>/service/<service_id>/content/
             POST, DELETE    | /game/<game_id>/host/<host_id>/service/<service_id>/content/<content_id>
         """
         if not game_id:
@@ -294,7 +291,7 @@ class GameViews:
                 filter_obj = {'pk': compromise_id, 'game_host__game_team__game_id': game_id, 'game_host__host_server_id': host_id}
                 r = get_object_by_filter(request, GameCompromise, filter_obj)
             return r
-        if request.method == 'PUT':
+        elif request.method == 'PUT':
             filter_obj = {'game_team__game_id': game_id, 'host_server_id': host_id}
             game_host = get_object_by_filter(request, GameHost, filter_obj, object_response=False)
             if not game_host or not len(game_host):
@@ -317,6 +314,90 @@ class GameViews:
             r = get_object_by_filter(request, GameCompromise, filter_obj, object_response=False)
             if r and len(r) == 1:
                 r.delete()
+
+            return HttpResponse()
+
+        return HttpResponseNotAllowed()
+
+    @staticmethod
+    @csrf_exempt
+    @val_auth
+    def game_flag(request, game_id=None, flag_id=None):
+        """
+            SBE Game Flag
+
+            Methods: GET, POST
+
+            GET         | /game/<game_id>/flag/
+            GET, POST   | /game/<game_id>/flag/<flag_id>/
+        """
+        if not game_id:
+            return HttpResponseBadRequest('SBE [API]: A game ID must be provided!')
+
+        if request.method == 'GET':
+            r = None
+            if not flag_id:
+                flags = GameFlag.objects.filter(game_id=game_id)
+                r = HttpResponse(get_json(flags))
+            else:
+                filter_obj = {'pk': flag_id, 'game_id': game_id}
+                r = get_object_by_filter(request, GameFlag, filter_obj)
+            return r
+        elif request.method == 'POST':
+            if not flag_id:
+                return HttpResponseBadRequest('SBE [API]: A flag ID must be provided!')
+
+            filter_obj = {'pk': flag_id, 'game_id': game_id}
+            r = get_object_by_filter(request, GameFlag, filter_obj, object_response=False)
+            r = r[0].id if r and len(r) > 0 else r
+            return save_json_or_error(request, r)
+
+        return HttpResponseNotAllowed()
+
+    @staticmethod
+    @csrf_exempt
+    @val_auth
+    def game_ticket(request, game_id=None, ticket_id=None):
+        """
+            SBE Game Ticket
+
+            Methods: GET, POST, PUT, DELETE
+            GET, PUT            | /game/<game_id>/ticket/
+            GET, POST, DELETE   | /game/<game_id>/ticket/<ticket_id>/
+        """
+        if not game_id:
+            return HttpResponseBadRequest('SBE [API]: A game ID must be provided!')
+
+        if request.method == 'GET':
+            r = None
+            if not ticket_id:
+                filter_obj = {'game_team__game_id': game_id}
+                r = get_object_by_filter(request, GameTicket, filter_obj)
+            else:
+                filter_obj = {'pk': ticket_id, 'game_team__game_id': game_id}
+                r = get_object_by_filter(request, GameTicket, filter_obj)
+            return r
+        elif request.method == 'POST':
+            if not ticket_id:
+                return HttpResponseBadRequest('SBE [API]: A ticket ID must be provided!')
+
+            filter_obj = {'pk': ticket_id, 'game_team__game_id': game_id}
+            r = get_object_by_filter(request, GameTicket, filter_obj, object_response=False)
+            r = r[0].id if r and len(r) > 0 else r
+            return save_json_or_error(request, r)
+        elif request.method == 'PUT':
+            return save_json_or_error(request)
+        elif request.method == 'DELETE':
+            if not ticket_id:
+                return HttpResponseBadRequest('SBE [API]: A ticket ID must be provided!')
+
+            filter_obj = {'pk': ticket_id, 'game_team__game_id': game_id}
+            ticket = get_object_by_filter(request, GameTicket, filter_obj, object_response=False)
+            if not ticket:
+                return HttpResponseNotFound()
+
+            ticket = GameTicket.objects.get(pk=ticket_id)
+            ticket.delete()
 
             return HttpResponse()
 
