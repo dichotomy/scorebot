@@ -8,7 +8,8 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sbegame', '0002_auto_20160524_0954'),
+        ('sbehost', '0001_initial'),
+        ('sbegame', '0001_initial'),
     ]
 
     operations = [
