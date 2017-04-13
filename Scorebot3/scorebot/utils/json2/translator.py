@@ -1,6 +1,5 @@
 import json
 
-from django.utils import timezone
 from sbegame.models import MonitorJob
 from sbehost.models import GameTeam, GameService
 from scorebot.utils import log as logger
@@ -69,7 +68,6 @@ def from_job_json(monitor, jsond):
     try:
         data = json.loads(jsond)
     except ValueError:
-        logger.warning(__name__, 'Monitor "%s" submitted incorrect JSON data!' % monitor.monitor_name)
         return None
 
     if 'wait' in MonitorJob.json_get_job_status(data):
@@ -116,3 +114,8 @@ def from_job_json(monitor, jsond):
             logger.exception(__name__, 'Job JSON failed')
 
     return job
+
+
+
+
+
