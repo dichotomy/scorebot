@@ -9,7 +9,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('sbegame', '0007_auto_20170328_0136'),
-        ('sbegame', '0003_auto_20160524_1155'),
     ]
 
     operations = [

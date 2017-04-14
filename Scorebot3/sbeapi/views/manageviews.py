@@ -8,6 +8,8 @@ from scorebot.utils.json2 import translator
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from ipware.ip import get_real_ip
 
+import json
+
 """
     Methods supported
 
@@ -165,7 +167,6 @@ class ManageViews:
 
             1. Check if AccessKey is tied to MonitorServer
                 -> if not return 403
-<<<<<<< HEAD
             2. Get a pending MonitorJob or create a queue of jobs then pick one
             3. If no hosts are available
                 Return 204 (No Jobs) and Job wait JSON
@@ -198,12 +199,12 @@ class ManageViews:
             '''
             job = get_job_from_queue(monitor=monitor)
 
-            if job:
+            if job is not None:
                 return HttpResponse(content=translator.to_job_json(job), status=201)
             else:
                 logger.debug(__name__, 'Monitor "%s" told to wait due to no games!' % monitor.name)
                 logger.debug(__name__, 'Monitor "%s" told to wait due to no available hosts!' % monitor.name)
-                return HttpResponse(content='{ "status": "wait" }', status=204)
+                return HttpResponse(content=json.dumps({'status': 'wait'}), status=204)
         elif request.method == 'POST':
             try:
                 job_response = translator.from_job_json(monitor, request.body.decode('utf-8'))
