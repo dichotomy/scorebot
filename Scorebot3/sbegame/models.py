@@ -328,9 +328,12 @@ class MonitorJob(models.Model):
         try:
             ping_lost = data['fields']['job_host']['ping_lost']
             ping_received = data['fields']['job_host']['ping_received']
-            val = (ping_received * 1.0)/((ping_received * 1.0) + (ping_lost * 1.0))
+            val = 0
+            if ping_lost + ping_received > 0:
+                val = ping_received/(ping_received + ping_lost)
         except KeyError:
-            logger.exception(__name__, 'host_ping_ratio does not exist')
+            logger.exception(__name__,
+                             'ping_lost or ping_received is not present')
         return val
 
     @staticmethod
