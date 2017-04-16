@@ -30,7 +30,7 @@ class WebClient(protocol.Protocol):
         self.body = ""
 
     def no_unicode(self, text):
-        sys.stderr.write("\nJob %s: Converting %s" % (self.job_id, text))
+        #sys.stderr.write("\nJob %s: Converting %s" % (self.job_id, text))
         if isinstance(text, unicode):
             return text.encode('utf-8')
         else:
@@ -229,7 +229,11 @@ class JobFactory(WebCoreFactory):
         else:
             #Connection closed cleanly, process the results
             #sys.stderr.write("Adding job %s\n" % self.body)
-            self.jobs.add(self.body)
+            # TODO - handle json returned on successful job completion
+            if "completed" in self.body:
+                self.deferred.callback(self.body)
+            else:
+                self.jobs.add(self.body)
 
 class WebServiceCheckFactory(WebCoreFactory):
 
@@ -341,6 +345,7 @@ class WebContentCheckFactory(WebCoreFactory):
             if self.debug:
                 sys.stderr.write( "\nReceived: %s" % self.get_server_headers())
         conn_time = self.end - self.start
+        # TODO - check the content for match against what was given in the JSON job
         if self.data:
             self.content.set_data(self.data)
         if self.fail and self.reason:

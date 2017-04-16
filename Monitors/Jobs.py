@@ -16,6 +16,10 @@ class Jobs(object):
         self.proc = []
         # List of jobs done
         self.done = []
+        # List of jobs being submitted
+        self.pending_submitted = []
+        # List of jobs submitted
+        self.submitted = []
         # The oldest job ID
         self.latest_job_id = 0
         self.debug = debug
@@ -47,9 +51,16 @@ class Jobs(object):
             self.todo.remove(job_id)
             sys.stdout.write("Job %s: Prematurely closing out job before starting it because %s!\n" % (job_id, reason))
         job = self.jobs[job_id]
-        del(self.jobs[job_id])
+        self.pending_submitted.append(job_id)
         return job
 
+    def submitted_job(self, job_id):
+        if job_id in self.pending_submitted:
+            self.submitted.append(job_id)
+            self.pending_submitted.remove(job_id)
+            del(self.jobs[job_id])
+        else:
+            raise Exception("Job %s: marked submitted but not done.")
 
     def get_job(self, job_id=None):
         if job_id:
@@ -78,8 +89,7 @@ class Job(object):
                 "job_host": {
                     "fqdn": "mail.gamma.net",
                     "ip_address":  "",
-                    "ping_lost": "100",
-                    "ping_received": "100",
+                    "host_ping_ratio": "100",
                     "services": [{
                         "port": "443",
                         "application": "http"|"https"|"ssh"|"telnet"|"ftp",
@@ -124,6 +134,12 @@ class Job(object):
         self.timeout = 90
         self.job_id = 0
         self.debug = debug
+        # todo - remove this code after the SBE stops giving it out
+        #if self.json["fields"]["job_host"]["ping_lost"]:
+        #    del self.json["fields"]["job_host"]["ping_lost"]
+        #if self.json["fields"]["job_host"]["ping_received"]:
+        #    del self.json["fields"]["job_host"]["ping_received"]
+        self.json["fields"]["job_host"]["host_ping_ratio"] = ""
 
     def get_timeout(self):
         return self.json["job_timeout"]
@@ -173,6 +189,13 @@ class Job(object):
     def get_url(self):
         # TODO replace this placeholder when the datastructure given by SBE is updated
         return "/index.html"
+
+    def set_ping_ratio(self, ratio):
+        self.json["fields"]["job_host"]["host_ping_ratio"] = ratio
+        if 0 <= ratio <= 100 :
+            return True
+        else:
+            return False
 
     def set_ping_lost(self, lost):
         if 0 <= lost <= 100 :
@@ -413,8 +436,7 @@ if __name__ == "__main__":
                 "job_host": {
                     "fqdn": "mail.gamma.net",
                     "ip_address":  "",
-                    "ping_lost": "100",
-                    "ping_received": "100",
+                    "host_ping_ratio": "100",
                     "services": [{
                         "port": "443",
                         "application": "http",
