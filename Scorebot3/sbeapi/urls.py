@@ -26,7 +26,8 @@ urlpatterns = [
     url(r'^game/(?P<game_id>[0-9]+)/ticket/$', GameViews.game_ticket, name='game_ticket'),
     url(r'^game/(?P<game_id>[0-9]+)/ticket/(?P<ticket_id>[0-9]+)/$', GameViews.game_ticket, name='game_ticket'),
 
-    #
+    #url(r'^parse$', GameViews.parse, name='parse'),
+
 #    url(r'^job/$', views.SBE_Management.job_request, name='jobs'),
 #    url(r'^game/(?P<game_id>[0-9]+)/$', views.SBE_Game.game, name='game'),
 #    url(r'^team/(?P<team_id>[0-9]+)/$', views.SBE_Game.team, name='teams'),

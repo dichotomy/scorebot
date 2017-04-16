@@ -1,12 +1,14 @@
-from sbehost.models import GameFlag, GameTicket
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse, HttpResponseNotFound, \
+from django.http import HttpResponse, HttpResponseNotFound,\
     HttpResponseBadRequest, HttpResponseNotAllowed
-from sbehost.models import Game, GameTeam, GameHost, GameService, \
-    GameCompromise, GameContent
-from scorebot.utils.general import val_auth, get_object_with_id, \
-    get_object_by_filter, get_json, save_json_or_error, get_object_by_query
+from django.db import transaction, IntegrityError
 
+from scorebot.settings import BASE_DIR
+from sbehost.models import Game, GameTeam, GameHost, GameService,\
+    GameCompromise, GameContent, ServiceApplication
+from scorebot.utils.general import val_auth, get_object_with_id,\
+    get_object_by_filter, get_json, save_json_or_error
+import scorebot.utils.log as logger
 
 """
     Methods supported
@@ -23,7 +25,66 @@ from scorebot.utils.general import val_auth, get_object_with_id, \
 """
 
 
+import os
+import json
+
 class GameViews:
+
+    '''
+        Used for loading previous years' hosts and services
+    '''
+    @staticmethod
+    def parse(request):
+        protocol_port = {
+            '21': 'telnet',
+            '22': 'ssh',
+            '25': 'smtp',
+            '80': 'http'
+        }
+        data = None
+        with open(os.path.join(BASE_DIR, 'hosts.json')) as f:
+            jdata = json.loads(f.read())
+
+        try:
+            with transaction.atomic():
+                for h in [h for team in jdata['blueteams'] for h in team['hosts']]:
+                    hostname = h['hostname']
+                    for s in h['services']:
+                        port = s['port']
+                        l4_protocol = s['protocol']
+                        value = s['value']
+                        service_name = '%s:%d' % (hostname, int(port))
+
+                        aprotocol = protocol_port[str(port)]
+                        application = ServiceApplication(port=port,
+                                                         layer4_protocol=l4_protocol,
+                                                         application_protocol=aprotocol)
+                        application.save()
+
+                        logger.debug(__name__, '=========== Hostname ======>%s<==============' % hostname)
+                        host = GameHost.objects.get(fqdn=hostname)
+                        service = GameService(name=service_name, value=value,
+                                              application=application, game_host=host)
+                        service.save()
+
+                        if port == 80:
+                            for page in s['content']['pages']:
+                                content = GameContent(service=service)
+                                data = '|'.join(page['keywords'])
+                                url = page['url']
+                                http_verb = '1'
+
+                                content.data = data
+                                content.url = url
+                                content.http_verb = http_verb
+
+                                content.save()
+        except IntegrityError:
+            logger.exception(__name__, 'ERROR=============')
+            return HttpResponse('ERRORRRRRRR')
+
+        return HttpResponse('DONE!')
+
     """
         SBE Game API
 
@@ -192,7 +253,10 @@ class GameViews:
                     'game_service__game_host_id': host_id,
                     'game_service_id': service_id
             }
-            game_content = get_object_by_filter(request, GameContent, filter_obj, object_response=False)
+            game_content = get_object_by_filter(request,
+                                                GameContent,
+                                                filter_obj,
+                                                object_response=False)
             if not game_content or not len(game_content):
                 return HttpResponseNotFound()
 
