@@ -77,7 +77,7 @@ class GameDNS(models.Model):
         return 'Game DNS (%s)' % self.address
 
     def __str__(self):
-        return 'DNS %s' % self.dns_address
+        return 'DNS %s' % self.address
 
 
 class GameTeam(models.Model):
