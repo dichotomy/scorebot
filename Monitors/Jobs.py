@@ -155,7 +155,7 @@ class Job(object):
 
     def get_json_str(self):
         #TODO - should this call self.get_json()?
-        sys.stderr.write("Job %s: Converting to JSON" % self.job_id)
+        sys.stderr.write("Job %s: Converting to JSON\n" % self.job_id)
         return json.dumps(self.get_json())
 
     def get_dns(self):
@@ -224,7 +224,7 @@ class Job(object):
         for service in self.services:
             json_services.append(service.get_json())
         self.json["fields"]["job_host"]["services"] = json_services
-        sys.stderr.write("Job %s: converting to json:")
+        sys.stderr.write("Job %s: converting to json:\n" % self.job_id)
         if self.debug:
             pp = pprint.PrettyPrinter(depth=4)
             pp.pprint(self.json)
@@ -324,7 +324,6 @@ class Service(object):
         self.json["connect"] = "success"
 
     def fail_conn(self, failure, data=None):
-        self.set_data(data)
         self.json["connect"] = failure
 
     def set_data(self, data):

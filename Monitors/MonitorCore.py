@@ -4,6 +4,7 @@ from twisted.internet import reactor, protocol, ssl
 from twisted.python import log
 from http_parser.pyparser import HttpParser
 from WebClient import WebContentCheckFactory, WebServiceCheckFactory, JobFactory
+from GenSocket import GenCheckFactory
 from DNSclient import DNSclient
 from Pingclient import PingProtocol
 from twisted.python import log
@@ -32,7 +33,7 @@ class MonitorCore(object):
         else:
             raise Exception("Unknown scheme:  %s" % self.params.get_scheme())
         # Keep looking for more work
-        reactor.callLater(0.1, self.get_job)
+        reactor.callLater(1, self.get_job)
 
     def start_job(self):
         # Get the next job started
@@ -126,7 +127,6 @@ class MonitorCore(object):
         # Service walk
         for service in job.get_services():
             if "tcp" in service.get_proto():
-                factory = None
                 if service.get_port() == 80:
                     factory = WebServiceCheckFactory(self.params, job, service)
                     deferred = factory.get_deferred()
@@ -134,20 +134,35 @@ class MonitorCore(object):
                     deferred.addErrback(self.web_service_connect_fail, job, service)
                     reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
                 else:
-                    service.fail_conn(failure)
-                    jobid = job.get_job_id()
-                    sys.stderr.write(("Job %s: Unexpected service %s/%s" % (jobid, service.get_port(), service.get_proto())))
+                    factory = GenCheckFactory(self.params, job, service)
+                    deferred = factory.get_deferred()
+                    deferred.addCallback(self.gen_service_connect_pass, job, service)
+                    deferred.addErrback(self.gen_service_connect_fail, job, service)
+                    reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
+                    #jobid = job.get_job_id()
+                    #service.fail_conn("Unknown service %s" % (service.get_port()))
+                    #sys.stderr.write(("Job %s: Unexpected service %s/%s" % (jobid, service.get_port(), service.get_proto())))
             else:
                 # todo - handle the error by reporting the problem with the job in the json
                 # and sending that back with the job report back.
-                pass
+                service.fail_conn("Unknown service protocol %s/%s" % (service.get_port(), service.get_proto()))
 
-    def web_service_connect_pass(self, result, job, service):
+    def gen_service_connect_pass(self, result, job, service):
         service.pass_conn()
         proto = service.get_proto()
         port = service.get_port()
         jobid = job.get_job_id()
         sys.stderr.write("Job %s:  Service %s/%s passed. %s\n" % (jobid, proto, port, result))
+
+    def gen_service_connect_fail(self, failure, job, service):
+        service.fail_conn(failure)
+        proto = service.get_proto()
+        port = service.get_port()
+        jobid = job.get_job_id()
+        sys.stderr.write("Job %s:  Service %s/%s failed:\n\t%s\n" % (jobid, proto, port, failure))
+
+    def web_service_connect_pass(self, result, job, service):
+        self.gen_service_connect_pass(result, job, service)
         #todo - add code to auth if the app is authenticated.  Get the cookie and use
         # with the subsequent content checks.  Add cookie code to the service object
         for content in service.get_contents():
@@ -158,11 +173,7 @@ class MonitorCore(object):
             reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
 
     def web_service_connect_fail(self, failure, job, service):
-        service.fail_conn(failure)
-        proto = service.get_proto()
-        port = service.get_port()
-        jobid = job.get_job_id()
-        sys.stderr.write("Job %s:  Service %s/%s failed:\n\t%s\n" % (jobid, proto, port, failure))
+        self.gen_service_connect_fail(failure, job, servicce)
 
     def web_content_pass(self, result, job, service, content):
         # What to do here?
@@ -184,6 +195,7 @@ if __name__=="__main__":
     # Testing with an artificial job file
     from Parameters import Parameters
     from Jobs import Jobs
+
     log.startLogging(open('log/MonitorCore.log', 'w'))
     params = Parameters()
     jobs = Jobs()
