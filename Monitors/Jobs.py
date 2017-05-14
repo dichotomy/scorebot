@@ -286,11 +286,15 @@ class Service(object):
 
     def is_done(self):
         for content in self.contents:
-            if content.has_data():
+            if content.check():
                 continue
             else:
                 return False
         return True
+
+    def get_passive(self):
+        #todo - implement passive FTP bit
+        return 0
 
     def get_contents(self):
         return self.contents
@@ -304,17 +308,17 @@ class Service(object):
     def get_login_url(self):
         return self.json["auth"]["login_url"]
 
-    def get_username(self):
-        return self.json["auth"]["username"]
+    def get_username(self, index=0):
+        return self.json["auth"][index]["username"]
 
-    def get_username_field(self):
-        return self.json["auth"]["username_field"]
+    def get_username_field(self, index=0):
+        return self.json["auth"][index]["username_field"]
 
-    def get_password(self):
-        return self.json["auth"]["password"]
+    def get_password(self, index=0):
+        return self.json["auth"][index]["password"]
 
-    def get_password_field(self):
-        return self.json["auth"]["password_field"]
+    def get_password_field(self, index=0):
+        return self.json["auth"][index]["password_field"]
 
     def timeout(self, data):
         self.set_data(data)
@@ -325,6 +329,12 @@ class Service(object):
 
     def fail_conn(self, failure, data=None):
         self.json["connect"] = failure
+
+    def pass_login(self, index=0):
+        self.json["auth"][index]["login"] = "pass"
+
+    def fail_login(self, index=0):
+        self.json["auth"][index]["login"] = "fail"
 
     def set_data(self, data):
         today = time.strftime("%Y%m%d" ,time.gmtime())
@@ -392,8 +402,19 @@ class Content(object):
     def get_url(self):
         return self.json["url"]
 
+    def get_filename(self):
+        return self.json["filename"]
+
     def get_type(self):
         return self.json["type"]
+
+    def check(self):
+        if self.json["check"] == "success":
+            return True
+        elif self.json["check"] == "fail":
+            return False
+        else:
+            raise Exception("Unknown check status %s" % self.json["check"])
 
     def set_data(self, data):
         today = time.strftime("%Y%m%d" ,time.gmtime())
@@ -402,11 +423,8 @@ class Content(object):
         data_file.write(base64.b64encode(data))
         data_file.close()
 
-    def has_data(self):
-        if self.json["data"]:
-            return True
-        else:
-            return False
+    def get_data(self):
+        return self.json["data"]
 
     def get_json(self):
         return self.json
@@ -415,12 +433,12 @@ class Content(object):
         self.set_data(data)
         self.json["connect"] = "timeout"
 
-    def pass_conn(self):
+    def success(self):
         self.json["connect"] = "success"
 
-    def fail_conn(self, reason, data):
+    def fail(self, data):
         self.set_data(data)
-        self.json["connect"] = reason
+        self.json["connect"] = "fail"
 
 if __name__ == "__main__":
     test_json_str = """ {

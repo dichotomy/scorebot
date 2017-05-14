@@ -7,6 +7,7 @@ from WebClient import WebContentCheckFactory, WebServiceCheckFactory, JobFactory
 from GenSocket import GenCheckFactory
 from DNSclient import DNSclient
 from Pingclient import PingProtocol
+from FTPclient import FTP_client
 from twisted.python import log
 import traceback
 import sys
@@ -123,6 +124,17 @@ class MonitorCore(object):
         job.set_ip("fail")
         self.post_job(job)
 
+    def ftp_fail(self, failure, service, job_id):
+        if "530 Login incorrect" in failure:
+            sys.stderr.write("Job ID %s: Login failure\n" % job_id)
+            service.fail_login()
+        elif "Connection refused" in failure:
+            sys.stderr.write("Job ID %s: Connection failure\n" % job_id)
+            service.fail_conn("refused")
+        else:
+            sys.stderr.write("Job ID %s: Failure %s\n" % (job_id, failure))
+            service.fail_conn(failure)
+
     def check_services(self, job):
         # Service walk
         for service in job.get_services():
@@ -133,6 +145,9 @@ class MonitorCore(object):
                     deferred.addCallback(self.web_service_connect_pass, job, service)
                     deferred.addErrback(self.web_service_connect_fail, job, service)
                     reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
+                elif service.get_port() == 21:
+                    ftpobj = FTP_client(job, service, self.params, self.ftp_fail)
+                    ftpobj.run()
                 else:
                     factory = GenCheckFactory(self.params, job, service)
                     deferred = factory.get_deferred()
