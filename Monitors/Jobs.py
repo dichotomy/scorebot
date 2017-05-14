@@ -245,7 +245,7 @@ class Service(object):
                 "port": "443",
                 "application": "http"|"https"|"ssh"|"telnet"|"ftp",
                 "protocol": "tcp",
-                "connect": "success"|"reset"|"timeout",
+                "connect": "success"|"reset"|"timeout|refused",
                 "data":"",
                 "auth":    [{
                     "auth_type": "<type>",
@@ -285,6 +285,10 @@ class Service(object):
         self.url = "/index.html"
 
     def is_done(self):
+        if self.json["connect"] in ["success", "reset", "timeout", "refused"]:
+            pass
+        else:
+            return False
         for content in self.contents:
             if content.check():
                 continue
@@ -309,16 +313,28 @@ class Service(object):
         return self.json["auth"]["login_url"]
 
     def get_username(self, index=0):
-        return self.json["auth"][index]["username"]
+        if self.json["auth"]:
+            self.json["auth"][index]["username"]
+        else:
+            return None
 
     def get_username_field(self, index=0):
-        return self.json["auth"][index]["username_field"]
+        if self.json["auth"]:
+            self.json["auth"][index]["username_field"]
+        else:
+            return None
 
     def get_password(self, index=0):
-        return self.json["auth"][index]["password"]
+        if self.json["auth"]:
+            return self.json["auth"][index]["password"]
+        else:
+            return None
 
     def get_password_field(self, index=0):
-        return self.json["auth"][index]["password_field"]
+        if self.json["auth"]:
+            return self.json["auth"][index]["password_field"]
+        else:
+            return None
 
     def timeout(self, data):
         self.set_data(data)

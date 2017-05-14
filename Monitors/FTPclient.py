@@ -34,6 +34,8 @@ class FTP_client(object):
         self.job_id = self.job.get_job_id()
         self.ip_addr = self.job.get_ip()
         self.service = service
+        self.port = self.service.get_port()
+        self.proto = self.service.get_proto()
         self.params = params
         self.creator = None
         self.fileList = None
@@ -83,18 +85,22 @@ class FTP_client(object):
                 sys.stderr.write("Job ID %s: content check failed %s\n" % (self.job.get_job_id(), found_data))
 
     def connectionMade(self, ftpClient):
-        sys.stderr.write("Job %s service %s/%s connected\n" % \
+        sys.stderr.write("Job ID: %s service %s/%s connected\n" % \
                          (self.job_id, self.service.get_port(), self.service.get_proto()))
         self.service.pass_conn()
-        self.login(ftpClient, self.service.get_username(), self.service.get_password())
+        username = self.service.get_username()
+        password =  self.service.get_password()
+        if username and password:
+            self.login(ftpClient, self.service.get_username(), self.service.get_password())
 
     def run(self):
         # Get config
-        port = int(self.service.get_port())
         passive = self.service.get_passive()
         # Create the client
+        sys.stderr.write("Job ID %s:  Connecting to %s %s/%s\n" % \
+                         (self.job_id, self.ip_addr, self.port, self.proto))
         self.creator = ClientCreator(reactor, ctfFTPclient, passive=passive)
-        self.ftp_deferred = self.creator.connectTCP(self.ip_addr, port)
+        self.ftp_deferred = self.creator.connectTCP(self.ip_addr, self.port)
         self.ftp_deferred.addCallback(self.connectionMade)
         self.ftp_deferred.addErrback(self.fail)
 
