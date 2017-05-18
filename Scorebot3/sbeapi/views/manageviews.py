@@ -26,6 +26,11 @@ import json
 
 
 def get_job_from_queue(monitor):
+    '''
+        Get's a pending job and starts it
+        or creates a new set of pending jobs based on available services
+        and returns one at random.
+    '''
     job = None
     try:
         job = MonitorJob.get_job_pending(monitor=monitor)
@@ -41,25 +46,6 @@ def get_job_from_queue(monitor):
 
 
 class ManageViews:
-    """
-        SBE Team API
-
-        Methods: GET, PUT, POST
-
-        GET  |  /team/
-        GET  |  /team/<game_id>/
-        PUT  |  /team/
-        POST |  /team/<player_id>/
-
-        Returns Team info.  Deletes are not allowed
-
-        JSON Example:
-
-
-
-        Permissions:
-            Team.(READ | UPDATE | CREATE | DELETE)
-    """
     @staticmethod
     @csrf_exempt
     @val_auth
@@ -81,25 +67,6 @@ class ManageViews:
 
         return HttpResponseBadRequest()
 
-    """
-        SBE Player API
-
-        Methods: GET, PUT, POST
-
-        GET  |  /player/
-        GET  |  /player/<game_id>/
-        PUT  |  /player/
-        POST |  /player/<player_id>/
-
-        Returns Player info.  Deletes are not allowed
-
-        JSON Example:
-
-
-
-        Permissions:
-            Player.(READ | UPDATE | CREATE | DELETE)
-    """
     @staticmethod
     @csrf_exempt
     @val_auth
@@ -121,34 +88,6 @@ class ManageViews:
 
         return HttpResponseBadRequest()
 
-    """
-        SBE Job API
-
-        Methods: GET, POST
-
-        GET  | /job/
-        POST | /job/
-
-        Requests a Job (GET) and submits a completed Job (POST)
-
-        How it works
-
-        1. Check if AccessKey is tied to MonitorServer
-            -> if not return 403
-        2. List Games that are Running (Not Done & Paused) and have the requesting Monitor Server assigned
-        3. Randomly select a game (if > 1)
-        4. Check if Monitor Server is assigned to any specific hosts for that game
-            -> if goto 5
-            -> if not goto 6
-        5. Set list of available hosts to the host list that is set. goto 7
-        6. Query the GameTeams through the Game object and enumerate all hosts in the game, store in list
-        7. Enumerate each host in the list randomly and check if a running Job is open for that host.
-            -> if goto 7, repeat until empty, goto 10
-            -> if not goto 8
-        8. Create a Job for that host.
-        9. Return 201 (Job Created) and Job JSON
-        10. Return 204 (No Jobs) and Job wait JSON
-    """
     @staticmethod
     @csrf_exempt
     @val_auth
@@ -202,7 +141,6 @@ class ManageViews:
             if job is not None:
                 return HttpResponse(content=translator.to_job_json(job), status=201)
             else:
-                logger.debug(__name__, 'Monitor "%s" told to wait due to no games!' % monitor.name)
                 logger.debug(__name__, 'Monitor "%s" told to wait due to no available hosts!' % monitor.name)
                 return HttpResponse(content=json.dumps({'status': 'wait'}), status=204)
         elif request.method == 'POST':
@@ -222,3 +160,23 @@ class ManageViews:
                 )
                 return HttpResponseBadRequest('SBE [API]: Invalid POST data!')
         return HttpResponseBadRequest('SBE [API]: Job only supports GET and POST!')
+
+    @staticmethod
+    @csrf_exempt
+    @val_auth
+    def score(request):
+        """
+            SBE Score API
+
+            Methods: GET, POST
+
+            GET  | /score/
+            POST | /score/
+
+            GET retrieves the scores
+            POST runs calculation for scores
+        """
+        if request.method == 'GET':
+            return HttpResponse('Not implemented yet')
+        elif request.method == 'POST':
+            return HttpResponse('Not implemented yet')

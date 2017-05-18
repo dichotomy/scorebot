@@ -254,7 +254,7 @@ class MonitorJob(models.Model):
                 jobs = MonitorJob.get_jobs_pending()
 
                 if len(jobs):
-                    job = MonitorJob.create_pending_job(jobs, monitor)
+                    job = MonitorJob.start_pending_job(jobs, monitor)
         else:
             try:
                 job = MonitorJob.objects.get(start__isnull=True,
@@ -266,7 +266,12 @@ class MonitorJob(models.Model):
         return job
 
     @staticmethod
-    def create_pending_job(jobs, monitor):
+    def start_pending_job(jobs, monitor):
+        '''
+            Creates a list from a QuerySet
+            and selects one to start at random,
+            leaving the rest untouched.
+        '''
         jobs = [j for j in jobs]
         shuffle(jobs)
         job = jobs.pop()
