@@ -16,6 +16,10 @@ class Jobs(object):
         self.proc = []
         # List of jobs done
         self.done = []
+        # List of jobs being submitted
+        self.pending_submitted = []
+        # List of jobs submitted
+        self.submitted = []
         # The oldest job ID
         self.latest_job_id = 0
         self.debug = debug
@@ -47,9 +51,16 @@ class Jobs(object):
             self.todo.remove(job_id)
             sys.stdout.write("Job %s: Prematurely closing out job before starting it because %s!\n" % (job_id, reason))
         job = self.jobs[job_id]
-        del(self.jobs[job_id])
+        self.pending_submitted.append(job_id)
         return job
 
+    def submitted_job(self, job_id):
+        if job_id in self.pending_submitted:
+            self.submitted.append(job_id)
+            self.pending_submitted.remove(job_id)
+            del(self.jobs[job_id])
+        else:
+            raise Exception("Job %s: marked submitted but not done.")
 
     def get_job(self, job_id=None):
         if job_id:
@@ -78,8 +89,7 @@ class Job(object):
                 "job_host": {
                     "fqdn": "mail.gamma.net",
                     "ip_address":  "",
-                    "ping_lost": "100",
-                    "ping_received": "100",
+                    "host_ping_ratio": "100",
                     "services": [{
                         "port": "443",
                         "application": "http"|"https"|"ssh"|"telnet"|"ftp",
@@ -124,6 +134,12 @@ class Job(object):
         self.timeout = 90
         self.job_id = 0
         self.debug = debug
+        # todo - remove this code after the SBE stops giving it out
+        #if self.json["fields"]["job_host"]["ping_lost"]:
+        #    del self.json["fields"]["job_host"]["ping_lost"]
+        #if self.json["fields"]["job_host"]["ping_received"]:
+        #    del self.json["fields"]["job_host"]["ping_received"]
+        self.json["fields"]["job_host"]["host_ping_ratio"] = ""
 
     def get_timeout(self):
         return self.json["job_timeout"]
@@ -139,7 +155,7 @@ class Job(object):
 
     def get_json_str(self):
         #TODO - should this call self.get_json()?
-        sys.stderr.write("Job %s: Converting to JSON" % self.job_id)
+        sys.stderr.write("Job %s: Converting to JSON\n" % self.job_id)
         return json.dumps(self.get_json())
 
     def get_dns(self):
@@ -174,6 +190,13 @@ class Job(object):
         # TODO replace this placeholder when the datastructure given by SBE is updated
         return "/index.html"
 
+    def set_ping_ratio(self, ratio):
+        self.json["fields"]["job_host"]["host_ping_ratio"] = ratio
+        if 0 <= ratio <= 100 :
+            return True
+        else:
+            return False
+
     def set_ping_lost(self, lost):
         if 0 <= lost <= 100 :
             self.json["fields"]["job_host"]["ping_lost"] = lost
@@ -201,7 +224,7 @@ class Job(object):
         for service in self.services:
             json_services.append(service.get_json())
         self.json["fields"]["job_host"]["services"] = json_services
-        sys.stderr.write("Job %s: converting to json:")
+        sys.stderr.write("Job %s: converting to json:\n" % self.job_id)
         if self.debug:
             pp = pprint.PrettyPrinter(depth=4)
             pp.pprint(self.json)
@@ -222,7 +245,7 @@ class Service(object):
                 "port": "443",
                 "application": "http"|"https"|"ssh"|"telnet"|"ftp",
                 "protocol": "tcp",
-                "connect": "success"|"reset"|"timeout",
+                "connect": "success"|"reset"|"timeout|refused",
                 "data":"",
                 "auth":    [{
                     "auth_type": "<type>",
@@ -262,12 +285,20 @@ class Service(object):
         self.url = "/index.html"
 
     def is_done(self):
+        if self.json["connect"] in ["success", "reset", "timeout", "refused"]:
+            pass
+        else:
+            return False
         for content in self.contents:
-            if content.has_data():
+            if content.check():
                 continue
             else:
                 return False
         return True
+
+    def get_passive(self):
+        #todo - implement passive FTP bit
+        return 0
 
     def get_contents(self):
         return self.contents
@@ -281,17 +312,29 @@ class Service(object):
     def get_login_url(self):
         return self.json["auth"]["login_url"]
 
-    def get_username(self):
-        return self.json["auth"]["username"]
+    def get_username(self, index=0):
+        if self.json["auth"]:
+            self.json["auth"][index]["username"]
+        else:
+            return None
 
-    def get_username_field(self):
-        return self.json["auth"]["username_field"]
+    def get_username_field(self, index=0):
+        if self.json["auth"]:
+            self.json["auth"][index]["username_field"]
+        else:
+            return None
 
-    def get_password(self):
-        return self.json["auth"]["password"]
+    def get_password(self, index=0):
+        if self.json["auth"]:
+            return self.json["auth"][index]["password"]
+        else:
+            return None
 
-    def get_password_field(self):
-        return self.json["auth"]["password_field"]
+    def get_password_field(self, index=0):
+        if self.json["auth"]:
+            return self.json["auth"][index]["password_field"]
+        else:
+            return None
 
     def timeout(self, data):
         self.set_data(data)
@@ -301,8 +344,13 @@ class Service(object):
         self.json["connect"] = "success"
 
     def fail_conn(self, failure, data=None):
-        self.set_data(data)
         self.json["connect"] = failure
+
+    def pass_login(self, index=0):
+        self.json["auth"][index]["login"] = "pass"
+
+    def fail_login(self, index=0):
+        self.json["auth"][index]["login"] = "fail"
 
     def set_data(self, data):
         today = time.strftime("%Y%m%d" ,time.gmtime())
@@ -370,8 +418,19 @@ class Content(object):
     def get_url(self):
         return self.json["url"]
 
+    def get_filename(self):
+        return self.json["filename"]
+
     def get_type(self):
         return self.json["type"]
+
+    def check(self):
+        if self.json["check"] == "success":
+            return True
+        elif self.json["check"] == "fail":
+            return False
+        else:
+            raise Exception("Unknown check status %s" % self.json["check"])
 
     def set_data(self, data):
         today = time.strftime("%Y%m%d" ,time.gmtime())
@@ -380,11 +439,8 @@ class Content(object):
         data_file.write(base64.b64encode(data))
         data_file.close()
 
-    def has_data(self):
-        if self.json["data"]:
-            return True
-        else:
-            return False
+    def get_data(self):
+        return self.json["data"]
 
     def get_json(self):
         return self.json
@@ -393,12 +449,12 @@ class Content(object):
         self.set_data(data)
         self.json["connect"] = "timeout"
 
-    def pass_conn(self):
+    def success(self):
         self.json["connect"] = "success"
 
-    def fail_conn(self, reason, data):
+    def fail(self, data):
         self.set_data(data)
-        self.json["connect"] = reason
+        self.json["connect"] = "fail"
 
 if __name__ == "__main__":
     test_json_str = """ {
@@ -413,8 +469,7 @@ if __name__ == "__main__":
                 "job_host": {
                     "fqdn": "mail.gamma.net",
                     "ip_address":  "",
-                    "ping_lost": "100",
-                    "ping_received": "100",
+                    "host_ping_ratio": "100",
                     "services": [{
                         "port": "443",
                         "application": "http",

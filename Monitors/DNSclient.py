@@ -5,12 +5,12 @@ from twisted.names import dns
 from Jobs import Jobs
 import sys
 
-
 class DNSclient(object):
+    # TODO - handle closing DNS connections properly!
 
     def __init__(self, job, timeout=30):
         self.proto = dns.DNSDatagramProtocol(controller=None)
-        reactor.listenUDP(0, self.proto)
+        self.port = reactor.listenUDP(0, self.proto)
         self.job = job
         self.fqdn = self.job.get_hostname()
         self.dnssvr = self.job.get_dns()[0]
@@ -38,7 +38,8 @@ class DNSclient(object):
         sys.stderr.write(str(failure))
         pass
 
-
+    def close(self):
+        self.port.stopListening()
 
 if __name__ == "__main__":
     import sys

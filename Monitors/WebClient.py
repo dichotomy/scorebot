@@ -28,9 +28,10 @@ class WebClient(protocol.Protocol):
                        (self.verb, self.factory.get_url(), self.factory.get_headers()))
         self.recv = ""
         self.body = ""
+        reactor.callLater(self.factory.get_timeout(), self.TimedOut)
 
     def no_unicode(self, text):
-        sys.stderr.write("\nJob %s: Converting %s" % (self.job_id, text))
+        #sys.stderr.write("\nJob %s: Converting %s" % (self.job_id, text))
         if isinstance(text, unicode):
             return text.encode('utf-8')
         else:
@@ -45,7 +46,6 @@ class WebClient(protocol.Protocol):
             sys.stderr.write("Job %s: Made connection to %s:%s\n" % (self.job_id, self.factory.get_ip(), self.factory.get_port()))
         else:
             sys.stderr.write("Made connection to %s:%s\n" % (self.factory.get_ip(), self.factory.get_port()))
-        reactor.callLater(self.factory.get_timeout(), self.TimedOut)
         #sys.stderr.write("Sending: %s\n" % self.request)
         self.transport.write("%s\r\n" % self.request)
 
@@ -68,8 +68,8 @@ class WebClient(protocol.Protocol):
             if "Location" in headers:
                 location = headers["Location"]
             self.factory.set_server_headers(self.parser.get_headers())
-            if "POST" in self.verb:
-                self.transport.loseConnection()
+            #if "POST" in self.verb:
+            #    self.transport.loseConnection()
         self.factory.proc_body(self.parser.recv_body())
         if self.parser.is_partial_body():
             self.body += self.parser.recv_body()
@@ -203,7 +203,7 @@ class JobFactory(WebCoreFactory):
     def clientConnectionFailed(self, connector, reason):
         if self.params.debug:
             if "put" in self.op:
-                sys.stderr.write( "Job %s:  JobFactoryClientConnectionFailed\t" % self.job.get_job_id())
+                sys.stderr.write( "Job %s:  JobFactory Put clientConnectionFailed\t" % self.job.get_job_id())
             else:
                 sys.stderr.write( "Job GET request clientConnectionFailed\t" % self.job.get_job_id())
             sys.stderr.write( "given reason: %s\t" % reason)
@@ -214,7 +214,7 @@ class JobFactory(WebCoreFactory):
 
     def clientConnectionLost(self, connector, reason):
         if "put" in self.op:
-            sys.stderr.write( "Job %s: clientConnectionLost\t" % self.job.get_job_id())
+            sys.stderr.write( "Job %s: JobFactory Put clientConnectionLost\n" % self.job.get_job_id())
         elif "get" in self.op:
             sys.stderr.write( "Job GET request clientConnectionLost\n")
         else:
@@ -229,7 +229,11 @@ class JobFactory(WebCoreFactory):
         else:
             #Connection closed cleanly, process the results
             #sys.stderr.write("Adding job %s\n" % self.body)
-            self.jobs.add(self.body)
+            # TODO - handle json returned on successful job completion
+            if "completed" in self.body:
+                self.deferred.callback(self.body)
+            else:
+                self.jobs.add(self.body)
 
 class WebServiceCheckFactory(WebCoreFactory):
 
@@ -250,7 +254,10 @@ class WebServiceCheckFactory(WebCoreFactory):
         else:
             self.service.fail_conn(reason, "%s\r\n%s" % (self.get_server_headers(), self.body))
 
-    def get_job(self):
+    #def get_job(self):
+        #return self.job.get_job_id()
+
+    def get_job_id(self):
         return self.job.get_job_id()
 
     def clientConnectionFailed(self, connector, reason):
@@ -307,6 +314,9 @@ class WebContentCheckFactory(WebCoreFactory):
         self.port = self.service.get_port()
         self.timeout = self.params.get_timeout()
 
+    def get_job_id(self):
+        return self.job.get_job_id()
+
     def add_fail(self, reason):
         if "timeout" in reason:
             self.content.timeout("%s\r\n%s" % (self.get_server_headers(), self.body))
@@ -341,6 +351,7 @@ class WebContentCheckFactory(WebCoreFactory):
             if self.debug:
                 sys.stderr.write( "\nReceived: %s" % self.get_server_headers())
         conn_time = self.end - self.start
+        # TODO - check the content for match against what was given in the JSON job
         if self.data:
             self.content.set_data(self.data)
         if self.fail and self.reason:
@@ -357,8 +368,7 @@ if __name__ == "__main__":
     from twisted.python import log
     from DNSclient import DNSclient
     import sys
-    log.startLogging(open('log/webtest.log', 'w'))
-    jobs = Jobs()
+
     def post_job(job_id):
         factory = JobFactory(params, jobs, "put", job_id)
         reactor.connectTCP(params.get_sb_ip(), params.get_sb_port(), factory, params.get_timeout())
@@ -398,6 +408,8 @@ if __name__ == "__main__":
             query_d.addCallback(check_web, params, job)
             query_d.addErrback(job_fail, job)
 
+    log.startLogging(open('log/webtest.log', 'w'))
+    jobs = Jobs()
     sys.stderr.write( "Testing %s\n" % sys.argv[0])
     params = Parameters()
     factory = JobFactory(params, jobs, "get")

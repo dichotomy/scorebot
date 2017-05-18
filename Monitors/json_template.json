@@ -12,13 +12,12 @@
         "job_host": {
             "fqdn": "mail.gamma.net",
             "ip_address":  "",
-            "ping_lost": "100",
-            "ping_received": "100",
+            "host_ping_ratio": "100",
             "services": [{
                 "port": "443",
                 "application": "http"|"https"|"ssh"|"telnet"|"ftp",
                 "protocol": "tcp",
-                "connect": "success"|"reset"|"timeout",
+                "connect": "success"|"reset"|"timeout"|"refused",
                 "auth":  [{
                     "login_url": "http://www.gamma.net/login",
                     "auth_type": "<type>",
@@ -33,6 +32,7 @@
                     "url": "",
                     "type": "text",
                     "connect": "success"|"reset"|"timeout",
+                    "check": "success"|"fail",
                     "data": ""
                 }]
             }]
