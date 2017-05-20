@@ -192,8 +192,8 @@ class GameHost(models.Model):
     fqdn = models.CharField('Host Name', max_length=250)
     tickets = models.ManyToManyField('sbehost.GameTicket')
     # Trying to design a setup that dosen't need this
-    used = models.BooleanField('Host in Game', default=False)
-    status = models.BooleanField('Host Online', default=False)
+    used = models.BooleanField('Host in Game (used)', default=False)
+    status = models.BooleanField('Host Online (status)', default=False)
     ping_ratio = models.SmallIntegerField('Host Pingback Percentage', default=0)
     ping_lost = models.IntegerField(default=0)
     ping_received = models.IntegerField(default=0)
@@ -476,3 +476,20 @@ class GameContent(models.Model):
             self.content_type,
             json.dumps(self.data)
         )
+
+
+class GameScore(models.Model):
+    __desc__ = """
+        SBE Game Round Scores
+    """
+
+    class Meta:
+        verbose_name = 'SBE Round Score'
+        verbose_name_plural = 'SBE Round Scores'
+
+    round = models.IntegerField()
+    game = models.ForeignKey(Game)
+    game_team = models.ForeignKey(GameTeam)
+    game_service = models.ForeignKey(GameService)
+    score = models.IntegerField()
+    json = models.TextField()
