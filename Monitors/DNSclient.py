@@ -12,12 +12,14 @@ class DNSclient(object):
         self.proto = dns.DNSDatagramProtocol(controller=None)
         self.port = reactor.listenUDP(0, self.proto)
         self.job = job
+        self.job_id = self.job.get_job_id()
         self.fqdn = self.job.get_hostname()
         self.dnssvr = self.job.get_dns()[0]
         self.timeout = timeout
 
     def query(self):
         #print "Querying %s for %s" % (self.dnssvr, self.fqdn)
+        sys.stderr.write("Job ID %s: starting DNS for FQDN %s\n" % (self.job_id, self.fqdn))
         self.d = self.proto.query((self.dnssvr, 53), [dns.Query(self.fqdn, dns.A)], timeout=self.timeout)
         self.d.addCallback(self.getResults)
         return self.d

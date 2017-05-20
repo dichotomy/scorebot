@@ -53,10 +53,14 @@ class GenCoreFactory(protocol.ClientFactory):
         self.data = ""
         self.addr = None
         self.status = ""
-        self.deferred = Deferred()
+        self.deferreds = {}
 
-    def get_deferred(self):
-        return self.deferred
+    def get_deferred(self, key):
+        deferred = Deferred()
+        # We use the connect object returned by reactor.connectTCP() as our key.
+        # This is ugly as fuck, but it works.
+        self.deferreds[key] = deferred
+        return deferred
 
     def startedConnecting(self, connector):
         if self.job:
@@ -135,7 +139,7 @@ class GenCheckFactory(GenCoreFactory):
         if self.status:
             self.service.add_status(self.status)
         self.service.fail_conn(reason.getErrorMessage(), self.data)
-        self.deferred.errback(reason)
+        self.deferreds[connector].errback(reason)
 
     def clientConnectionLost(self, connector, reason):
         self.end = time.time()
@@ -156,7 +160,7 @@ class GenCheckFactory(GenCoreFactory):
             self.service.fail_conn("other", self.data)
         else:
             self.service.pass_conn()
-            self.deferred.callback(self.job.get_job_id())
+            self.deferreds[connector].callback(self.job.get_job_id())
 
 if __name__ == "__main__":
     from twisted.python import log

@@ -134,12 +134,20 @@ class Job(object):
         self.timeout = 90
         self.job_id = 0
         self.debug = debug
+        self.factory = None
         # todo - remove this code after the SBE stops giving it out
         #if self.json["fields"]["job_host"]["ping_lost"]:
         #    del self.json["fields"]["job_host"]["ping_lost"]
         #if self.json["fields"]["job_host"]["ping_received"]:
         #    del self.json["fields"]["job_host"]["ping_received"]
         self.json["fields"]["job_host"]["host_ping_ratio"] = ""
+
+
+    def set_factory(self, factory):
+        self.factory = factory
+
+    def get_factory(self):
+        return self.factory
 
     def get_timeout(self):
         return self.json["job_timeout"]
@@ -425,12 +433,13 @@ class Content(object):
         return self.json["type"]
 
     def check(self):
-        if self.json["check"] == "success":
+        if self.json["connect"] == "success" or \
+                self.json["connect"] == "fail" or \
+                self.json["connect"] == "reset" or \
+                self.json["connect"] == "timeout":
             return True
-        elif self.json["check"] == "fail":
-            return False
         else:
-            raise Exception("Unknown check status %s" % self.json["check"])
+            return False
 
     def set_data(self, data):
         today = time.strftime("%Y%m%d" ,time.gmtime())

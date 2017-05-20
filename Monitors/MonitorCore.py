@@ -71,21 +71,21 @@ class MonitorCore(object):
 
     def post_job(self, job):
         factory = JobFactory(self.params, self.jobs, "put", job)
-        deferred = factory.get_deferred()
-        reactor.connectTCP(self.params.get_sb_ip(), self.params.get_sb_port(), factory, \
+        connector = reactor.connectTCP(self.params.get_sb_ip(), self.params.get_sb_port(), factory, \
                            self.params.get_timeout())
+        deferred = factory.get_deferred(connector)
         deferred.addCallback(self.job_submit_pass, job)
         deferred.addErrback(self.job_submit_fail, job)
 
     def job_submit_pass(self, result, job):
         job_id = job.get_job_id()
-        sys.stderr.write("Job %s submitted successfully: %s" % (job_id, result))
+        sys.stderr.write("Job %s submitted successfully: %s\n" % (job_id, result))
         self.jobs_done.append(job_id)
         self.jobs.submitted_job(job_id)
 
     def job_submit_fail(self, failure, job):
         job_id = job.get_job_id()
-        sys.stderr.write("Job %s failed due to %s retrying in %s." % (job_id, failure, self.resubmit_interval))
+        sys.stderr.write("Job %s failed due to %s retrying in %s.\n" % (job_id, failure, self.resubmit_interval))
         reactor.callLater(self.resubmit_interval, self.post_job(job))
 
     def dns_fail(self, failure, job, dnsobj):
@@ -141,19 +141,20 @@ class MonitorCore(object):
             if "tcp" in service.get_proto():
                 if service.get_port() == 80:
                     factory = WebServiceCheckFactory(self.params, job, service)
-                    deferred = factory.get_deferred()
+                    job.set_factory(factory)
+                    connector = reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
+                    deferred = factory.get_deferred(connector)
                     deferred.addCallback(self.web_service_connect_pass, job, service)
                     deferred.addErrback(self.web_service_connect_fail, job, service)
-                    reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
                 elif service.get_port() == 21:
                     ftpobj = FTP_client(job, service, self.params, self.ftp_fail)
                     ftpobj.run()
                 else:
                     factory = GenCheckFactory(self.params, job, service)
-                    deferred = factory.get_deferred()
+                    connector = reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
+                    deferred = factory.get_deferred(connector)
                     deferred.addCallback(self.gen_service_connect_pass, job, service)
                     deferred.addErrback(self.gen_service_connect_fail, job, service)
-                    reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
                     #jobid = job.get_job_id()
                     #service.fail_conn("Unknown service %s" % (service.get_port()))
                     #sys.stderr.write(("Job %s: Unexpected service %s/%s" % (jobid, service.get_port(), service.get_proto())))
@@ -181,14 +182,15 @@ class MonitorCore(object):
         #todo - add code to auth if the app is authenticated.  Get the cookie and use
         # with the subsequent content checks.  Add cookie code to the service object
         for content in service.get_contents():
-            factory = WebContentCheckFactory(self.params, job, service, content)
+            #factory = WebContentCheckFactory(self.params, job, service, content)
+            factory = job.get_factory()
             deferred = factory.get_deferred()
             deferred.addCallback(self.web_content_pass, job, service, content)
             deferred.addErrback(self.web_content_fail, job, service, content)
             reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
 
     def web_service_connect_fail(self, failure, job, service):
-        self.gen_service_connect_fail(failure, job, servicce)
+        self.gen_service_connect_fail(failure, job, service)
 
     def web_content_pass(self, result, job, service, content):
         # What to do here?
