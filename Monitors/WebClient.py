@@ -10,26 +10,91 @@ import time
 import sys
 import re
 
+class Cookie(object):
+
+    def __init__(self):
+        self.name = ""
+        self.value = ""
+        self.domain = ""
+        self.path = ""
+        # todo - add code to handle cookie expiry
+        self.expires = ""
+
+    def parse_str(self, cookie_str):
+        pieces = cookie_str.split(";")
+        pieces.reverse()
+        cookie = pieces.pop()
+        pieces.reverse()
+        (self.name, self.value) = cookie.split("=")
+        for piece in pieces:
+            (key, value) = piece.split("=")
+            if "path" == key:
+                self.path = value
+            elif "Expires" == key:
+                self.expires = value
+
+    def get(self):
+        return "%s=%s" % (self.name, self.value)
+
+class CookieJar(object):
+
+    def __init__(self):
+        self.cookies = []
+
+    def add(self, cookie_str):
+        new_cookie = Cookie()
+        new_cookie.parse_str(cookie_str)
+        self.cookies.append(new_cookie)
+
+    def get(self):
+        if self.cookies:
+            cookies_str = "Cookie: "
+            cookies_str_a = []
+            for cookie in self.cookies:
+                cookies_str_a.append(cookie.get())
+            cookies_str += "; ".join(cookies_str_a)
+            return cookies_str
+        else:
+            return None
+
 class WebClient(protocol.Protocol):
 
-    def __init__(self, factory):
+    def __init__(self, factory, verb="GET", url="/index.php", conn_id=None, authing=False):
         self.parser = HttpParser()
         self.factory = factory
-        self.verb = self.factory.get_verb()
+        self.verb = verb
+        self.url = url
+        self.conn_id = conn_id
         self.job_id = self.factory.get_job_id()
-        if "POST" in self.verb:
+        self.authing = authing
+        headers = self.factory.get_headers()
+        cookies = self.factory.get_cookies()
+        if cookies:
+            headers += cookies
+        if self.authing:
+            data = self.factory.get_authdata()
+            header = self.prep_data(data)
+            headers += header
+            self.request = self.no_unicode("%s %s HTTP/1.0\r\n%s\r\n%s\r\n\r\n" %
+                                           (self.verb, self.url, headers, data))
+        elif "POST" in self.verb:
             data = self.factory.get_postdata()
-            headers = self.factory.get_headers()
-            length = len(data)
-            headers += "Content-Length: %s\r\n" % str(length)
-            self.request = self.no_unicode("%s %s HTTP/1.0\r\n%s\r\n%s\r\n\r\n" % \
-                           (self.verb, self.factory.get_url(), headers, data))
+            header = self.prep_data(data)
+            headers += header
+            self.request = self.no_unicode("%s %s HTTP/1.0\r\n%s\r\n%s\r\n\r\n" %
+                           (self.verb, self.url, headers, data))
         else:
-            self.request = self.no_unicode("%s %s HTTP/1.0\r\n%s\r\n\r\n" % \
-                       (self.verb, self.factory.get_url(), self.factory.get_headers()))
+            self.request = self.no_unicode("%s %s HTTP/1.0\r\n%s\r\n\r\n" %
+                       (self.verb, self.url, headers))
         self.recv = ""
         self.body = ""
+        # We don't wait forever...
         reactor.callLater(self.factory.get_timeout(), self.TimedOut)
+
+    def prep_data(self, data):
+        length = len(data)
+        header = "Content-Length: %s\r\n" % str(length)
+        return header
 
     def no_unicode(self, text):
         #sys.stderr.write("\nJob %s: Converting %s" % (self.job_id, text))
@@ -39,8 +104,8 @@ class WebClient(protocol.Protocol):
             return text
 
     def TimedOut(self):
-        self.factory.add_fail("timeout")
         self.transport.loseConnection()
+        self.factory.add_fail("timeout")
 
     def connectionMade(self):
         if self.job_id:
@@ -59,21 +124,33 @@ class WebClient(protocol.Protocol):
         #sys.stderr.write("Received this response: \n\t%s\n" % self.recv)
         #sys.stderr.write(line)
         if self.factory.get_debug():
-            sys.stderr.write( "Job %s: ConnID %s: Received:\n %s" % (self.job_id, self.factory.get_conn_id(), self.recv))
+            sys.stderr.write( "Job %s: ConnID %s: Received:\n %s\n" % (self.job_id, self.factory.get_conn_id(), self.recv))
         self.parser.execute(data, data_len)
         #sys.stderr.write(line)
         #sys.stderr.write("Received this body: \n\t%s\n" % self.parser.recv_body())
         #sys.stderr.write(line)
         if self.parser.is_headers_complete():
+            status = self.parser.get_status_code()
+            sys.stderr.write("Job %s:   Returned status %s\n" % (self.job_id, status))
+            if self.authing:
+                if status != 302:
+                    raise Exception("Job %s: Failed authentication\n" % (self.job_id))
+            #if self.factory.get_debug():
+            if self.conn_id:
+                conn_id = self.conn_id
+            else:
+                conn_id = self.factory.get_conn_id()
             headers = self.parser.get_headers()
+            sys.stderr.write( "Job %s: ConnID %s: HEADER COMPLETE!\n\t%s\n\n" % (self.job_id, conn_id, headers))
             if "Location" in headers:
                 location = headers["Location"]
+            if "Set-Cookie" in headers:
+                self.factory.set_cookie(headers["Set-Cookie"])
             self.factory.set_server_headers(self.parser.get_headers())
             #if "POST" in self.verb:
             #    self.transport.loseConnection()
         self.factory.proc_body(self.parser.recv_body())
         if self.parser.is_partial_body():
-            sys.stderr.write( "Job %s: ConnID %s: HEADER COMPLETE!\n" % (self.job_id, self.factory.get_conn_id()))
             self.body += self.parser.recv_body()
         # TODO - find a way to deal with this, SBE jobs currently don't trigger this check, but we need it for health checks
         if self.parser.is_message_complete():
@@ -95,14 +172,21 @@ class WebCoreFactory(GenCoreFactory):
         self.headers = ""
         self.body = ""
         self.conn_id = 0
-        self.cookie_re = re.compile("Set-cookie: (.*)")
+        self.cj = CookieJar()
         self.data = ""
         self.verb = "GET"
         self.postdata = ""
+        self.authdata = ""
         self.url = None
 
     def get_postdata(self):
         return self.postdata
+
+    def set_cookie(self, cookie_str):
+        self.cj.add(cookie_str)
+
+    def get_cookies(self):
+        return self.cj.get()
 
     def get_verb(self):
        return self.verb
@@ -157,6 +241,11 @@ class JobFactory(WebCoreFactory):
         else:
             raise Exception("Job %s: Unknown operation %s\n" % (self.job_id, op))
 
+    def buildProtocol(self, addr):
+        self.addr = addr
+        self.start = time.time()
+        return WebClient(self, verb=self.verb, url=self.url)
+
     def clientConnectionFailed(self, connector, reason):
         if self.params.debug:
             if "put" in self.op:
@@ -194,16 +283,104 @@ class JobFactory(WebCoreFactory):
 
 class WebServiceCheckFactory(WebCoreFactory):
 
-    def __init__(self, params, job, service, url="/index.html"):
+    def __init__(self, params, job, service):
         WebCoreFactory.__init__(self)
         self.job = job
         self.params = params
+        self.debug = self.params.get_debug()
         self.service = service
-        self.url = url
         self.headers = self.service.get_headers()
         self.ip = job.get_ip()
         self.port = self.service.get_port()
         self.timeout = self.params.get_timeout()
+        self.conns_done = 0
+        self.contents = self.service.get_contents()
+        self.auth_data = ""
+        self.authenticated = False
+        self.authenticating = False
+        self.checking_contents = False
+
+    def get_authdata(self):
+        auth_type = self.service.get_auth_type()
+        username = self.service.get_username()
+        password = self.service.get_password()
+        username_field = self.service.get_username_field()
+        password_field = self.service.get_password_field()
+        if auth_type == "zerocms":
+            # zcms auth format
+            # email=test%40delta.net&password=password&action=Login
+            self.auth_data = "%s=%s&%s=%s&action=Login" % \
+                             (username_field, username, password_field, password)
+            sys.stderr.write("Job %s: authdata %s\n" % (self.get_job_id(), self.auth_data))
+        else:
+            raise Exception("Job %s: Unsupported Authtype!" % auth_type)
+        return self.auth_data
+
+    def buildProtocol(self, addr):
+        self.addr = addr
+        self.start = time.time()
+        if self.authenticating:
+            # This isn't technically true, but we're close enough, we just needed to carry state to the WebClient() instance
+            self.authenticating = False
+            return WebClient(self, verb="POST", url=self.service.get_login_url(), authing=True)
+        elif self.checking_contents:
+            this_conn = self.contents[self.conns_done]
+            self.conns_done += 1
+            return WebClient(self, verb="GET", url=this_conn.get_url(), conn_id=self.conns_done)
+        else:
+            return WebClient(self, verb="GET")
+
+    def authenticate(self):
+        if self.service.has_auth():
+            self.authenticating = True
+            connector = reactor.connectTCP(self.job.get_ip(), self.service.get_port(), self, self.params.get_timeout())
+            deferred = self.get_deferred(connector)
+            deferred.addCallback(self.auth_pass)
+            deferred.addErrback(self.auth_fail)
+        else:
+            self.check_contents()
+
+    def auth_pass(self, result):
+        sys.stdout.write("Job %s: Successfully authenticated against %s: %s" % (self.get_job_id(), self.addr, result))
+        self.service.pass_auth()
+        self.check_contents()
+
+    def auth_fail(self, failure):
+        sys.stdout.write("Job %s: Successfully authenticated against %s: %s" % (self.get_job_id(), self.addr, failure))
+        self.service.fail_auth()
+        self.check_contents()
+
+    def check_content(self, content):
+        connector = reactor.connectTCP(self.job.get_ip(), self.service.get_port(), self, self.params.get_timeout())
+        deferred = self.get_deferred(connector)
+        deferred.addCallback(self.content_pass, content)
+        deferred.addErrback(self.content_fail, content)
+
+    def check_contents(self):
+        if self.authenticating:
+            # We can't do anything until the authentication buildProtocol is done...
+            reactor.callLater(1, self.check_contents)
+        else:
+            # Why wait?  So we can collect cookies.  Otherwise, all requests go out instantly
+            wait_for = 5
+            waiting = 0
+            self.checking_contents = True
+            for content in self.service.get_contents():
+                waiting += wait_for
+                reactor.callLater(waiting, self.check_content, content)
+
+    def content_pass(self, result, content):
+        content.success()
+        self.service.pass_conn()
+        sys.stdout.write("Job %s: Finished content check with result %s:  %s/%s | %s\n" % \
+                         (self.job.get_job_id(), result, self.service.get_port(), self.service.get_proto(),
+                          self.content.get_url))
+
+    def content_fail(self, failure, content):
+        content.fail(failure)
+        sys.stdout.write("Job %s: Finished content check with result %s:  %s/%s | %s\n" % \
+                         (self.job.get_job_id(), failure, self.service.get_port(), self.service.get_proto(),
+                          self.content.get_url))
 
     def add_fail(self, reason):
         if "timeout" in reason:
@@ -228,7 +405,7 @@ class WebServiceCheckFactory(WebCoreFactory):
         if self.start:
             conn_time = self.end - self.start
         else:
-            self.service.timeout(conn_time, self.data)
+            self.service.timeout(self.data)
             return
         if self.status:
             self.service.add_status(self.status)
@@ -255,68 +432,6 @@ class WebServiceCheckFactory(WebCoreFactory):
             self.service.pass_conn()
             self.deferreds[connector].callback(self.job.get_job_id())
 
-class WebContentCheckFactory(WebCoreFactory):
-
-    def __init__(self, params, job, service, content):
-        WebCoreFactory.__init__(self)
-        self.job = job
-        self.params = params
-        self.service = service
-        self.content = content
-        self.url = self.content.get_url()
-        self.headers = self.service.get_headers()
-        self.ip = job.get_ip()
-        self.port = self.service.get_port()
-        self.timeout = self.params.get_timeout()
-
-    def get_job_id(self):
-        return self.job.get_job_id()
-
-    def add_fail(self, reason):
-        if "timeout" in reason:
-            self.content.timeout("%s\r\n%s" % (self.get_server_headers(), self.body))
-        else:
-            self.content.fail_conn(reason, "%s\r\n%s" % (self.get_server_headers(), self.body))
-
-    def clientConnectionFailed(self, connector, reason):
-        # TODO - implement handling of failure to connect.  Should it retry?
-        self.end = time.time()
-        if self.params.debug:
-            sys.stderr.write( "Job %s: clientConnectionFailed\t" % self.job.get_job_id())
-            sys.stderr.write( "given reason: %s\t" % reason)
-            sys.stderr.write( "self.reason: %s\t" % self.reason)
-            sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
-        conn_time = None
-        if self.start:
-            conn_time = self.end - self.start
-        else:
-            self.content.timeout(conn_time, self.data)
-            return
-        if self.status:
-            self.content.add_status(self.status)
-        self.content.fail_conn(reason.getErrorMessage(), self.data)
-
-    def clientConnectionLost(self, connector, reason):
-        self.end = time.time()
-        if self.params.debug:
-            sys.stderr.write( "Job %s: clientConnectionLost\t" % self.job.get_job_id())
-            sys.stderr.write( "given reason: %s\t" % reason)
-            sys.stderr.write( "self.reason: %s\t" % self.reason)
-            sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
-        conn_time = self.end - self.start
-        # TODO - check the content for match against what was given in the JSON job
-        #if self.data:
-            #self.content.set_data(self.data)
-        if self.fail and self.reason:
-            self.content.fail("%s %s" % (self.reason, self.data))
-        elif self.fail and not self.reason:
-            self.content.fail("%s %s" % (reason.getErrorMessage(), self.data))
-        elif "non-clean" in reason.getErrorMessage():
-            self.content.fail("Non clean %s" % self.data)
-        else:
-            self.content.success()
-            self.deferreds[connector].callback(self.job.get_job_id())
-
 if __name__ == "__main__":
     from twisted.python import log
     from DNSclient import DNSclient
@@ -328,12 +443,14 @@ if __name__ == "__main__":
 
     def check_web(result, params, job):
         print "Got %s %s %s" % (result, params, job)
+        check_web2(params, job)
+
+    def check_web2(params, job):
         print "Checking services for %s" % job.get_ip()
         for service in job.get_services():
             factory = WebServiceCheckFactory(params, job, service)
-            deferred = factory.get_deferred()
-            deferred.addCallback(post_job)
-            reactor.connectTCP(job.get_ip(), service.get_port(), factory, params.get_timeout())
+            job.set_factory(factory)
+            factory.authenticate()
 
     def dns_fail(failure, job):
         jobid = job.get_job_id()
@@ -363,11 +480,21 @@ if __name__ == "__main__":
 
     log.startLogging(open('log/webtest.log', 'w'))
     jobs = Jobs()
+    jobfile = open("test_webjob.txt")
     sys.stderr.write( "Testing %s\n" % sys.argv[0])
     params = Parameters()
-    factory = JobFactory(params, jobs, "get")
-    reactor.connectTCP(params.get_sb_ip(), params.get_sb_port(), factory, params.get_timeout())
-    reactor.callLater(5, check_job, params, jobs)
+    fetchjob = False
+    if fetchjob:
+        factory = JobFactory(params, jobs, "get")
+        reactor.connectTCP(params.get_sb_ip(), params.get_sb_port(), factory, params.get_timeout())
+        reactor.callLater(5, check_job, params, jobs)
+    else:
+        import json
+        jobs_raw = json.load(jobfile)
+        for job in jobs_raw:
+            jobs.add(json.dumps(job))
+        job = jobs.get_job()
+        check_web2(params, job)
     reactor.callLater(30, reactor.stop)
     reactor.run()
     print "Finished normally"

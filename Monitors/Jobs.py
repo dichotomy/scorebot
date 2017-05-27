@@ -317,18 +317,27 @@ class Service(object):
         else:
             return False
 
-    def get_login_url(self):
-        return self.json["auth"]["login_url"]
+    def get_auth_type(self, index=0):
+        if self.json["auth"]:
+            return self.json["auth"][index]["auth_type"]
+        else:
+            return None
+
+    def get_login_url(self, index=0):
+        if self.json["auth"]:
+            return self.json["auth"][index]["login_url"]
+        else:
+            return None
 
     def get_username(self, index=0):
         if self.json["auth"]:
-            self.json["auth"][index]["username"]
+            return self.json["auth"][index]["username"]
         else:
             return None
 
     def get_username_field(self, index=0):
         if self.json["auth"]:
-            self.json["auth"][index]["username_field"]
+            return self.json["auth"][index]["username_field"]
         else:
             return None
 
@@ -354,10 +363,10 @@ class Service(object):
     def fail_conn(self, failure, data=None):
         self.json["connect"] = failure
 
-    def pass_login(self, index=0):
+    def pass_auth(self, index=0):
         self.json["auth"][index]["login"] = "pass"
 
-    def fail_login(self, index=0):
+    def fail_auth(self, index=0):
         self.json["auth"][index]["login"] = "fail"
 
     def set_data(self, data):

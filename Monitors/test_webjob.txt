@@ -1,0 +1,52 @@
+[
+    {
+        "status": "job",
+        "game_id": 1,
+        "model": "scorebot.job",
+        "fields": {
+            "job_duration": 60,
+            "job_host": {
+                "ping_lost": 0,
+                "services": [
+                    {
+                        "protocol": "tcp",
+                        "auth": [{
+                            "login_url": "/zero_transact_user.php",
+                            "username_field": "email",
+                            "username": "test@delta.net",
+                            "password_field": "password",
+                            "auth_type": "zerocms",
+                            "password": "password1",
+                            "login": ""
+                        }],
+                        "port": 80,
+                        "content": [
+                        {   "url": "/index.php",
+                            "data": "Gold team scoring file, do not touch!",
+                            "connect": "unknown", "check": "unknown"
+                        },
+                        {   "url": "/index2.php",
+                            "data": "Gold team scoring file, do not touch!",
+                            "connect": "unknown", "check": "unknown"
+                        },
+                        {   "url": "/zero_view_article.php?article_id=2",
+                            "data": "Gold team scoring file, do not touch!",
+                            "connect": "unknown", "check": "unknown"
+                        }
+                        ],
+                        "application": "web",
+                        "connect": "unknown",
+                        "id": 41
+                    }
+                ],
+                "ping_received": 0,
+                "ip_address": "10.100.104.130",
+                "fqdn": "zcms.delta.net"
+            },
+            "job_dns": [
+                "10.100.104.60"
+            ]
+        },
+        "pk": 5893
+    }
+]

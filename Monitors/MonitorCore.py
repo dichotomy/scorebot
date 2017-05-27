@@ -3,7 +3,7 @@
 from twisted.internet import reactor, protocol, ssl
 from twisted.python import log
 from http_parser.pyparser import HttpParser
-from WebClient import WebContentCheckFactory, WebServiceCheckFactory, JobFactory
+from WebClient import WebServiceCheckFactory, JobFactory
 from GenSocket import GenCheckFactory
 from DNSclient import DNSclient
 from Pingclient import PingProtocol
@@ -142,10 +142,7 @@ class MonitorCore(object):
                 if service.get_port() == 80:
                     factory = WebServiceCheckFactory(self.params, job, service)
                     job.set_factory(factory)
-                    connector = reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
-                    deferred = factory.get_deferred(connector)
-                    deferred.addCallback(self.web_service_connect_pass, job, service)
-                    deferred.addErrback(self.web_service_connect_fail, job, service)
+                    factory.authenticate()
                 elif service.get_port() == 21:
                     ftpobj = FTP_client(job, service, self.params, self.ftp_fail)
                     ftpobj.run()
@@ -155,9 +152,6 @@ class MonitorCore(object):
                     deferred = factory.get_deferred(connector)
                     deferred.addCallback(self.gen_service_connect_pass, job, service)
                     deferred.addErrback(self.gen_service_connect_fail, job, service)
-                    #jobid = job.get_job_id()
-                    #service.fail_conn("Unknown service %s" % (service.get_port()))
-                    #sys.stderr.write(("Job %s: Unexpected service %s/%s" % (jobid, service.get_port(), service.get_proto())))
             else:
                 # todo - handle the error by reporting the problem with the job in the json
                 # and sending that back with the job report back.
@@ -176,37 +170,6 @@ class MonitorCore(object):
         port = service.get_port()
         jobid = job.get_job_id()
         sys.stderr.write("Job %s:  Service %s/%s failed:\n\t%s\n" % (jobid, proto, port, failure))
-
-    def web_service_connect_pass(self, result, job, service):
-        self.gen_service_connect_pass(result, job, service)
-        #todo - add code to auth if the app is authenticated.  Get the cookie and use
-        # with the subsequent content checks.  Add cookie code to the service object
-        for content in service.get_contents():
-            #factory = WebContentCheckFactory(self.params, job, service, content)
-            factory = job.get_factory()
-            deferred = factory.get_deferred()
-            deferred.addCallback(self.web_content_pass, job, service, content)
-            deferred.addErrback(self.web_content_fail, job, service, content)
-            reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
-
-    def web_service_connect_fail(self, failure, job, service):
-        self.gen_service_connect_fail(failure, job, service)
-
-    def web_content_pass(self, result, job, service, content):
-        # What to do here?
-        job_id = job.get_job_id()
-        port = service.get_port()
-        proto = service.get_proto()
-        url = content.get_url()
-        sys.stdout.write("Finished content check with result %s for job %s:  %s/%s | %s\n" % (result, job_id, port, proto, url))
-
-    def web_content_fail(self, failure, job, service, content):
-        # What to do here?
-        job_id = job.get_job_id()
-        port = service.get_port()
-        proto = service.get_proto()
-        url = content.get_url()
-        sys.stdout.write("Finished content check with result %s for job %s:  %s/%s | %s\n" % (failure, job_id, port, proto, url))
 
 if __name__=="__main__":
     # Testing with an artificial job file
