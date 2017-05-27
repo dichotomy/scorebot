@@ -54,6 +54,8 @@ class GenCoreFactory(protocol.ClientFactory):
         self.addr = None
         self.status = ""
         self.deferreds = {}
+        self.fqdn = ""
+        self.port = 0
 
     def get_deferred(self, key):
         deferred = Deferred()
@@ -92,6 +94,9 @@ class GenCoreFactory(protocol.ClientFactory):
 
     def get_ip(self):
         return self.ip
+
+    def get_fqdn(self):
+        return self.fqdn
 
     def get_port(self):
         return self.port

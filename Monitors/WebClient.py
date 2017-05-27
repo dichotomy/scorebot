@@ -377,6 +377,7 @@ class WebServiceCheckFactory(WebCoreFactory):
                           self.content.get_url))
 
     def content_fail(self, failure, content):
+        print failure
         content.fail(failure)
         sys.stdout.write("Job %s: Finished content check with result %s:  %s/%s | %s\n" % \
                          (self.job.get_job_id(), failure, self.service.get_port(), self.service.get_proto(),
@@ -409,7 +410,7 @@ class WebServiceCheckFactory(WebCoreFactory):
             return
         if self.status:
             self.service.add_status(self.status)
-        self.service.fail_conn(reason.getErrorMessage(), self.data)
+        #self.service.fail_conn(reason.getErrorMessage(), self.data)
         self.deferreds[connector].errback(reason)
 
     def clientConnectionLost(self, connector, reason):
@@ -424,10 +425,13 @@ class WebServiceCheckFactory(WebCoreFactory):
             self.service.set_data(self.data)
         if self.fail and self.reason:
             self.service.fail_conn(self.reason, self.data)
+            self.deferreds[connector].errback(reason)
         elif self.fail and not self.reason:
             self.service.fail_conn(reason.getErrorMessage(), self.data)
+            self.deferreds[connector].errback(reason)
         elif "non-clean" in reason.getErrorMessage():
             self.service.fail_conn("other", self.data)
+            self.deferreds[connector].errback(reason)
         else:
             self.service.pass_conn()
             self.deferreds[connector].callback(self.job.get_job_id())

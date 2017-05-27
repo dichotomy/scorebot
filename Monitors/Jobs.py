@@ -187,6 +187,9 @@ class Job(object):
     def get_hostname(self):
         return self.json["fields"]["job_host"]["fqdn"]
 
+    def get_fqdn(self):
+        return self.json["fields"]["job_host"]["fqdn"]
+
     def set_ip(self, ip_address):
         # Should add code here to sanity check the IP
         self.json["fields"]["job_host"]["ip_address"] = ip_address

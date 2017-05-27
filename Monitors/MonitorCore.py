@@ -8,6 +8,7 @@ from GenSocket import GenCheckFactory
 from DNSclient import DNSclient
 from Pingclient import PingProtocol
 from FTPclient import FTP_client
+from SMTPclient import SMTPFactory
 from twisted.python import log
 import traceback
 import sys
@@ -146,6 +147,10 @@ class MonitorCore(object):
                 elif service.get_port() == 21:
                     ftpobj = FTP_client(job, service, self.params, self.ftp_fail)
                     ftpobj.run()
+                elif service.get_port() == 25:
+                    factory = SMTPFactory(self.params, job, service)
+                    job.set_factory(factory)
+                    factory.check_service()
                 else:
                     factory = GenCheckFactory(self.params, job, service)
                     connector = reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())

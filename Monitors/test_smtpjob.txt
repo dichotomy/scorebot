@@ -1,0 +1,31 @@
+[
+    {
+        "status": "job",
+        "game_id": 1,
+        "model": "scorebot.job",
+        "fields": {
+            "job_duration": 60,
+            "job_host": {
+                "ping_lost": 0,
+                "services": [
+                    {
+                        "protocol": "tcp",
+                        "auth": [],
+                        "port": 25,
+                        "content": [],
+                        "application": "smtp",
+                        "connect": "unknown",
+                        "id": 41
+                    }
+                ],
+                "ping_received": 0,
+                "ip_address": "10.100.104.203",
+                "fqdn": "zcms.delta.net"
+            },
+            "job_dns": [
+                "10.100.104.60"
+            ]
+        },
+        "pk": 5893
+    }
+]
