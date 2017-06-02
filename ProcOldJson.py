@@ -31,6 +31,8 @@ class ProcOldJson(object):
     def get_dns(self, team):
         if team in self.teams:
             return self.json_obj["blueteams"][self.teams.index(team)]["dns"]
+        else:
+            raise Exception("Unknown team %s!" % team)
 
     def get_services(self, team, host):
         if team in self.teams:
