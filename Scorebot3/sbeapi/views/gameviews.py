@@ -5,7 +5,7 @@ from django.db import transaction, IntegrityError
 
 from scorebot.settings import BASE_DIR
 from sbehost.models import Game, GameTeam, GameHost, GameService,\
-    GameCompromise, GameContent, ServiceApplication
+    GameCompromise, GameContent, ServiceApplication, GameTicket
 from scorebot.utils.general import val_auth, get_object_with_id,\
     get_object_by_filter, get_json, save_json_or_error
 import scorebot.utils.log as logger
@@ -372,17 +372,17 @@ class GameViews:
             r = None
             if not ticket_id:
                 filter_obj = {'game_team__game_id': game_id}
-                r = get_object_by_filter(request, GameTicket, filter_obj)
+                r = get_object_by_filter(request, GameTicket, object_filter=filter_obj)
             else:
                 filter_obj = {'pk': ticket_id, 'game_team__game_id': game_id}
-                r = get_object_by_filter(request, GameTicket, filter_obj)
+                r = get_object_by_filter(request, GameTicket, object_filter=filter_obj)
             return r
         elif request.method == 'POST':
             if not ticket_id:
                 return HttpResponseBadRequest('SBE [API]: A ticket ID must be provided!')
 
             filter_obj = {'pk': ticket_id, 'game_team__game_id': game_id}
-            r = get_object_by_filter(request, GameTicket, filter_obj, object_response=False)
+            r = get_object_by_filter(request, GameTicket, object_filter=filter_obj, object_response=False)
             r = r[0].id if r and len(r) > 0 else r
             return save_json_or_error(request, r)
         elif request.method == 'PUT':
@@ -392,7 +392,7 @@ class GameViews:
                 return HttpResponseBadRequest('SBE [API]: A ticket ID must be provided!')
 
             filter_obj = {'pk': ticket_id, 'game_team__game_id': game_id}
-            ticket = get_object_by_filter(request, GameTicket, filter_obj, object_response=False)
+            ticket = get_object_by_filter(request, GameTicket, object_filter=filter_obj, object_response=False)
             if not ticket:
                 return HttpResponseNotFound()
 

@@ -77,7 +77,7 @@ class SMTPFactory(GenCoreFactory):
         sys.stdout.write("Job %s: Successfully checked SMTP connection for %s(%s)\n" % (self.job_id, self.fqdn, self.ip))
 
     def service_fail(self, failure):
-        self.service.pass_conn(failrue)
+        self.service.pass_conn(failure)
         sys.stdout.write("Job %s: Failed check of SMTP connection for %s(%s)\n" % (self.job_id, self.fqdn, self.ip))
 
     def clientConnectionFailed(self, connector, reason):
