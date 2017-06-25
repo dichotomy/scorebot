@@ -374,14 +374,14 @@ class WebServiceCheckFactory(WebCoreFactory):
         self.service.pass_conn()
         sys.stdout.write("Job %s: Finished content check with result %s:  %s/%s | %s\n" % \
                          (self.job.get_job_id(), result, self.service.get_port(), self.service.get_proto(),
-                          self.content.get_url))
+                          content.get_url))
 
     def content_fail(self, failure, content):
         print failure
         content.fail(failure)
         sys.stdout.write("Job %s: Finished content check with result %s:  %s/%s | %s\n" % \
                          (self.job.get_job_id(), failure, self.service.get_port(), self.service.get_proto(),
-                          self.content.get_url))
+                          content.get_url))
 
     def add_fail(self, reason):
         if "timeout" in reason:

@@ -1,0 +1,2 @@
+INSTALLATION INSTRUCTIONS FOR ARCH LINUX
+pacman -S mysql-python

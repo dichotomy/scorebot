@@ -139,7 +139,7 @@ class GenCheckFactory(GenCoreFactory):
         if self.start:
             conn_time = self.end - self.start
         else:
-            self.service.timeout(conn_time, self.data)
+            self.service.timeout(self.data)
             return
         if self.status:
             self.service.add_status(self.status)

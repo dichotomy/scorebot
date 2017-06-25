@@ -1,0 +1,32 @@
+{
+    "host": {
+        "ping_respond": 2,
+        "ping_sent": 4,
+        "services": [
+            {
+                "application": "http",
+                "content": null,
+                "port": 80,
+                "protocol": "tcp",
+                "status": ""
+            },
+            {
+                "application": "ftp",
+                "content": null,
+                "port": 21,
+                "protocol": "tcp",
+                "status": "pass"
+            },
+            {
+                "application": "telnet",
+                "content": {
+                    "status": 1
+                },
+                "port": 23,
+                "protocol": "tcp",
+                "status": "pass"
+            }
+        ]
+    },
+    "id": 15
+}

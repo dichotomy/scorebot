@@ -1,0 +1,32 @@
+{
+    "dns": [
+        "10.10.10.10"
+    ],
+    "host": {
+        "fqdn": "www.alpha.net",
+        "services": [
+            {
+                "application": "http",
+                "content": null,
+                "port": 80,
+                "protocol": "tcp"
+            },
+            {
+                "application": "ftp",
+                "content": null,
+                "port": 21,
+                "protocol": "tcp"
+            },
+            {
+                "application": "telnet",
+                "content": {
+                    "content": "This is some content",
+                    "type": "text"
+                },
+                "port": 23,
+                "protocol": "tcp"
+            }
+        ]
+    },
+    "id": 15
+}
