@@ -14,12 +14,12 @@ class DNSclient(object):
         self.job = job
         self.job_id = self.job.get_job_id()
         self.fqdn = self.job.get_hostname()
-        self.dnssvr = self.job.get_dns()[0]
+        self.dnssvr = self.job.get_dns()
         self.timeout = timeout
 
     def query(self):
         #print "Querying %s for %s" % (self.dnssvr, self.fqdn)
-        sys.stderr.write("Job ID %s: starting DNS for FQDN %s\n" % (self.job_id, self.fqdn))
+        sys.stderr.write("Job %s: starting DNS for FQDN %s using server %s\n" % (self.job_id, self.fqdn, self.dnssvr))
         self.d = self.proto.query((self.dnssvr, 53), [dns.Query(self.fqdn, dns.A)], timeout=self.timeout)
         self.d.addCallback(self.getResults)
         return self.d
@@ -33,6 +33,8 @@ class DNSclient(object):
             sys.stderr.write("Job %s:  DNS lookup for %s gave %s\n" % \
                                 (self.job.get_job_id(), res.answers[0].name, self.job.get_ip()))
         else:
+            self.job.set_ping_sent(0)
+            self.job.set_ping_respond(0)
             raise Exception("No results obtained")
 
     def errorHandler(self, failure):

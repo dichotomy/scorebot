@@ -8,13 +8,15 @@ class Parameters(object):
     def __init__(self):
         self.debug = False
         self.timeout = 90
-        self.sbe_auth = "0987654321"
-        self.sb_ip = "10.200.100.50"
+        #self.sbe_auth = "0987654321"
+        #self.sb_ip = "10.200.100.50"
+        self.sbe_auth = "b56eea46-39f2-41d5-989f-2224d2437f61"
+        self.sb_ip = "10.200.100.110"
         self.sb_port = 80
         #self.sb_ip = "10.200.100.205"
         #self.sb_ip = "172.25.20.211"
         #self.sb_port = 8080
-        self.job_url = "/job/"
+        self.job_url = "/api/job"
         self.reason = ""
         self.headers = {}
         self.headers["Connection"] = "keep-alive"

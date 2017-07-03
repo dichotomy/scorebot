@@ -52,7 +52,6 @@ class GenCoreFactory(protocol.ClientFactory):
         self.debug = False
         self.data = ""
         self.addr = None
-        self.status = ""
         self.deferreds = {}
         self.fqdn = ""
         self.port = 0
@@ -79,9 +78,6 @@ class GenCoreFactory(protocol.ClientFactory):
     def add_fail(self, reason):
         self.reason = reason
         self.fail = True
-
-    def set_status(self, status):
-        self.status = status
 
     def get_conn_id(self):
         return self.conn_id
@@ -141,8 +137,6 @@ class GenCheckFactory(GenCoreFactory):
         else:
             self.service.timeout(self.data)
             return
-        if self.status:
-            self.service.add_status(self.status)
         self.service.fail_conn(reason.getErrorMessage(), self.data)
         self.deferreds[connector].errback(reason)
 

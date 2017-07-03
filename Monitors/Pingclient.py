@@ -33,10 +33,10 @@ class PingProtocol(protocol.ProcessProtocol):
         self.recv = int(self.received_re.search(self.data).group(1))
         self.trans = int(self.transmitted_re.search(self.data).group(1))
         self.lost = self.trans - self.recv
-        self.job.set_ping_recv(self.recv)
-        self.job.set_ping_lost(self.lost)
+        self.job.set_ping_sent(self.trans)
+        self.job.set_ping_respond(self.recv)
         self.ratio = self.recv / self.trans
-        if self.job.set_ping_ratio(self.ratio):
+        if 0 <= self.ratio <= 100:
             self.d.callback(self)
         else:
             self.d.errback()

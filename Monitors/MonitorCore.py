@@ -11,6 +11,7 @@ from FTPclient import FTP_client
 from SMTPclient import SMTPFactory
 from twisted.python import log
 import traceback
+import time
 import sys
 
 class MonitorCore(object):
@@ -78,9 +79,19 @@ class MonitorCore(object):
         deferred.addCallback(self.job_submit_pass, job)
         deferred.addErrback(self.job_submit_fail, job)
 
+    def proc_result(self, result):
+        if len(result) > 300:
+            filename = "sbe/%s.out" % time.strftime("%Y-%m-%d_%H%M%S", time.localtime(time.time()))
+            fileobj = open(filename, "w")
+            fileobj.write(result)
+            fileobj.close()
+            sys.stderr.write("Job %s submitted successfully, results in %s\n" % (job_id, filename))
+        else:
+            sys.stderr.write("Job %s submitted successfully: %s\n" % (job_id, result))
+
     def job_submit_pass(self, result, job):
         job_id = job.get_job_id()
-        sys.stderr.write("Job %s submitted successfully: %s\n" % (job_id, result))
+        self.proc_result(result)
         self.jobs_done.append(job_id)
         self.jobs.submitted_job(job_id)
 
@@ -140,14 +151,14 @@ class MonitorCore(object):
         # Service walk
         for service in job.get_services():
             if "tcp" in service.get_proto():
-                if service.get_port() == 80:
+                if service.get_application() == "http":
                     factory = WebServiceCheckFactory(self.params, job, service)
                     job.set_factory(factory)
                     factory.authenticate()
-                elif service.get_port() == 21:
+                elif service.get_application() == "ftp":
                     ftpobj = FTP_client(job, service, self.params, self.ftp_fail)
                     ftpobj.run()
-                elif service.get_port() == 25:
+                elif service.get_application() == "smtp":
                     factory = SMTPFactory(self.params, job, service)
                     job.set_factory(factory)
                     factory.check_service()
@@ -187,4 +198,5 @@ if __name__=="__main__":
     mon_obj = MonitorCore(params, jobs)
     reactor.callLater(5, mon_obj.get_job)
     reactor.callLater(10, mon_obj.start_job)
+    reactor.callLater(1, mon_obj.finish_jobs)
     reactor.run()

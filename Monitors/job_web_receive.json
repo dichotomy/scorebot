@@ -1,0 +1,86 @@
+{
+    "dns": [
+        "10.10.10.10"
+    ],
+    "host": {
+        "fqdn": "mail.alpha.net",
+        "services": [
+            {
+                "application": "smtp",
+                "content": null,
+                "port": 25,
+                "protocol": "tcp"
+            },
+            {
+                "application": "http",
+                "content": {
+                    "content": {
+                        "auth": {
+                            "password": "pass",
+                            "password_field": "pas",
+                            "url": "/login",
+                            "username": "user",
+                            "username_field": "usr"
+                        },
+                        "urls": [
+                            {
+                                "keywords": [
+                                    "Hello",
+                                    "Wordpress",
+                                    "First"
+                                ],
+                                "size": 990,
+                                "url": "/index.html"
+                            },
+                            {
+                                "keywords": [
+                                    "Hello",
+                                    "Wordpress",
+                                    "First"
+                                ],
+                                "size": 990,
+                                "url": "/index.html"
+                            }
+                        ]
+                    },
+                    "type": "web"
+                },
+                "port": 80,
+                "protocol": "tcp"
+            },
+            {
+                "application": "ftp",
+                "content": {
+                    "content": {
+                        "auth": {
+                            "username": "blueteam",
+                            "password": "scorebot"
+                        },
+                        "files": [
+                            {
+                                "name": "file1.txt",
+                                "size": 16,
+                                "data": "This is a file"
+                            },
+                            {
+                                "name": "file2.txt",
+                                "size": 32,
+                                "data": "This is another file"
+                            }
+                        ],
+                    },
+                    "type": "files"
+                },
+                "port": 21
+                "protocol": "tcp"
+            },
+            {
+                "application": "imap",
+                "content": null,
+                "port": 143,
+                "protocol": "tcp"
+            }
+        ]
+    },
+    "id": 19
+}
