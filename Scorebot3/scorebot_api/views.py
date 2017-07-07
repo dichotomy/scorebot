@@ -253,11 +253,14 @@ class ScorebotAPI:
     @staticmethod
     @csrf_exempt
     @authenticate('__SYS_STORE')
-    def api_purchase(request, team_id):
+    def api_purchase(request, team_id=None):
         client = get_client_ip(request)
         if request.method == 'GET':
             logger.debug('SBE-STORE', 'Store API: Client "%s" is requesting the exchange rate for Team "%d".'
                          % (client, team_id))
+            if team_id is None:
+                logger.warning('SBE-STORE', 'Store API: Client "%s" attempted to use Null Team ID!' % client)
+                return HttpResponseNotFound('{"message": "SBE API: Team could not be found!"}')
             try:
                 team = GameTeam.objects.get(store_id=int(team_id), game__status=1)
             except ValueError:
