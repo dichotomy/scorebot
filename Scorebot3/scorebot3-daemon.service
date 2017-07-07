@@ -1,0 +1,15 @@
+[Unit]
+Description=Scorebot3 Daemon Service
+After=syslog.target httpd.service mysqld.service
+Wants=network-online.target httpd.service mysqld.service
+
+[Service]
+Type=simple
+PrivateTmp=true
+ExecStart=/opt/scorebot/3.2beta/daemon
+KillSignal=SIGINT
+ProtectSystem=true
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

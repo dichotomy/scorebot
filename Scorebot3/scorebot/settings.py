@@ -1,12 +1,24 @@
 import os
+import scorebot.utils.logger
 
-from scorebot.utils.log import init_logger
 
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SECRET_KEY = 'j0pu^g6cpfv^dzxjmts+elxr#*ufa8(t@b!k6d^ei8*#eq8@z%'
 DEBUG = True
+USE_TZ = True
+USE_I18N = True
+USE_L10N = True
+TIME_ZONE = 'UTC'
+APPEND_SLASH = False
 ALLOWED_HOSTS = ['*']
+LANGUAGE_CODE = 'en-us'
+STATIC_URL = '/static/'
+SBE_VERSION = 'v3.1beta'
+ROOT_URLCONF = 'scorebot.urls'
+LOG_FILE = '/tmp/scorebot.log' # os.path.join(BASE_DIR, 'scorebot.log')
+WSGI_APPLICATION = 'scorebot.wsgi.application'
+SECRET_KEY = 'mvn+$y(2lz%!nga3h@p7jf*zsrop^(ojp1)=mdn1gz+im-c%re'
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PLUGIN_DIR = os.path.join(BASE_DIR, 'plugins')
+DAEMON_DIR = os.path.join(BASE_DIR, 'scorebot', 'utils', 'daemons')
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -14,26 +26,24 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'sbeapi',
-    'sbegame',
-    'sbehost',
-    'sbehistory',
+    'scorebot_core',
+    'scorebot_grid',
+    'scorebot_game',
+    'scorebot_api',
 ]
-MIDDLEWARE_CLASSES = [
+MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-ROOT_URLCONF = 'scorebot.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'scorebot_html')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -45,71 +55,20 @@ TEMPLATES = [
         },
     },
 ]
-WSGI_APPLICATION = 'scorebot.wsgi.application'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'scorebotv3',
-        'HOST': 'localhost',
-        'USER': 'scorebot_user',
+        'NAME': '',
+        'HOST': '',
+        'USER': '',
         'PASSWORD': '',
     }
 }
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_L10N = True
-USE_TZ = True
-STATIC_URL = '/static/'
-"""
-SBEv3 Options
-"""
-SBE_VERSION = 3.02
-PLUGIN_DIR = os.path.join(BASE_DIR, 'plugins')
-init_logger({
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'standard': {
-            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-        },
-    },
-    'handlers': {
-        'default': {
-            'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
-            'formatter': 'standard',
-            'stream': 'ext://sys.stdout'
-        },
-        'default_file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'level': 'DEBUG',
-            'formatter': 'standard',
-            'filename': os.path.join(BASE_DIR, 'logs', 'sbe_log.log'),
-            'maxBytes': 10485760,
-            'backupCount': 20,
-            'encoding': 'utf8'
-        },
-    },
-    'loggers': {
-        '': {
-            'handlers': ['default', 'default_file'],
-            'level': 'DEBUG',
-            'propagate': True
-        }
-    }
-})
+scorebot.utils.logger.init_simple(LOG_FILE, 'DEBUG')

@@ -1,0 +1,29 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scorebot v3: Scoreboard</title>
+    <script type="text/javascript">
+        var sb3_game = {{ game_id }};
+        var sb3_server = window.location.origin;
+    </script>
+    <script type="text/javascript" src="{% static 'scoreboard.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'scoreboard.css' %}" type="text/css" media="screen" />
+</head>
+<body onload="sb3_init()">
+<div id="sb3_main">
+  <header id="sb3_header">
+    <div id="sb3_message"><span id="sb3_message_text" style="left: 0px"></span></div>
+  </header>
+  <div id="sb3_content">
+    <div id="sb3_game">
+      <div id="sb3_game_title"></div>
+      <div id="sb3_teams">
+      </div>
+    </div>
+   </div>
+  <footer id="sb3_footer"></footer>
+</div>
+</body>
+</html>
