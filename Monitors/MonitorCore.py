@@ -120,21 +120,23 @@ class MonitorCore(object):
     def pinghost(self, job):
         pingobj = PingProtocol(job)
         ping_d = pingobj.getDeferred()
-        ping_d.addCallback(self.ping_pass, job)
-        ping_d.addErrback(self.ping_fail, job)
+        ping_d.addCallback(self.ping_pass, job, pingobj)
+        ping_d.addErrback(self.ping_fail, job, pingobj)
         pingobj.ping()
 
-    def ping_pass(self, result, job):
+    def ping_pass(self, result, job, pingobj):
         jobid = job.get_job_id()
         sys.stderr.write("Job %s:  Ping passed. %s\n" % (jobid, result))
         reactor.callLater(1, self.check_services, job)
+        pingobj = None
 
-    def ping_fail(self, failure, job):
+    def ping_fail(self, failure, job, pingobj):
         jobid = job.get_job_id()
         sys.stderr.write("Job %s:  Ping failed. %s\n" % (jobid, failure))
         job = self.jobs.finish_job(job_id, "Ping failed")
         job.set_ip("fail")
         self.post_job(job)
+        pingobj = None
 
     def ftp_fail(self, failure, service, job_id):
         if "530 Login incorrect" in failure:
