@@ -6,8 +6,32 @@ import argparse
 import signal
 import sys
 import json
+import ssl
+from socketserver import TCPServer, StreamRequestHandler, ThreadingMixIn
 from sbeapiclient import Client
 
+
+class SSLBeaconServer(ThreadingMixIn, TCPServer):
+    """SSL TCP Server"""
+
+    def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True):
+        self.certfile = "cert.pem"
+        self.keyfile = "key.pem"
+        self.ssl_version = ssl.PROTOCOL_TLSv1
+        TCPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate)
+
+    def get_request(self):
+        (socket, addr) = TCPServer.get_request(self)
+        socket.do_handshake()
+        return (socket, addr)
+
+    def server_bind(self):
+        TCPServer.server_bind(self)
+        self.socket = ssl.wrap_socket(
+            self.socket, server_side=True, certfile=self.certfile, keyfile=self.keyfile, ssl_version=self.ssl_version,
+            do_handshake_on_connect=False
+        )
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 
 class BeaconHandler(socketserver.BaseRequestHandler):
@@ -31,13 +55,6 @@ class BeaconHandler(socketserver.BaseRequestHandler):
             apiclient.send_beacon(clean_data, self.client_address[0])
         except Exception as e:
             print("Error while sending beacon: ", e)
-
-
-class BeaconServer(socketserver.ThreadingTCPServer):
-
-    def server_bind(self):
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        socketserver.ThreadingTCPServer.server_bind(self)
 
 
 def get_ports(ports, staleports):
@@ -137,7 +154,7 @@ if __name__ == "__main__":
             else:
                 pid = os.fork()
                 if pid == 0:
-                    beaconserver = BeaconServer((HOST, port), BeaconHandler)
+                    beaconserver = SSLBeaconServer((HOST, port), BeaconHandler)
                     beaconserver.serve_forever()
                 else:
                     print("child pid: ", pid)
