@@ -13,7 +13,7 @@ LANGUAGE_CODE = 'en-us'
 STATIC_URL = '/static/'
 SBE_VERSION = 'v3.1beta'
 ROOT_URLCONF = 'scorebot.urls'
-LOG_FILE = '/tmp/scorebot.log' # os.path.join(BASE_DIR, 'scorebot.log')
+LOG_FILE = '/tmp/scorebot.log'
 WSGI_APPLICATION = 'scorebot.wsgi.application'
 SECRET_KEY = 'mvn+$y(2lz%!nga3h@p7jf*zsrop^(ojp1)=mdn1gz+im-c%re'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -55,14 +55,10 @@ TEMPLATES = [
         },
     },
 ]
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'scorebot3',
-        'HOST': 'localhost',
-        'USER': 'scorebot3_user',
-        'PASSWORD': 'U7TQXJdjMCzQVOv4oBYJxxNNhA2PF5CVKGaCQG3OAs+ltdQfFdNpSnKb8Ubvm0mg',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 AUTH_PASSWORD_VALIDATORS = [

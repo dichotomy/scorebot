@@ -77,6 +77,16 @@ class Job(GameModel):
     def finished(self):
         self.delete()
 
+    def is_expired(self, now):
+        if self.finish is not None:
+            return False
+        return (now - self.start).seconds > int(self.monitor.game.get_option('job_timeout'))
+
+    def can_cleanup(self, now):
+        if self.finish is None:
+            return False
+        return (now - self.finish).seconds > int(self.monitor.game.get_option('job_cleanup_time'))
+
     def get_finish_time(self):
         if self.finish is None:
             return self.__len__()
@@ -115,10 +125,7 @@ class Game(GameModel):
                             self.message if self.message is not None else CONST_GAME_GAME_MESSAGE)
 
     def round_score(self, now):
-        if self.scored is None:
-            self.scored = now
-            self.save()
-        if (now - self.scored).seconds > int(self.get_option('round_time')):
+        if (now - self.scored).seconds > int(self.get_option('round_time')) or self.scored is None:
             logger.info('SBE-SCORING', 'Starting round based scoring on Game "%s".' % self.name)
             for team in self.teams.all():
                 for host in team.hosts.all():
@@ -128,7 +135,8 @@ class Game(GameModel):
 
     def get_json_scoreboard(self):
         game_json = {'name': html.escape(self.name), 'message': html.escape(self.get_message()), 'mode': self.mode,
-                     'teams': [t.get_json_scoreboard() for t in self.teams.all()]}
+                     'teams': [t.get_json_scoreboard() for t in self.teams.all()],
+                     'events': []}
         game_json_data = json.dumps(game_json)
         del game_json
         return game_json_data
@@ -153,6 +161,7 @@ class GameTeam(GameModel):
 
     objects = GameTeamManager()
     name = models.CharField('Team Name', max_length=150)
+    subnet = models.CharField('Team Subnet', max_length=90)
     dns = models.ManyToManyField('scorebot_grid.DNS', blank=True)
     offensive = models.BooleanField('Team is Offensive', default=False)
     color = models.IntegerField('Team Color', default=team_create_new_color)
@@ -166,7 +175,7 @@ class GameTeam(GameModel):
     mail_server = models.GenericIPAddressField('SMTP Server', protocol='both', unpack_ipv4=True, null=True, blank=True)
 
     def __str__(self):
-        return '[GameTeam] %s <%s>%s' % (self.name, self.score, ('OF' if self.offensive else ''))
+        return '[GameTeam] %s <%s>%s' % (self.get_canonical_name(), self.score, ('OF' if self.offensive else ''))
 
     def __len__(self):
         return self.score.__len__()
@@ -204,7 +213,8 @@ class GameTeam(GameModel):
                      'tickets': {'open': self.tickets.filter(completed__isnull=True, started__isnull=False).count(),
                                  'closed': self.tickets.filter(completed__isnull=False, started__isnull=False,
                                                                expired=False).count()},
-                     'hosts': [h.get_json_scoreboard() for h in self.hosts.all()], 'beacons': self.get_beacon_count(),
+                     'hosts': [h.get_json_scoreboard() for h in self.hosts.all().filter(hidden=False)],
+                     'beacons': self.get_beacon_count(),
                      'logo': (self.logo.url if self.logo.__bool__() else 'default.png'),
                      'compromises': self.attacker_beacons.all().count()}
         return team_json
@@ -303,6 +313,11 @@ class Compromise(GameModel):
     def round_score(self):
         if self.__bool__():
             self.host.team.score.set_beacons(-1 * self.host.team.game.get_option('beacon_value'))
+
+    def is_expired(self, now):
+        if self.checkin is None:
+            return (now - self.start).seconds > int(self.host.team.game.get_option('beacon_time'))
+        return (now - self.checkin).seconds > int(self.host.team.game.get_option('beacon_time'))
 
 
 class GameMonitor(GameModel):

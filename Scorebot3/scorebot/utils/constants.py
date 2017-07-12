@@ -91,7 +91,6 @@ CONST_GAME_GAME_OPTIONS_DEFAULTS = {
     'flag_captured_multiplier': 300,
     'ticket_severity_level_modify': 0,
 }
-DAEMON_CLEANUP_JOB_EXPIRE_TIME = 300
 CONST_GRID_TICKET_VALUE_DEFAULT = 500
 CONST_GRID_SERVICE_STATUS_CHOICES = (
     (0, 'pass'),

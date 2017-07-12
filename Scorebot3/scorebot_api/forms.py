@@ -45,6 +45,7 @@ class Scorebot2ImportForm(forms.Form):
             blueteam_team = GameTeam()
             blueteam_team.game = game
             blueteam_team.name = blueteam['name']
+            blueteam_team.subnet = blueteam['nets'][0]
             blueteam_team.save()
             blueteam_team.dns.add(dns)
             blueteam_team.save()
@@ -87,7 +88,16 @@ class Scorebot2ImportForm(forms.Form):
             for flag_name, flag_data in blueteam['flags'].items():
                 blue_flag = Flag()
                 blue_flag.name = slugify(flag_name)
-                blue_flag.flag = '%s-%d' % (flag_data['value'], random.randint(0,255))
+                try:
+                    blue_flag_check = blueteam_team.flags.all().get(flag=str(flag_data['value']))
+                except Flag.DoesNotExist:
+                    blue_flag_check = None
+                except Flag.MultipleObjectsReturned:
+                    blue_flag_check = True
+                if blue_flag_check is not None:
+                    blue_flag.flag = '%s-%d' % (flag_data['value'], random.randint(0, 255))
+                else:
+                    blue_flag.flag = flag_data['value']
                 blue_flag.description = flag_data['answer']
                 blue_flag.team = blueteam_team
                 blue_flag.host = random.choice(blueteam_team.hosts.all())

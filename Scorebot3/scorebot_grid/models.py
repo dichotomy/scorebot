@@ -140,6 +140,7 @@ class Host(GridModel):
         verbose_name = 'Host'
         verbose_name_plural = 'Hosts'
 
+    hidden = models.BooleanField('Host Hidden', default=False)
     fqdn = models.CharField('Host Full Domain Name', max_length=150)
     online = models.BooleanField('Host Online', default=False, editable=False)
     name = models.SlugField('Host Display Name', max_length=150, null=True, blank=True)
@@ -170,7 +171,7 @@ class Host(GridModel):
         return self.get_beacon_count() > 0
 
     def get_score(self):
-        if not self.online:
+        if not self.online or self.hidden:
             return 0
         host_score = 0
         for service in self.services.all():
@@ -186,7 +187,7 @@ class Host(GridModel):
         self.save()
 
     def get_json_job(self):
-        if self.team is None:
+        if self.team is None or self.hidden:
             return None
         return {'host': {'fqdn': self.fqdn, 'services': [s.get_json_job() for s in self.services.all()]},
                 'dns': [str(dns.address) for dns in self.team.dns.all()],
@@ -204,7 +205,7 @@ class Host(GridModel):
         return self.name
 
     def get_json_scoreboard(self):
-        if self.team is None:
+        if self.team is None or self.hidden:
             return None
         host_json = {'name': html.escape(self.name), 'id': self.id, 'online': self.online,
                      'services': [s.get_json_scoreboard() for s in self.services.all()]}

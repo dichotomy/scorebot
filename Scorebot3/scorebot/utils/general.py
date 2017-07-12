@@ -164,7 +164,7 @@ def game_team_from_token(request, api_name, json_field, offense=True, beacon=Fal
         return None, None, None, HttpResponseForbidden(content='{"message": "SBE API: Token is not valid (expired)!"}')
     try:
         if beacon:
-            team = GameTeam.objects.get(beacons__in=token)
+            team = GameTeam.objects.get(beacons__in=[token])
         else:
             team = GameTeam.objects.get(token=token)
     except GameTeam.DoesNotExist:
