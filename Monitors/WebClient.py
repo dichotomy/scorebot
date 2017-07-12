@@ -311,7 +311,7 @@ class JobFactory(WebCoreFactory):
                         sys.stderr.write("Adding as job:\n %s\n" % self.body)
                         self.jobs.add(self.body)
                 else:
-                    sys.stderr.write("No job to add!")
+                    sys.stderr.write("No job to add!\n")
 
 class WebServiceCheckFactory(WebCoreFactory):
 
@@ -349,7 +349,6 @@ class WebServiceCheckFactory(WebCoreFactory):
         self.start = time.time()
         if self.authenticating:
             # This isn't technically true, but we're close enough, we just needed to carry state to the WebClient() instance
-            self.authenticating = False
             return WebClient(self, verb="POST", url=self.service.get_login_url(), authing=True)
         elif self.checking_contents:
             this_conn = self.contents[self.conns_done]
@@ -369,10 +368,12 @@ class WebServiceCheckFactory(WebCoreFactory):
             self.check_contents()
 
     def auth_pass(self, result):
+        self.authenticating = False
         sys.stdout.write("Job %s: Successfully authenticated against %s: %s" % (self.get_job_id(), self.addr, result))
         self.check_contents()
 
     def auth_fail(self, failure):
+        self.authenticating = False
         sys.stdout.write("Job %s: Successfully authenticated against %s: %s" % (self.get_job_id(), self.addr, failure))
         self.check_contents()
 
@@ -388,7 +389,7 @@ class WebServiceCheckFactory(WebCoreFactory):
             reactor.callLater(1, self.check_contents)
         else:
             # Why wait?  So we can collect cookies.  Otherwise, all requests go out instantly
-            wait_for = 5
+            wait_for = 0.1
             waiting = 0
             self.checking_contents = True
             for content in self.service.get_contents():

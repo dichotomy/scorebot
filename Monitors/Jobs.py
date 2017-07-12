@@ -20,6 +20,7 @@ class Jobs(object):
         self.done = []
         # List of jobs being submitted
         self.pending_submitted = []
+        self.max_submitted = 100
         # List of jobs submitted
         self.submitted = []
         # The oldest job ID
@@ -64,6 +65,10 @@ class Jobs(object):
 
     def submitted_job(self, job_id):
         if job_id in self.pending_submitted:
+            if len(self.submitted) > self.max_submitted:
+                self.submitted.reverse()
+                self.submitted.pop()
+                self.submitted.reverse()
             self.submitted.append(job_id)
             self.pending_submitted.remove(job_id)
             del(self.jobs[job_id])

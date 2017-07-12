@@ -10,7 +10,7 @@ class Parameters(object):
         self.timeout = 90
         #self.sbe_auth = "0987654321"
         #self.sb_ip = "10.200.100.50"
-        self.sbe_auth = "b56eea46-39f2-41d5-989f-2224d2437f61"
+        self.sbe_auth = "4cd97f10-3b0e-4a77-8d63-fdab403aaa9a"
         self.sb_ip = "10.200.100.110"
         self.sb_port = 80
         #self.sb_ip = "10.200.100.205"
