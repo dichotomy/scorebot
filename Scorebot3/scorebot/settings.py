@@ -59,10 +59,10 @@ TEMPLATES = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'scorebot3',
-        'HOST': 'localhost',
-        'USER': 'scorebot3_user',
-        'PASSWORD': 'U7TQXJdjMCzQVOv4oBYJxxNNhA2PF5CVKGaCQG3OAs+ltdQfFdNpSnKb8Ubvm0mg',
+        'NAME': '',
+        'HOST': '',
+        'USER': '',
+        'PASSWORD': '',
     }
 }
 AUTH_PASSWORD_VALIDATORS = [
