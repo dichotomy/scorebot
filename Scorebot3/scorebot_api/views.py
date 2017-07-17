@@ -180,22 +180,26 @@ class ScorebotAPI:
                                 % (team.get_canonical_name(), host.get_canonical_name()))
                     return HttpResponse(status=201)
             except Host.DoesNotExist:
-                logger.info('SBE-BEACON', 'Beacon API: Host accessed by Team "%s" does not exist! Creating new one!'
-                            % team.get_canonical_name())
-                beacon_host = Host()
-                beacon_host.ip = address_raw
-                beacon_host.fqdn = 'beacon-%d.generated' % random.randint(0, 4096)
-                beacon_host.hidden = True
-                beacon_host.team = victim_team_instance
-                beacon_host.save()
-                beacon = Compromise()
-                beacon.host = beacon_host
-                beacon.token = token
-                beacon.attacker = team
-                beacon.save()
-                logger.info('SBE-CLI', 'Beacon API: Team "%s" added a Beacon to Host "%s"!'
-                            % (team.get_canonical_name(), host.get_canonical_name()))
-                return HttpResponse(status=201)
+                if victim_team_instance is not None:
+                    logger.info('SBE-BEACON', 'Beacon API: Host accessed by Team "%s" does not exist! Creating new one!'
+                                % team.get_canonical_name())
+                    beacon_host = Host()
+                    beacon_host.ip = address_raw
+                    beacon_host.fqdn = 'beacon-%d.generated' % random.randint(0, 4096)
+                    beacon_host.hidden = True
+                    beacon_host.team = victim_team_instance
+                    beacon_host.save()
+                    beacon = Compromise()
+                    beacon.host = beacon_host
+                    beacon.token = token
+                    beacon.attacker = team
+                    beacon.save()
+                    logger.info('SBE-CLI', 'Beacon API: Team "%s" added a Beacon to Host "%s"!'
+                                % (team.get_canonical_name(), host.get_canonical_name()))
+                    return HttpResponse(status=201)
+                logger.warning('SBE-BEACON','Beacon API: Host accessed by Team "%s" does not exist and a '
+                                            'hosting team cannot be found!'% team.get_canonical_name())
+                return HttpResponseNotFound('{"message": "SBE API: Host does not exist!"}')
             except Host.MultipleObjectsReturned:
                 logger.warning('SBE-BEACON',
                                'Beacon API: Host accessed by Team "%s" returned multiple Hosts!'

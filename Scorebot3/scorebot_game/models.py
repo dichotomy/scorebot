@@ -78,14 +78,11 @@ class Job(GameModel):
         self.delete()
 
     def is_expired(self, now):
-        if self.finish is not None:
-            return False
-        return (now - self.start).seconds > int(self.monitor.game.get_option('job_timeout'))
+        return self.finish is not None and (now - self.start).seconds > int(self.monitor.game.get_option('job_timeout'))
 
     def can_cleanup(self, now):
-        if self.finish is None:
-            return False
-        return (now - self.finish).seconds > int(self.monitor.game.get_option('job_cleanup_time'))
+        return self.finish is None and \
+               (now - self.finish).seconds > int(self.monitor.game.get_option('job_cleanup_time'))
 
     def get_finish_time(self):
         if self.finish is None:
@@ -125,7 +122,7 @@ class Game(GameModel):
                             self.message if self.message is not None else CONST_GAME_GAME_MESSAGE)
 
     def round_score(self, now):
-        if (now - self.scored).seconds > int(self.get_option('round_time')) or self.scored is None:
+        if self.scored is None or (now - self.scored).seconds > int(self.get_option('round_time')):
             logger.info('SBE-SCORING', 'Starting round based scoring on Game "%s".' % self.name)
             for team in self.teams.all():
                 for host in team.hosts.all():
@@ -175,7 +172,8 @@ class GameTeam(GameModel):
     mail_server = models.GenericIPAddressField('SMTP Server', protocol='both', unpack_ipv4=True, null=True, blank=True)
 
     def __str__(self):
-        return '[GameTeam] %s <%s>%s' % (self.get_canonical_name(), self.score, ('OF' if self.offensive else ''))
+        return '[GameTeam] %s <%s>%s' % (self.get_canonical_name(), self.score.get_score(),
+                                         ('OF' if self.offensive else ''))
 
     def __len__(self):
         return self.score.__len__()
@@ -220,6 +218,10 @@ class GameTeam(GameModel):
         return team_json
 
     def save(self, *args, **kwargs):
+        if '/' not in self.subnet:
+            self.subnet = '%s/24' % self.subnet
+            logger.debug('SBE-GENERAL', 'Subnet for Team "%s" is not in slash notation, setting to class /24!'
+                         % self.get_canonical_name())
         if self.score is None:
             self.score = score_create_new()
         if self.token is None:

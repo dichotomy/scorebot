@@ -71,7 +71,7 @@ function _sb3_team_draw()
     var _sb3_team_div_pointer = document.getElementById('sb3_team_div_info_' + this.id);
     if(_sb3_team_div_pointer !== null)
     {
-        _sb3_team_div_pointer.innerHTML = this.name + ' - ' + this.score.total;
+        _sb3_team_div_pointer.innerHTML = this.name + ' : ' + this.score.total;
         if(this.offense === true)
         {
             _sb3_team_div_pointer.innerHTML += '<div class="sb3_team_info_off"></div>';

@@ -184,6 +184,7 @@ class Host(GridModel):
             beacon.round_score()
         for flag in self.flags.filter(captured__isnull=True, enabled=True):
             flag.round_score()
+        self.team.score.set_uptime(self.get_score())
         self.save()
 
     def get_json_job(self):
@@ -276,7 +277,6 @@ class Host(GridModel):
                             break
                     except ValueError:
                         pass
-        self.team.score.set_uptime(self.get_score())
         logger.info('SBE-JOB', 'Finished scoring Host "%s" by Job "%d".' % (self.fqdn, job.id))
 
 
