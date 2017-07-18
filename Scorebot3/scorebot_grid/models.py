@@ -182,8 +182,8 @@ class Host(GridModel):
         self.scored = None
         for beacon in self.beacons.filter(finish__isnull=True):
             beacon.round_score()
-        for flag in self.flags.filter(captured__isnull=True, enabled=True):
-            flag.round_score()
+        #for flag in self.flags.filter(captured__isnull=True, enabled=True):
+        #    flag.round_score()
         self.team.score.set_uptime(self.get_score())
         self.save()
 

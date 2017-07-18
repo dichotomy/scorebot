@@ -22,6 +22,7 @@ class AccessTokenForm(forms.ModelForm):
     access_team_read = forms.BooleanField(required=False, label='Team.READ')
     access_game_read = forms.BooleanField(required=False, label='Game.READ')
     access_host_read = forms.BooleanField(required=False, label='Host.READ')
+    access_sys_ticket = forms.BooleanField(required=False, label='SYS.TICKET')
     access_all_update = forms.BooleanField(required=False, label='ALL.UPDATE')
     access_all_create = forms.BooleanField(required=False, label='ALL.CREATE')
     accces_all_delete = forms.BooleanField(required=False, label='ALL.DELETE')

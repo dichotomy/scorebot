@@ -127,6 +127,8 @@ class Game(GameModel):
             for team in self.teams.all():
                 for host in team.hosts.all():
                     host.round_score()
+                for flag in team.flags.filter(enabled=True):
+                    flag.round_score()
             self.scored = now
             self.save()
 
@@ -214,7 +216,7 @@ class GameTeam(GameModel):
                      'hosts': [h.get_json_scoreboard() for h in self.hosts.all().filter(hidden=False)],
                      'beacons': self.get_beacon_count(),
                      'logo': (self.logo.url if self.logo.__bool__() else 'default.png'),
-                     'compromises': self.attacker_beacons.all().count()}
+                     'compromises': self.attacker_beacons.filter(filter_isnull=False).count()}
         return team_json
 
     def save(self, *args, **kwargs):

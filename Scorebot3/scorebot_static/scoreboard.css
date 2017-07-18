@@ -122,7 +122,9 @@ body {
 }
 .sb3_team_status_beacons {
   padding-right: 25px;
-  color: rgb(231,47,23);
+  /*color: rgb(231,47,23);*/
+}
+.sb3_team_div_status_beacons_pwned {
   background: url('img/beacon.png') no-repeat;
 }
 .sb3_team_status_lost {

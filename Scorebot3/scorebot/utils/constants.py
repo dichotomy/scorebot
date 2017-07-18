@@ -15,6 +15,7 @@ CONST_CORE_ACCESS_KEY_LEVELS = {
     '__SYS_FLAG': 6,
     '__SYS_BEACON': 7,
     '__SYS_STORE': 61,
+    '__SYS_TICKET': 62,
     'Monitor.READ': 8,
     'Monitor.UPDATE': 9,
     'Monitor.CREATE': 10,

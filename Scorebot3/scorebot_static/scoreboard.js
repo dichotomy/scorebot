@@ -57,8 +57,7 @@ function _sb3_team_draw()
                 '<div class="sb3_team_health"><table><tr><td class="sb3_team_health_left" id="sb3_team_div_left_' + this.id +
                 '"></td><td class="sb3_team_health_right"><table id="sb3_team_div_health_' + this.id +
                 '" class="sb3_team_health_stats"></table></td></tr></table></div><div class="sb3_team_stats">' +
-                '<table><tr><td class="sb3_team_status_health" id="sb3_team_div_status_health_' + this.id +
-                '">0</td><td class="sb3_team_status_flags" id="sb3_team_div_status_flags_' + this.id +
+                '<table><tr><td class="sb3_team_status_flags" id="sb3_team_div_status_flags_' + this.id +
                 '"></td><td class="sb3_team_status_tickets" id="sb3_team_div_status_tickets_' + this.id +
                 '"></td><td class="sb3_team_status_beacons" id="sb3_team_div_status_beacons_' + this.id +
                 '"></td></tr></table></div>';
@@ -136,18 +135,29 @@ function _sb3_team_draw()
         }
         _sb3_team_div_pointer.innerHTML = _sb3_host_health;
     }
-    _sb3_team_div_pointer = document.getElementById('sb3_team_div_status_health_' + this.id);
-    if(_sb3_team_div_pointer !== null)
-        _sb3_team_div_pointer.innerText = this.score.health;
+    //_sb3_team_div_pointer = document.getElementById('sb3_team_div_status_health_' + this.id);
+    //if(_sb3_team_div_pointer !== null)
+    //    _sb3_team_div_pointer.innerText = this.score.health;
     _sb3_team_div_pointer = document.getElementById('sb3_team_div_status_flags_' + this.id);
     if(_sb3_team_div_pointer !== null)
-        _sb3_team_div_pointer.innerHTML = this.flags.open + ' / <span class="sb3_team_status_lost">' + this.flags.lost + '</span>';
+        if(this.offense)
+        {
+            if(this.flags.lost > 0)
+                _sb3_team_div_pointer.innerHTML = '<span class="sb3_team_status_taken>' + this.flags.captured + '</span> / ' + this.flags.lost;
+            else _sb3_team_div_pointer.innerHTML = this.flags.lost;
+        }
+        else _sb3_team_div_pointer.innerHTML = this.flags.lost;
     _sb3_team_div_pointer = document.getElementById('sb3_team_div_status_tickets_' + this.id);
     if(_sb3_team_div_pointer !== null)
         _sb3_team_div_pointer.innerHTML = this.tickets.open + ' / <span class="sb3_team_status_lost">' + this.tickets.closed + '</span>';
     _sb3_team_div_pointer = document.getElementById('sb3_team_div_status_beacons_' + this.id);
     if(_sb3_team_div_pointer !== null)
-        _sb3_team_div_pointer.innerText = this.beacons;
+    {
+        if(this.beacons > 0) _sb3_team_div_pointer.classList.add('sb3_team_div_status_beacons_pwned');
+        else  _sb3_team_div_pointer.classList.remove('sb3_team_div_status_beacons_pwned');
+        if(this.offense) _sb3_team_div_pointer.innerHTML = this.compromises;
+        else _sb3_team_div_pointer.innerHTML = '';
+    }
 }
 function sb3_update_teams()
 {
@@ -251,11 +261,13 @@ function _sb3_team_update(team_update)
     this.color = team_update['color'];
     this.offense = team_update['offense'];
     this.beacons = parseInt(team_update['beacons']);
+    this.compromises = parseInt(team_update['compromises']);
     this.flags['open'] = parseInt(team_update['flags']['open']);
     this.flags['lost'] = parseInt(team_update['flags']['lost']);
     this.score['total'] = parseInt(team_update['score']['total']);
     this.score['health'] = parseInt(team_update['score']['health']);
     this.tickets['open'] = parseInt(team_update['tickets']['open']);
+    this.flags['captured'] = parseInt(team_update['flags']['captured']);
     this.tickets['closed'] = parseInt(team_update['tickets']['closed']);
     var team_host_int, team_service_int;
     for(team_host_int = 0; team_host_int < team_update['hosts'].length; team_host_int++)
