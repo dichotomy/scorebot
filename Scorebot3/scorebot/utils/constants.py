@@ -15,6 +15,7 @@ CONST_CORE_ACCESS_KEY_LEVELS = {
     '__SYS_FLAG': 6,
     '__SYS_BEACON': 7,
     '__SYS_STORE': 61,
+    '__SYS_TICKET': 62,
     'Monitor.READ': 8,
     'Monitor.UPDATE': 9,
     'Monitor.CREATE': 10,
@@ -91,7 +92,6 @@ CONST_GAME_GAME_OPTIONS_DEFAULTS = {
     'flag_captured_multiplier': 300,
     'ticket_severity_level_modify': 0,
 }
-DAEMON_CLEANUP_JOB_EXPIRE_TIME = 300
 CONST_GRID_TICKET_VALUE_DEFAULT = 500
 CONST_GRID_SERVICE_STATUS_CHOICES = (
     (0, 'pass'),

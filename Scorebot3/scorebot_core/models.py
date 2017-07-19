@@ -68,7 +68,7 @@ class Team(models.Model):
     score = models.OneToOneField('scorebot_core.Score', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
-        return '[Team] %s (%d)' % (self.name, self.score.__len__())
+        return '[Team] %s (%d)' % (self.name, self.score.get_score())
 
     def __len__(self):
         return self.score.__len__()
@@ -140,10 +140,13 @@ class Score(models.Model):
                                                      self.date.strftime('%m/%d/%y;%H:%M.%S'))
 
     def __len__(self):
-        return max(self.flags + self.uptime + self.tickets + self.beacons, 0)
+        return max(self.get_score(), 0)
 
     def __bool__(self):
         return self.__len__() > 0
+
+    def get_score(self):
+        return self.flags + self.uptime + self.tickets + self.beacons
 
     def __lt__(self, other):
         return isinstance(other, Score) and len(other) < self.__len__()
@@ -194,7 +197,7 @@ class Player(models.Model):
     score = models.OneToOneField('scorebot_core.Score', on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
-        return '[Player] %s <%d>' % (self.name, self.score.__len__())
+        return '[Player] %s <%d>' % (self.name, self.score.get_score())
 
     def __len__(self):
         return self.score.__len__()

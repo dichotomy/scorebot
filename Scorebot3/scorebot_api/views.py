@@ -7,6 +7,7 @@ from scorebot_grid.models import Flag, Host
 from django.shortcuts import render, reverse
 from scorebot_api.forms import Scorebot2ImportForm
 from django.views.decorators.csrf import csrf_exempt
+from netaddr import IPNetwork, IPAddress, AddrFormatError
 from scorebot_core.models import Monitor, token_create_new
 from django.contrib.admin.views.decorators import staff_member_required
 from scorebot.utils.general import authenticate, get_client_ip, game_team_from_token
@@ -105,7 +106,7 @@ class ScorebotAPI:
                                % team.get_canonical_name())
                 return HttpResponseNotFound(content='SBE API: Flag not valid!')
             except Flag.MultipleObjectsReturned:
-                logger.warning('SBE-FLAG', 'Flag API: Dlag submitted by Team "%s" returned multiple flags!'
+                logger.warning('SBE-FLAG', 'Flag API: Flag submitted by Team "%s" returned multiple flags!'
                                % team.get_canonical_name())
                 return HttpResponseNotFound(content='SBE API: Flag not valid!')
             if flag.captured is not None:
@@ -135,8 +136,28 @@ class ScorebotAPI:
                                                                 fields=['address'])
             if exception is not None:
                 return exception
+            address_raw = data['address']
             try:
-                host = Host.objects.get(ip=data['address'], team_game__status=1)
+                address = IPAddress(address_raw)
+            except AddrFormatError:
+                logger.warning('SBE-BEACON',
+                               'Beacon API: IP Reported by Team "%s" is invalid!' % team.get_canonical_name())
+                return HttpResponseBadRequest(content='{"message": "SBE API: Invalid IP Address!"}')
+            victim_team_instance = None
+            for victim_team in team.game.teams.all():
+                try:
+                    victim_subnet = IPNetwork(victim_team.subnet)
+                except AddrFormatError:
+                    logger.warning('SBE-BEACON',
+                               'Beacon API: Team "%s" subnet is invalid! Skipping!' % team.get_canonical_name())
+                    continue
+                if address in victim_subnet:
+                    logger.warning('SBE-BEACON', 'Beacon API: Beacon from Team "%s" to Team "%s"\'s subnet!'
+                                   % (team.get_canonical_name(), victim_team.get_canonical_name()))
+                    victim_team_instance = victim_team
+                    break
+            try:
+                host = Host.objects.get(ip=address_raw, team__game__status=1)
                 if host.team.game.id != team.game.id:
                     logger.warning('SBE-BEACON',
                                    'Beacon API: Host accessed by Team "%s" is not in the same game as "%s"!'
@@ -159,9 +180,26 @@ class ScorebotAPI:
                                 % (team.get_canonical_name(), host.get_canonical_name()))
                     return HttpResponse(status=201)
             except Host.DoesNotExist:
-                logger.warning('SBE-BEACON',
-                               'Beacon API: Host accessed by Team "%s" does not exist!' % team.get_canonical_name())
-                return HttpResponseNotFound('SBE API: Host does not exist!')
+                if victim_team_instance is not None:
+                    logger.info('SBE-BEACON', 'Beacon API: Host accessed by Team "%s" does not exist! Creating new one!'
+                                % team.get_canonical_name())
+                    beacon_host = Host()
+                    beacon_host.ip = address_raw
+                    beacon_host.fqdn = 'beacon-%d.generated' % random.randint(0, 4096)
+                    beacon_host.hidden = True
+                    beacon_host.team = victim_team_instance
+                    beacon_host.save()
+                    beacon = Compromise()
+                    beacon.host = beacon_host
+                    beacon.token = token
+                    beacon.attacker = team
+                    beacon.save()
+                    logger.info('SBE-CLI', 'Beacon API: Team "%s" added a Beacon to Host "%s"!'
+                                % (team.get_canonical_name(), host.get_canonical_name()))
+                    return HttpResponse(status=201)
+                logger.warning('SBE-BEACON','Beacon API: Host accessed by Team "%s" does not exist and a '
+                                            'hosting team cannot be found!'% team.get_canonical_name())
+                return HttpResponseNotFound('{"message": "SBE API: Host does not exist!"}')
             except Host.MultipleObjectsReturned:
                 logger.warning('SBE-BEACON',
                                'Beacon API: Host accessed by Team "%s" returned multiple Hosts!'
