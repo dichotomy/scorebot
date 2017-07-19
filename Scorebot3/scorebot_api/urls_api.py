@@ -14,6 +14,8 @@ urlpatterns = [
     url(r'^purchase/$', ScorebotAPI.api_purchase),
     url(r'^beacon/port$', ScorebotAPI.api_register_port),
     url(r'^beacon/port/$', ScorebotAPI.api_register_port),
+    url(r'^tickets$', ScorebotAPI.api_ticket),
+    url(r'^tickets/$', ScorebotAPI.api_ticket),
     url(r'^scoreboard/(?P<game_id>[0-9]+)$', ScorebotAPI.api_scoreboard_json),
     url(r'^scoreboard/(?P<game_id>[0-9]+)/$', ScorebotAPI.api_scoreboard_json),
 ]
