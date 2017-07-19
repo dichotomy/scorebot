@@ -27,6 +27,8 @@ import _mysql
 import time
 import re
 import sys
+import json
+import requests
 from threading import Thread
 from Table import Table
 from Tickets import Ticket
@@ -66,6 +68,15 @@ class TicketManager(Thread):
         self.users_by_id = {}
         self.round_scores = {}
         self.get_users()
+        self.url = "http://10.200.100.110/api/tickets/"
+        self.req = requests.session()
+        self.req.headers['SBE-AUTH'] = "bf086697-5373-496e-b2f0-8464d2b162eb"
+        self.team_apis = {
+             "ALPHA": "bab14508-f15a-4de0-9e02-3a019902f3a7",
+             "Gamma": "0980aef1-a13e-4aa9-9910-4c3fdf7769ed",
+             "Delta": "18bff393-895d-4aa6-8440-92e2f001f5d4",
+             "Epsilon": "3f303b60-730b-45bd-9d9a-0ef5dad35707"
+        }
 
     def run(self):
         """
@@ -139,9 +150,27 @@ class TicketManager(Thread):
             if self.round_scores:
                 sys.stdout.write("Round scores: ")
                 print self.round_scores
+                scores = {}
+                for team in self.round_scores:
+                    if team == "BETA":
+                        continue
+                    uid = self.team_apis[team]
+                    scores[uid] = self.round_scores[team]
+                self.submit(json.dumps(scores))
                 self.round_scores = {}
             # Take a break, you earned it!
             time.sleep(1)
+
+    def submit(self, data):
+        sys.stderr.write("Posting to %s: %s" % (self.url, data))
+        b = self.req.post(self.url, data=data)
+        r = b.content.decode('utf-8')
+        print r
+        #filename = "%s.log" % time.time()
+        #outfile = open(filename, "w")
+        #outfile.write(r)
+        sys.stderr.write("Received status code: " + str(b.status_code))
+        #if r.status_code == 200:
 
     def get_users(self):
         results = self.query(self.get_users_query)

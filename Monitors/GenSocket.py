@@ -55,6 +55,7 @@ class GenCoreFactory(protocol.ClientFactory):
         self.deferreds = {}
         self.fqdn = ""
         self.port = 0
+        self.timeout = 30
 
     def get_deferred(self, key):
         deferred = Deferred()
@@ -112,7 +113,8 @@ class GenCheckFactory(GenCoreFactory):
         self.service = service
         self.ip = job.get_ip()
         self.port = self.service.get_port()
-        self.timeout = self.params.get_timeout()
+        #self.timeout = self.params.get_timeout()
+        self.timeout = self.job.get_timeout()
 
     def add_fail(self, reason):
         if "timeout" in reason:

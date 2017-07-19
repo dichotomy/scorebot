@@ -32,7 +32,7 @@ class Jobs(object):
         self.jobs[self.latest_job_id] = Job(job_json_str, self.debug)
         self.jobs[self.latest_job_id].set_job_id(self.latest_job_id)
         self.todo.append(self.latest_job_id)
-        sys.stderr.write("Job %s added\n" % self.latest_job_id)
+        sys.stderr.write("Job %s added: %s\n" % (self.latest_job_id, job_json_str))
         return self.latest_job_id
 
     def find_done_jobs(self):
@@ -181,6 +181,8 @@ class Job(object):
     def get_result_json_str(self):
         #TODO - should this call self.get_json()?
         sys.stderr.write("Job %s: Converting to result JSON\n" % self.job_id)
+        #sys.stderr.write("Job %s: Before: %s\n" % (self.job_id, self.get_json_str()))
+        sys.stderr.write("Job %s: %s\n" % (self.job_id, json.dumps(self.get_result_json())))
         return json.dumps(self.get_result_json())
 
     def get_dns(self):
@@ -502,7 +504,7 @@ class Service(object):
         if "status" in self.json:
             result_json["status"] = self.json["status"]
         else:
-            result_json["status"] = "invalid"
+            result_json["status"] = "timeout"
         total = 0
         num_contents = 0
         if self.contents:
@@ -611,6 +613,17 @@ class Content(object):
         self.headers["Accept"] = "*/*"
         self.current_index = 0
         self.max_index = 0
+
+    def verify_page(self, page):
+        if len(page)==self.json["size"]:
+            for keyword in self.json["keywords"]:
+                if keyword in page:
+                    continue
+                else:
+                    self.invalid()
+        else:
+            self.invalid()
+        self.success()
 
     def get_size(self):
         if "size" in self.json:

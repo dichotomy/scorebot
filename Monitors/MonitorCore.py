@@ -79,26 +79,33 @@ class MonitorCore(object):
         deferred.addCallback(self.job_submit_pass, job)
         deferred.addErrback(self.job_submit_fail, job)
 
-    def proc_result(self, result):
+    def proc_result(self, job, result):
+        job_id = job.get_job_id()
+        job_json = job.get_result_json_str()
         if len(result) > 300:
             filename = "sbe/%s.out" % time.strftime("%Y-%m-%d_%H%M%S", time.localtime(time.time()))
             fileobj = open(filename, "w")
             fileobj.write(result)
             fileobj.close()
-            sys.stderr.write("Job %s submitted successfully, results in %s\n" % (job_id, filename))
+            sys.stderr.write("Job %s submitted, SBE response in file %s\n" % (job_id, filename))
         else:
-            sys.stderr.write("Job %s submitted successfully: %s\n" % (job_id, result))
+            sys.stderr.write("Job %s submitted, SBE response: %s\n" % (job_id, result))
+        sys.stderr.write("Job %s: submitted: %s\n" % (job_id, job_json))
 
     def job_submit_pass(self, result, job):
         job_id = job.get_job_id()
-        self.proc_result(result)
+        self.proc_result(job, result)
         self.jobs_done.append(job_id)
         self.jobs.submitted_job(job_id)
 
     def job_submit_fail(self, failure, job):
         job_id = job.get_job_id()
-        sys.stderr.write("Job %s failed due to %s retrying in %s.\n" % (job_id, failure, self.resubmit_interval))
-        reactor.callLater(self.resubmit_interval, self.post_job(job))
+        sys.stderr.write("Job %s failed due to %s \n" % (job_id, failure.getErrorMessage()))
+        if job.get_job_fail():
+            sys.stderr.write("giving up.\n")
+        else:
+            sys.stderr.write("retrying in %s.\n" % self.resubmit_interval)
+            reactor.callLater(self.resubmit_interval, self.post_job(job))
 
     def dns_fail(self, failure, job, dnsobj):
         # Do this if the DNS check failed
@@ -108,14 +115,14 @@ class MonitorCore(object):
         job.set_ip("fail")
         self.post_job(job)
         dnsobj.close()
-        dnsobj = None
+        del dnsobj
 
     def dns_pass(self, result, job, dnsobj):
         jobid = job.get_job_id()
         print "Job %s:  DNS passed: %s" % (jobid, result)
         reactor.callLater(0.1, self.pinghost, job)
         dnsobj.close()
-        dnsobj = None
+        del dnsobj
 
     def pinghost(self, job):
         pingobj = PingProtocol(job)
@@ -128,7 +135,7 @@ class MonitorCore(object):
         jobid = job.get_job_id()
         sys.stderr.write("Job %s:  Ping passed. %s\n" % (jobid, result))
         reactor.callLater(1, self.check_services, job)
-        pingobj = None
+        del pingobj
 
     def ping_fail(self, failure, job, pingobj):
         jobid = job.get_job_id()
@@ -136,7 +143,7 @@ class MonitorCore(object):
         job = self.jobs.finish_job(job_id, "Ping failed")
         job.set_ip("fail")
         self.post_job(job)
-        pingobj = None
+        del pingobj
 
     def ftp_fail(self, failure, service, job_id):
         if "530 Login incorrect" in failure:

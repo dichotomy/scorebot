@@ -65,12 +65,16 @@ class CookieJar(object):
 
 class WebClient(protocol.Protocol):
 
-    def __init__(self, factory, verb="GET", url="/index.php", conn_id=None, authing=False, isjob=False):
+    def __init__(self, factory, verb="GET", url="/index.html", conn=None, conn_id=None, authing=False, isjob=False):
         self.parser = HttpParser()
         self.isjob = isjob
         self.factory = factory
         self.verb = verb
-        self.url = url
+        self.conn = conn
+        if self.conn:
+            self.url = conn.get_url()
+        else:
+            self.url = url
         self.conn_id = conn_id
         self.job_id = self.factory.get_job_id()
         self.authing = authing
@@ -143,8 +147,13 @@ class WebClient(protocol.Protocol):
                 if status != 302:
                     raise Exception("Job %s: Failed authentication\n" % (self.job_id))
             if self.isjob:
+                self.factory.set_code(status)
                 if status == 204:
                     self.transport.loseConnection()
+                    return
+                elif status == 400:
+                    self.transport.loseConnection()
+                    self.factory.set_job_fail()
                     return
             #if self.factory.get_debug():
             if self.conn_id:
@@ -169,6 +178,8 @@ class WebClient(protocol.Protocol):
                 sys.stderr.write("Current self.body: %s\n" % self.body)
         # TODO - find a way to deal with this, SBE jobs currently don't trigger this check, but we need it for health checks
         if self.parser.is_message_complete():
+            if self.conn:
+                self.conn.verify_page(self.body)
             if self.factory.get_debug():
                 sys.stderr.write( "Job %s: ConnID %s: MESSAGE COMPLETE!\n" % (self.job_id, self.factory.get_conn_id()))
                 sys.stderr.write("Job %s: Received this body: %s\n" % (self.job_id, self.body))
@@ -250,6 +261,8 @@ class JobFactory(WebCoreFactory):
         self.debug = self.params.get_debug()
         self.op = op
         self.job = job
+        self.code = None
+        self.job_fail = False
         if "get" in self.op:
             self.verb = "GET"
         elif "put" in self.op:
@@ -259,6 +272,15 @@ class JobFactory(WebCoreFactory):
             sys.stderr.write("Job %s: Starting Job Post, sending JSON: %s\n" % (self.job.get_job_id(), self.postdata))
         else:
             raise Exception("Job %s: Unknown operation %s\n" % (self.job_id, op))
+
+    def set_code(self, code):
+        self.code = code
+
+    def set_job_fail(self):
+        self.job_fail = True
+
+    def get_job_fail(self):
+        return self.job_fail
 
     def buildProtocol(self, addr):
         self.addr = addr
@@ -275,31 +297,37 @@ class JobFactory(WebCoreFactory):
             sys.stderr.write( "self.reason: %s\t" % self.reason)
             if self.debug:
                 sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
-        self.params.fail_conn("Job %s connection failed\n" % (self.op), reason.getErrorMessage(), self.get_server_headers())
+        self.params.fail_conn("Job %s connection failed\n" %
+                              (self.op), reason.getErrorMessage(), self.get_server_headers())
+        self.deferreds[connector].errback(reason)
 
     def clientConnectionLost(self, connector, reason):
         if "put" in self.op:
-            sys.stderr.write( "Job %s: JobFactory Put clientConnectionLost\n" % self.job.get_job_id())
+            job_id = self.job.get_job_id()
+            if self.code == 202:
+                self.deferreds[connector].callback(reason)
+            #elif self.code == 400:
+                #self.deferreds[connector].errback(reason)
+            else:
+                self.deferreds[connector].errback(reason)
+            sys.stderr.write( "Job %s: JobFactory Put clientConnectionLost\n" % job_id)
             # Todo - restore code that checks to see if the job was successfully submitted.  It was removed from SBE
             return
         elif "get" in self.op:
             sys.stderr.write( "Job GET request clientConnectionLost\n")
-        else:
-            raise Exception("Unknown op: %s\n" % self.op)
-        if self.debug:
-            sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
-        if self.fail:
-            sys.stderr.write("Fail bit set\n")
-            sys.stderr.write( "given reason: %s\t" % reason)
-            sys.stderr.write( "self.reason: %s\t" % self.reason)
-            sys.stderr.write("error message:\n%s\n\n" % reason.getErrorMessage())
-        else:
-            #Connection closed cleanly, process the results
-            #sys.stderr.write("Adding job %s\n" % self.body)
-            # TODO - handle json returned on successful job completion
-            #if "completed" in self.body:
+            if self.debug:
+                sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
+            if self.fail:
+                sys.stderr.write("Fail bit set\n")
+                sys.stderr.write( "given reason: %s\t" % reason)
+                sys.stderr.write( "self.reason: %s\t" % self.reason)
+                sys.stderr.write("error message:\n%s\n\n" % reason.getErrorMessage())
+            else:
+                #Connection closed cleanly, process the results
+                #sys.stderr.write("Adding job %s\n" % self.body)
+                #if "completed" in self.body:
                 #self.deferreds[connector].callback(self.body)
-            #else:
+                #else:
                 if self.body:
                     if "<!DOCTYPE html>" in self.body:
                         filename = "sbe/%s.out" % time.strftime("%Y-%m-%d_%H%M%S", time.localtime(time.time()))
@@ -312,6 +340,8 @@ class JobFactory(WebCoreFactory):
                         self.jobs.add(self.body)
                 else:
                     sys.stderr.write("No job to add!\n")
+        else:
+            raise Exception("Unknown op: %s\n" % self.op)
 
 class WebServiceCheckFactory(WebCoreFactory):
 
@@ -331,6 +361,7 @@ class WebServiceCheckFactory(WebCoreFactory):
         self.authenticated = False
         self.authenticating = False
         self.checking_contents = False
+        self.status = None
 
     def get_authdata(self):
         username = self.service.get_username()
@@ -353,7 +384,7 @@ class WebServiceCheckFactory(WebCoreFactory):
         elif self.checking_contents:
             this_conn = self.contents[self.conns_done]
             self.conns_done += 1
-            return WebClient(self, verb="GET", url=this_conn.get_url(), conn_id=self.conns_done)
+            return WebClient(self, verb="GET", conn=this_conn, conn_id=self.conns_done)
         else:
             return WebClient(self, verb="GET")
 
@@ -391,10 +422,28 @@ class WebServiceCheckFactory(WebCoreFactory):
             # Why wait?  So we can collect cookies.  Otherwise, all requests go out instantly
             wait_for = 0.1
             waiting = 0
-            self.checking_contents = True
-            for content in self.service.get_contents():
-                waiting += wait_for
-                reactor.callLater(waiting, self.check_content, content)
+            contents = self.service.get_contents()
+            if contents:
+                self.checking_contents = True
+                for content in contents:
+                    waiting += wait_for
+                    reactor.callLater(waiting, self.check_content, content)
+            else:
+                connector = reactor.connectTCP(self.job.get_ip(), self.service.get_port(), self, self.params.get_timeout())
+                deferred = self.get_deferred(connector)
+                deferred.addCallback(self.conn_pass)
+                deferred.addErrback(self.conn_fail)
+
+    def conn_pass(self, result):
+        sys.stdout.write("Job %s: Successfully connected to %s: %s" % (self.get_job_id(), self.addr, result))
+        self.service.pass_conn()
+
+    def conn_fail(self, failure):
+        sys.stdout.write("Job %s: Finished content check with result %s:  %s/%s | %s\n" % \
+                         (self.job.get_job_id(), failure, self.service.get_port(), self.service.get_proto(),
+                          content.get_url))
+        print failure
+        self.service.fail_conn()
 
     def content_pass(self, result, content):
         content.success()
@@ -404,11 +453,11 @@ class WebServiceCheckFactory(WebCoreFactory):
                           content.get_url))
 
     def content_fail(self, failure, content):
-        print failure
         content.fail(failure)
         sys.stdout.write("Job %s: Finished content check with result %s:  %s/%s | %s\n" % \
                          (self.job.get_job_id(), failure, self.service.get_port(), self.service.get_proto(),
                           content.get_url))
+        print failure
 
     def add_fail(self, reason):
         if "timeout" in reason:
@@ -425,10 +474,11 @@ class WebServiceCheckFactory(WebCoreFactory):
 
     def clientConnectionFailed(self, connector, reason):
         self.end = time.time()
-        if self.params.debug:
+        #if self.params.debug:
+        if True:
             sys.stderr.write( "Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
-            sys.stderr.write( "reason %s\t" % reason)
-            sys.stderr.write( "self.reason: %s\t" % self.reason)
+            sys.stderr.write( "reason %s\n" % reason.getErrorMessage())
+            reason.printTraceback()
             sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
         conn_time = None
         if self.start:
@@ -436,16 +486,20 @@ class WebServiceCheckFactory(WebCoreFactory):
         else:
             self.service.timeout(self.data)
             return
-        if self.status:
-            self.service.add_status(self.status)
+        #####
+        # WTF is this?
+        #if self.status:
+        #    self.service.add_status(self.status)
         #self.service.fail_conn(reason.getErrorMessage(), self.data)
+        #####
         self.deferreds[connector].errback(reason)
 
     def clientConnectionLost(self, connector, reason):
         self.end = time.time()
-        if self.params.debug:
+        #if self.params.debug:
+        if True:
             sys.stderr.write( "Job %s: clientConnectionLost\t" % self.job.get_job_id())
-            sys.stderr.write( "given reason: %s\t" % reason)
+            sys.stderr.write( "given reason: %s\t" % reason.getErrorMessage())
             sys.stderr.write( "self.reason: %s\t" % self.reason)
             sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
         conn_time = self.end - self.start
