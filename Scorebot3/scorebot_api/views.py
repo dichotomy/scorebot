@@ -1,5 +1,6 @@
 import json
 import random
+import uuid
 
 from django.utils import timezone
 from scorebot.utils import logger
@@ -8,7 +9,7 @@ from django.shortcuts import render, reverse
 from scorebot_api.forms import Scorebot2ImportForm
 from django.views.decorators.csrf import csrf_exempt
 from netaddr import IPNetwork, IPAddress, AddrFormatError
-from scorebot_core.models import Monitor, token_create_new
+from scorebot_core.models import Monitor, token_create_new, Token
 from django.contrib.admin.views.decorators import staff_member_required
 from scorebot.utils.general import authenticate, get_client_ip, game_team_from_token
 from scorebot_game.models import GameMonitor, Job, Game, GamePort, GameTeam, Compromise, Purchase
@@ -180,31 +181,75 @@ class ScorebotAPI:
                                 % (team.get_canonical_name(), host.get_canonical_name()))
                     return HttpResponse(status=201)
             except Host.DoesNotExist:
-                if victim_team_instance is not None:
-                    logger.info('SBE-BEACON', 'Beacon API: Host accessed by Team "%s" does not exist! Creating new one!'
-                                % team.get_canonical_name())
-                    beacon_host = Host()
-                    beacon_host.ip = address_raw
-                    beacon_host.fqdn = 'beacon-%d.generated' % random.randint(0, 4096)
-                    beacon_host.hidden = True
-                    beacon_host.team = victim_team_instance
-                    beacon_host.save()
-                    beacon = Compromise()
-                    beacon.host = beacon_host
-                    beacon.token = token
-                    beacon.attacker = team
-                    beacon.save()
-                    logger.info('SBE-CLI', 'Beacon API: Team "%s" added a Beacon to Host "%s"!'
-                                % (team.get_canonical_name(), host.get_canonical_name()))
-                    return HttpResponse(status=201)
-                logger.warning('SBE-BEACON','Beacon API: Host accessed by Team "%s" does not exist and a '
-                                            'hosting team cannot be found!'% team.get_canonical_name())
-                return HttpResponseNotFound('{"message": "SBE API: Host does not exist!"}')
+                logger.info('SBE-BEACON', 'Beacon API: Host accessed by Team "%s" does not exist! Creating new one!'
+                            % team.get_canonical_name())
+                beacon_host = Host()
+                beacon_host.ip = address_raw
+                beacon_host.fqdn = 'beacon-%d.generated' % random.randint(0, 4096)
+                beacon_host.hidden = True
+                beacon_host.team = victim_team_instance
+                beacon_host.save()
+                beacon = Compromise()
+                beacon.host = beacon_host
+                beacon.token = token
+                beacon.attacker = team
+                beacon.save()
+                logger.info('SBE-CLI', 'Beacon API: Team "%s" added a Beacon to Host "%s"!'
+                            % (team.get_canonical_name(), host.get_canonical_name()))
+                return HttpResponse(status=201)
             except Host.MultipleObjectsReturned:
                 logger.warning('SBE-BEACON',
                                'Beacon API: Host accessed by Team "%s" returned multiple Hosts!'
                                % team.get_canonical_name())
                 return HttpResponseNotFound('SBE API: Host does not exist!')
+        return HttpResponseBadRequest(content='SBE API: Not a supported method type!')
+
+    @staticmethod
+    @csrf_exempt
+    @authenticate('__SYS_TICKET')
+    def api_ticket(request):
+        api_name = "ticket"
+        client = get_client_ip(request)
+        if request.method == 'POST':
+            try:
+                decoded_data = request.body.decode('UTF-8')
+            except UnicodeDecodeError:
+                logger.warning('SBE-%s' % api_name.upper(), '%s API: Data submitted by Client "%s" is not encoded properly!'
+                               % (api_name, client))
+                return HttpResponseBadRequest(
+                    content='{"message": "SBE API: Incorrect encoding, please use UTF-8!"}')
+            try:
+                json_data = json.loads(decoded_data)
+            except json.decoder.JSONDecodeError:
+                logger.warning('SBE-%s' % api_name.upper(),
+                               '%s API: Data submitted by Client "%s" is not in correct JSON format!' % (api_name, client))
+                return HttpResponseBadRequest(content='{"message": "SBE API: Not in valid JSON format!"} %s ' % decoded_data)
+            for field, value in json_data.items():
+                try:
+                    token = Token.objects.get(uuid=uuid.UUID(field))
+                except ValueError:
+                    logger.warning('SBE-%s' % api_name.upper(),
+                                   '%s API: Token submitted by Client "%s" was not found!' % (api_name, client))
+                    return HttpResponseForbidden(content='{"message": "SBE API: Token is not valid!"}')
+                except Token.DoesNotExist:
+                    logger.warning('SBE-%s' % api_name.upper(),
+                                   '%s API: Token submitted by Client "%s" was not found!' % (api_name, client))
+                    return HttpResponseForbidden(content='{"message": "SBE API: Token is not valid!"}')
+                except Token.MultipleObjectsReturned:
+                    logger.warning('SBE-%s' % api_name.upper(),
+                                   '%s API: Token submitted by Client "%s" was not found!' % (api_name, client))
+                    return HttpResponseForbidden(content='{"message": "SBE API: Token is not valid!"}')
+                if token is None:
+                    logger.warning('SBE-%s' % api_name.upper(),
+                                   '%s API: Token submitted by Client "%s" was not found!' % (api_name, client))
+                    return HttpResponseForbidden(content='{"message": "SBE API: Token is not valid!"}')
+                if not token.__bool__():
+                    logger.warning('SBE-%s' % api_name.upper(),
+                                   '%s API: Token submitted by Client "%s" was expired!' % (api_name, client))
+                    return HttpResponseForbidden(content='{"message": "SBE API: Token is not valid (expired)!"}')
+                team = GameTeam.objects.get(token=token)
+                team.score.set_tickets(value)
+            return HttpResponse(status=200)
         return HttpResponseBadRequest(content='SBE API: Not a supported method type!')
 
     @staticmethod
