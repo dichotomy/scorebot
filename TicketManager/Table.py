@@ -29,8 +29,9 @@ import re
 
 class Table(object):
 
-    def __init__(self, select_query, host="10.150.100.153", user="scorebot", passwd="password", db="sts"):
+    def __init__(self, select_query, name, host="10.150.100.153", user="scorebot", passwd="password", db="sts"):
         self.sets = []
+        self.name = name
         self.select_query = select_query
         self.db = _mysql.connect(host=host, user=user, passwd=passwd,db=db)
         table_name_re = re.compile("from (\w+)")
@@ -58,6 +59,9 @@ class Table(object):
 
     def reset_iter(self):
         self.current_index = 0
+
+    def get_name(self):
+        return self.name
 
     def get_row(self, row, set=None):
         if not set:

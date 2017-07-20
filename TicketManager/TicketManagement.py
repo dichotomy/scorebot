@@ -34,6 +34,7 @@ from Table import Table
 from Tickets import Ticket
 import logging
 
+# TODO - alert when unable to connect or login to the database
 class TicketManager(Thread):
 
     def __init__(self, logfilename, start_time=None,
@@ -52,9 +53,9 @@ class TicketManager(Thread):
         self.get_tickets_log_query_by_ticket = "select * from tickets_log where ticket_id = %s;"
         self.users_query = "select * from users order by id;"
         self.get_users_query = "select id, ln from users;"
-        self.tickets_log_table = Table(self.get_tickets_log_query, host, user, passwd, db)
-        self.tickets_table = Table(self.get_tickets_query, host, user, passwd, db)
-        self.users_table = Table(self.users_query, host, user, passwd, db)
+        self.tickets_log_table = Table(self.get_tickets_log_query, "tickets_log", host, user, passwd, db)
+        self.tickets_table = Table(self.get_tickets_query, "tickets", host, user, passwd, db)
+        self.users_table = Table(self.users_query, "users", host, user, passwd, db)
         self.tickets = {}
         self.ticket_logs = []
         self.db = _mysql.connect(host=host, user=user, passwd=passwd,db=db)
@@ -70,12 +71,12 @@ class TicketManager(Thread):
         self.get_users()
         self.url = "http://10.200.100.110/api/tickets/"
         self.req = requests.session()
-        self.req.headers['SBE-AUTH'] = "bf086697-5373-496e-b2f0-8464d2b162eb"
+        self.req.headers['SBE-AUTH'] = "730389a1-a955-4f48-9f41-d048505b51b9"
         self.team_apis = {
-             "ALPHA": "bab14508-f15a-4de0-9e02-3a019902f3a7",
-             "Gamma": "0980aef1-a13e-4aa9-9910-4c3fdf7769ed",
-             "Delta": "18bff393-895d-4aa6-8440-92e2f001f5d4",
-             "Epsilon": "3f303b60-730b-45bd-9d9a-0ef5dad35707"
+            "ALPHA":  "1dc86513-ba2e-4b59-8634-dc0565ad86ea",
+            "Gamma":  "76d79133-de32-463f-8ff6-354f8f1e862a",
+            "Delta":  "014d0681-68ca-4fc5-91d9-ebca0fe30320",
+            "Epsilon":  "6b062d8e-3f6c-4ab4-9ad0-99589e7ad0ab"
         }
 
     def run(self):
@@ -101,11 +102,11 @@ class TicketManager(Thread):
             # Rather than do SQL queries for each data type, we do all the work in memory with Python
             # Why?  Because we can't trust the database, so we take these snapshots and work with those
             self.users_table.update()
-            self.audit_table(self.users_table, "users")
+            self.audit_table(self.users_table)
             self.tickets_table.update()
-            self.audit_table(self.tickets_table, "tickets")
+            self.audit_table(self.tickets_table)
             self.tickets_log_table.update()
-            self.audit_table(self.tickets_log_table, "tickets_log")
+            self.audit_table(self.tickets_log_table)
             for ticket_row in self.tickets_table:
                 ticket_id = ticket_row[0]
                 if ticket_id in self.tickets:
@@ -134,8 +135,7 @@ class TicketManager(Thread):
                     #todo - evaluate each log row to ensure the time is always ascending.
             # Every five minutes, we score
             now = time.time()
-            #if self.check_time(now):
-            if True:
+            if self.check_time(now):
                 # Time to do a scoring run!
                 # Look for new tickets
                 for ticket in self.tickets_table:
@@ -148,8 +148,8 @@ class TicketManager(Thread):
                     else:
                         self.round_scores[username] = score
             if self.round_scores:
-                sys.stdout.write("Round scores: ")
                 print self.round_scores
+                sys.stdout.write("Round scores: ")
                 scores = {}
                 for team in self.round_scores:
                     if team == "BETA":
@@ -184,22 +184,34 @@ class TicketManager(Thread):
     def audit_ticket(self, ticket_id, ticket_row):
         # Audit for ticket changes.
         ticket = self.tickets[ticket_id]
+        ###############################################################
         # Look for cheating - raise alerts
+        # TODO - distinuish between legit and illegit
         new_created_uid = ticket_row[5]
         old_created_uid = ticket.get_created_uid()
         if new_created_uid != old_created_uid:
             logging.error("ALERT!  Ticket %s created UID was changed! from %s to %s" %
                         (ticket_id, old_created_uid, new_created_uid))
+        # TODO - distinuish between legit and illegit
         new_created_time = ticket_row[7]
         old_created_time = ticket.get_created_time()
         if new_created_time != old_created_time:
             logging.error("ALERT!  Ticket %s created time was changed! from %s to %s" %
                         (ticket_id, old_created_time, new_created_time))
+        # TODO - distinuish between legit and illegit
         new_created_date = ticket_row[6]
         old_created_date = ticket.get_created_date()
         if new_created_date != old_created_date:
             logging.error("ALERT!  Ticket %s created date was changed! from %s to %s" %
                         (ticket_id, old_created_date, new_created_date))
+        # TODO - category_id changes.  Need to distinguish between legit and illegit
+        # TODO - location_id changes.  Need to distinguish between legit and illegit
+        # TODO - assigned_gid changes.  Need to distinguish between legit and illegit
+        # TODO - assigned_uid changes.  Need to distinguish between legit and illegit
+        # TODO - assigned_date changes.  Need to distinguish between legit and illegit
+        # TODO - assigned_time changes.  Need to distinguish between legit and illegit
+        # TODO - eu_uid changes.  Need to distinguish between legit and illegit
+        ###############################################################
         # Look for expected changes
         new_state_id = ticket_row[14]
         old_state_id = ticket.get_state_id()
@@ -224,9 +236,15 @@ class TicketManager(Thread):
             ticket.set_resolved_time(new_resolved_time)
             logging.info("Ticket %s resolved time change from %s to %s" %
                          (ticket_id, old_resolved_time, new_resolved_time))
+            # Here we look for who closed the ticket
+            closer = ticket.get_closed_uid(new_resolved_time)
+            if closer:
+                logging.info("Ticket %s logs stated closed by %s" % (ticket_id, closer))
+            else:
+                logging.info("Ticket %s logs had no record of who closed it" % ticket_id)
 
-
-    def audit_table(self, table, name):
+    def audit_table(self, table):
+        name = table.get_name()
         # Monitor and log all observed changes to tables.
         # TODO - add intelligence per table to alert on sensitive columns.  This could get noisy as is.
         difflist = table.find_diff()
@@ -266,6 +284,7 @@ class TicketManager(Thread):
         else:
             next_go_m = this_time_m + 5 - (this_time_m % 5)
             self.next_time = [this_time_h + 1, next_go_m]
+        logging.info("Setting next go to %sh %sm" % (self.next_time[0], self.next_time[1]))
 
     def query(self, query):
         results = []

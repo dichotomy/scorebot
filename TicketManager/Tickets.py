@@ -112,6 +112,7 @@ class Ticket(object):
         self.ticket["resolved_date"] = ticket[16]
         self.ticket["resolved_time"] = ticket[17]
         self.ticket["eu_uid"] = ticket[18]
+        self.resolved_time = self.ticket["resolved_time"]
         self.logs = []
         self.log_index = 0
         self.ticket_closed_re = re.compile("Ticket Closed.")
@@ -136,7 +137,14 @@ class Ticket(object):
             else:
                 raise Exception("Unknown category id %s for ticket %s" %  (index, self.get_id()))
         else:
-            raise Exception("Category index %s for ticket %s is too large!" % (index, self.get_id()))
+            return False
+
+    def get_closed_uid(self, resolved_time):
+        for log in self.logs:
+            if resolved_time == log.get_time():
+                return log.get_user_id()
+        raise Exception("Ticket %s: Cannot match resolved time with a tickets_log entry!" % self.get_id())
+
 
     def get_base_score(self):
         category = self.get_category()
