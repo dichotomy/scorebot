@@ -1,0 +1,49 @@
+
+- Flags
+  - Scored in real time
+  - + points for "safe" flags/round (100)
+  - - 3x for loss
+- Beacons
+  - Every 5 minutes, team loses X (100)
+- Tickets
+  - Grace period on open tickets
+  - Every 5 minutes, team loses Y (100)
+  - Reopened ticket:
+    - Reaggregation
+    - Base value *1.5
+- H&W
+  - Every service has a base value
+  - 5 minute interval
+  - Only scored for up
+  - Half-up scoring
+- Zencart
+
+Format:
+- Timestamp (ISO8601)
+- Team
+- Event type
+- Service/Beacon/Flag ID/Ticket
+- Value
+
+Types:
+  - BEACON
+  - SERVICE
+  - FLAG
+  - TICKET
+
+Flag values:
+  - SAFE
+  - STOLEN
+
+Ticket values:
+  - OPEN
+  - CLOSED
+
+Beacon values:
+  - ALIVE
+  - SILENT
+
+H&W values:
+  - UP
+  - HALFUP
+  - DOWN
