@@ -14,9 +14,15 @@ class Config(object):
     HW_INTERVAL = 5 * 60  # 5 minutes
     HW_SERVICES = {
             # Names don't matter, they're just strings
-            'A_21/tcp': 50,
-            'A_80/tcp': 100,
-            'B_80/tcp': 100,
+            'S1': 150,
+            'S2': 150,
+            'S3': 150,
+            'S4': 150,
+            'S5': 150,
+            'S6': 150,
+            'S7': 150,
+            'S8': 150,
+            'S9': 150,
             }
     HW_SCORES = {
             # Keys are state names, percent of service score
@@ -28,9 +34,17 @@ class Config(object):
     # Tickets
     TICKET_INTERVAL = 5 * 60  # 5 minutes
     TICKET_GRACE_PERIOD = 15 * 60  # 15 minutes
-    TICKET_COST = 100
     TICKET_COST_ROUNDS = 20  # maximum number of rounds
-    TICKET_AGGRAVATION_COST = TICKET_COST * 300
+    # cost, % restored
+    TICKET_TYPES = {
+            'outage':       (50, 100),
+            'service':      (30, 80),
+            'request':      (20, 75),
+            'change':       (40, 60),
+            'issue':        (35, 100),
+            'deliverable':  (10, 100),
+            '':             (10, 90),
+            }
 
     # Beacons
     BEACON_INTERVAL = 5 * 60  # 5 minutes
@@ -49,13 +63,15 @@ class Event(object):
     FLAG = 'FLAG'
     TICKET = 'TICKET'
 
-    def __init__(self, timestamp, team, event_type, event_id, value):
+    def __init__(self, timestamp, team, event_type, event_id, value,
+            subtype=None):
         self.timestamp = dateutil.parser.parse(timestamp)
         self.team = team
         assert event_type in (self.BEACON, self.SERVICE, self.FLAG, self.TICKET)
         self.event_type = event_type
         self.event_id = event_id
         self.value = value
+        self.subtype = subtype
         self.impact = None
         self.current_score = None
 
@@ -65,7 +81,8 @@ class Event(object):
 
     def to_csv(self):
         return (self.time_str, self.team, self.event_type, self.event_id,
-                self.value, self.impact, self.current_score)
+                self.value, self.subtype if self.subtype else '',
+                self.impact, self.current_score)
 
 
 class GenericService(object):
@@ -79,8 +96,12 @@ class GenericService(object):
     def interval(self):
         return datetime.timedelta(seconds=self.INTERVAL)
 
-    def add_event(self, event):
+    def event_id(self, event):
         entity_id = (event.team, event.event_id)
+        return entity_id
+
+    def add_event(self, event):
+        entity_id = self.event_id(event)
         self.elements[entity_id].update_state(event.value, event.timestamp)
         return self.elements[entity_id].round_score(
                 self.get_round(event.timestamp))
@@ -91,7 +112,7 @@ class GenericService(object):
 
     def advance_round(self, when):
         if when > self.round_time + self.interval:
-            for e in self.elements:
+            for e in self.elements.itervalues():
                 e.advance_round(when)
             self.round_time = when
 
@@ -152,10 +173,22 @@ class Ticket(RoundObject):
     REOPENED_FIRST = 3
     REOPENED = 4
     OPEN_NO_POINTS = 5
+    CLOSED_FIRST = 6
 
     def __init__(self):
         self.state = self.GRACE
         self.start = None
+        self.subtype = None
+        self.total_cost = 0
+
+    def set_subtype(self, subtype):
+        self.subtype = subtype
+
+    def get_cost_factors(self):
+        try:
+            return Config.TICKET_TYPES[self.subtype]
+        except KeyError:
+            return Config.TICKET_TYPES['']
 
     def grace_expired(self, timestamp):
         return ((timestamp - self.start) >
@@ -169,28 +202,32 @@ class Ticket(RoundObject):
 
     def update_state(self, value, timestamp):
         """Complex states for reopening, grace periods."""
-        if value == 'CLOSED':
-            self.state = self.CLOSED
+        if self.score < 0:
+            self.total_cost += -self.score
+        if value in ('CLOSED', 'CLOSE'):
+            if self.state != self.CLOSED:
+                self.state = self.CLOSED_FIRST
         elif value == 'OPEN':
             if self.start is None:
                 self.start = timestamp
-            elif not self.grace_expired(timestamp):
-                return
-            if self.state == self.CLOSED:
+            if not self.grace_expired(timestamp):
+                self.state = self.GRACE
+            elif self.state == self.CLOSED:
                 self.state = self.REOPENED_FIRST
             elif self.state not in (self.REOPENED, self.REOPENED_FIRST):
                 self.state = self.OPEN
 
     @property
     def score(self):
+        costs = self.get_cost_factors()
         if self.state == self.OPEN:
-            return -Config.TICKET_COST
+            return -costs[0]
         elif self.state == self.REOPENED_FIRST:
-            self.state = self.REOPENED
-            return -(Config.TICKET_REOPEN_COST + Config.TICKET_COST *
-                    Config.TICKET_COST_ROUNDS)
+            return -self.total_cost * 11 / 10
         elif self.state == self.REOPENED:
-            return -Config.TICKET_REOPEN_COST
+            return -costs[0]
+        elif self.state == self.CLOSED_FIRST:
+            return self.total_cost * costs[1] / 100
         return 0
 
     def advance_round(self, timestamp):
@@ -201,7 +238,10 @@ class Ticket(RoundObject):
         elif self.state == self.OPEN:
             if self.points_maxed(timestamp):
                 self.state = self.OPEN_NO_POINTS
-
+        elif self.state == self.CLOSED_FIRST:
+            self.state = self.CLOSED
+        elif self.state == self.REOPENED_FIRST:
+            self.state = self.REOPENED
 
 
 class TicketService(GenericService):
@@ -209,6 +249,10 @@ class TicketService(GenericService):
     ELEMENT_TYPE = Ticket
     INTERVAL = Config.TICKET_INTERVAL
 
+    def add_event(self, event):
+        event_id = self.event_id(event)
+        self.elements[event_id].set_subtype(event.subtype)
+        return super(TicketService, self).add_event(event)
 
 class Beacon(RoundObject):
 
