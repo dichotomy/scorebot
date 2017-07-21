@@ -29,8 +29,8 @@ class Config(object):
     TICKET_INTERVAL = 5 * 60  # 5 minutes
     TICKET_GRACE_PERIOD = 15 * 60  # 15 minutes
     TICKET_COST = 100
+    TICKET_COST_ROUNDS = 20  # maximum number of rounds
     TICKET_AGGRAVATION_COST = TICKET_COST * 300
-    TICKET_REOPEN_COST = int(TICKET_COST * 1.5)
 
     # Beacons
     BEACON_INTERVAL = 5 * 60  # 5 minutes
@@ -73,6 +73,7 @@ class GenericService(object):
     def __init__(self, start_time):
         self.elements = collections.defaultdict(self.ELEMENT_TYPE)
         self.start_time = start_time
+        self.round_time = start_time
 
     @property
     def interval(self):
@@ -88,6 +89,13 @@ class GenericService(object):
         delta = when - self.start_time
         return delta.seconds / self.interval.seconds
 
+    def advance_round(self, when):
+        if when > self.round_time + self.interval:
+            for e in self.elements:
+                e.advance_round(when)
+            self.round_time = when
+
+
 
 class RoundObject(object):
 
@@ -99,6 +107,9 @@ class RoundObject(object):
             pass
         self.rnd = rnd
         return self.score
+
+    def advance_round(self, unused_when):
+        pass
 
 
 class Flag(RoundObject):
@@ -140,10 +151,21 @@ class Ticket(RoundObject):
     CLOSED = 2
     REOPENED_FIRST = 3
     REOPENED = 4
+    OPEN_NO_POINTS = 5
 
     def __init__(self):
         self.state = self.GRACE
         self.start = None
+
+    def grace_expired(self, timestamp):
+        return ((timestamp - self.start) >
+                datetime.timedelta(seconds=Config.TICKET_GRACE_PERIOD))
+
+    def points_maxed(self, timestamp):
+        if self.state == self.OPEN:
+            return ((timestamp - self.start) >
+                    (datetime.timedelta(seconds=Config.TICKET_INTERVAL) *
+                        Config.TICKET_COST_ROUNDS))
 
     def update_state(self, value, timestamp):
         """Complex states for reopening, grace periods."""
@@ -152,8 +174,7 @@ class Ticket(RoundObject):
         elif value == 'OPEN':
             if self.start is None:
                 self.start = timestamp
-            elif ((timestamp - self.start) <
-                    datetime.timedelta(seconds=Config.TICKET_GRACE_PERIOD)):
+            elif not self.grace_expired(timestamp):
                 return
             if self.state == self.CLOSED:
                 self.state = self.REOPENED_FIRST
@@ -166,10 +187,21 @@ class Ticket(RoundObject):
             return -Config.TICKET_COST
         elif self.state == self.REOPENED_FIRST:
             self.state = self.REOPENED
-            return -(Config.TICKET_REOPEN_COST + Config.TICKET_AGGRAVATION_COST)
+            return -(Config.TICKET_REOPEN_COST + Config.TICKET_COST *
+                    Config.TICKET_COST_ROUNDS)
         elif self.state == self.REOPENED:
             return -Config.TICKET_REOPEN_COST
         return 0
+
+    def advance_round(self, timestamp):
+        if self.state == self.GRACE:
+            if self.grace_expired(timestamp):
+                self.state = self.OPEN
+                self.start = timestamp
+        elif self.state == self.OPEN:
+            if self.points_maxed(timestamp):
+                self.state = self.OPEN_NO_POINTS
+
 
 
 class TicketService(GenericService):
@@ -275,6 +307,8 @@ class Game(object):
             self.start_services(event.timestamp)
         if self.game_time != event.timestamp:
             self.game_time = event.timestamp
+        for svc in self.services.itervalues():
+            svc.advance_round(event.timestamp)
         score = self.services[event.event_type].add_event(event)
         if score > 0:
             self.scores_changed = True
