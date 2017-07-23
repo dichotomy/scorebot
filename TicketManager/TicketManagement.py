@@ -29,17 +29,19 @@ import re
 import sys
 import json
 import requests
-from threading import Thread
+#from threading import Thread
 from Table import Table
 from Tickets import Ticket
 import logging
+import traceback
 
 # TODO - alert when unable to connect or login to the database
-class TicketManager(Thread):
+class TicketManager(object):
 
-    def __init__(self, logfilename, start_time=None,
+    def __init__(self, logfilename, game_id=0, start_time=None,
                     host="10.150.100.153", user="scorebot", passwd="password", db="sts"):
-        Thread.__init__(self)
+        #Thread.__init__(self)
+        self.game_id = game_id
         now = time.time()
         if start_time:
             self.start_time = start_time
@@ -69,9 +71,13 @@ class TicketManager(Thread):
         self.users_by_id = {}
         self.round_scores = {}
         self.get_users()
-        self.url = "http://10.200.100.110/api/tickets/"
+        # Real SBE
+        self.ticket_url = "http://10.200.100.110/api/ticket/"
+        self.map_url = "http://10.200.100.110/api/mapper/%s"
+        # Mock SBE
+        #self.ticket_url = "http://10.200.10.200:8080/api/tickets/"
         self.req = requests.session()
-        self.req.headers['SBE-AUTH'] = "730389a1-a955-4f48-9f41-d048505b51b9"
+        self.req.headers['SBE-AUTH'] = "a9718722-f530-454a-9257-cd6922b6b4db"
         self.team_apis = {
             "ALPHA":  "1dc86513-ba2e-4b59-8634-dc0565ad86ea",
             "Gamma":  "76d79133-de32-463f-8ff6-354f8f1e862a",
@@ -101,6 +107,7 @@ class TicketManager(Thread):
             # Grab a copy of each table every minute and save it
             # Rather than do SQL queries for each data type, we do all the work in memory with Python
             # Why?  Because we can't trust the database, so we take these snapshots and work with those
+            to_send = []
             self.users_table.update()
             self.audit_table(self.users_table)
             self.tickets_table.update()
@@ -111,7 +118,8 @@ class TicketManager(Thread):
                 ticket_id = ticket_row[0]
                 if ticket_id in self.tickets:
                     #Look for changes we care about
-                    self.audit_ticket(ticket_id, ticket_row)
+                    if self.audit_ticket(ticket_id, ticket_row):
+                        to_send.append(ticket_id)
                 else:
                     self.tickets[ticket_id] = Ticket(ticket_row)
                     owner_id = self.tickets[ticket_id].get_eu_uid()
@@ -121,6 +129,7 @@ class TicketManager(Thread):
                     category = self.tickets[ticket_id].get_category()
                     logging.info("Found new ticket number %s of type %s for team %s opened by %s " %
                                  (ticket_id, category, owner_name, opened_name))
+                    to_send.append(ticket_id)
             new_rows = self.tickets_log_table.get_new_rows()
             print "Found %s new rows for tickets log" % new_rows
             if new_rows:
@@ -133,37 +142,39 @@ class TicketManager(Thread):
                     else:
                         logging.error("Ticket log '%s' does not have a ticket" % "|".join(row) )
                     #todo - evaluate each log row to ensure the time is always ascending.
-            # Every five minutes, we score
-            now = time.time()
-            if self.check_time(now):
-                # Time to do a scoring run!
-                # Look for new tickets
-                for ticket in self.tickets_table:
-                    ticket_id = ticket[0]
-                    score = self.tickets[ticket_id].score(now)
-                    owner_id = self.tickets[ticket_id].get_assigned_uid()
-                    username = self.users_by_id[owner_id]
-                    if username in self.round_scores:
-                        self.round_scores[username] += score
-                    else:
-                        self.round_scores[username] = score
-            if self.round_scores:
-                print self.round_scores
-                sys.stdout.write("Round scores: ")
-                scores = {}
-                for team in self.round_scores:
-                    if team == "BETA":
-                        continue
-                    uid = self.team_apis[team]
-                    scores[uid] = self.round_scores[team]
-                self.submit(json.dumps(scores))
-                self.round_scores = {}
-            # Take a break, you earned it!
+            tickets_to_send = []
+            for ticket_id in to_send:
+                logging.info("Processing Ticket %s to send" % ticket_id)
+                try:
+                    short_ticket = {}
+                    ticket = self.tickets[ticket_id]
+                    short_ticket["id"] = int(ticket_id)
+                    short_ticket["name"] = ticket.get_subject()
+                    short_ticket["details"] = ticket.get_issue()
+                    short_ticket["type"] = ticket.get_category()
+                    short_ticket["status"] = ticket.get_state()
+                    team_id = ticket.get_assigned_uid()
+                    team_name = self.users_by_id[team_id]
+                    short_ticket["team"] = self.team_apis[team_name]
+                    tickets_to_send.append(short_ticket)
+                except:
+                    logging.exception("Error processing ticket %s" % ticket_id)
+            if tickets_to_send:
+                self.submit(json.dumps({"tickets":tickets_to_send}))
             time.sleep(1)
 
-    def submit(self, data):
+    def get_map(self):
         sys.stderr.write("Posting to %s: %s" % (self.url, data))
-        b = self.req.post(self.url, data=data)
+        b = self.req.post(self.map_url % self.game_id)
+        r = b.content.decode('utf-8')
+        map = json.loads(r)
+        if "teams"in map:
+            for team in map["teams"]:
+                self.team_
+
+    def submit(self, data):
+        sys.stderr.write("Posting to %s: %s" % (self.ticket_url, data))
+        b = self.req.post(self.ticket_url, data=data)
         r = b.content.decode('utf-8')
         print r
         #filename = "%s.log" % time.time()
@@ -184,6 +195,7 @@ class TicketManager(Thread):
     def audit_ticket(self, ticket_id, ticket_row):
         # Audit for ticket changes.
         ticket = self.tickets[ticket_id]
+        changed = False
         ###############################################################
         # Look for cheating - raise alerts
         # TODO - distinuish between legit and illegit
@@ -204,18 +216,51 @@ class TicketManager(Thread):
         if new_created_date != old_created_date:
             logging.error("ALERT!  Ticket %s created date was changed! from %s to %s" %
                         (ticket_id, old_created_date, new_created_date))
-        # TODO - category_id changes.  Need to distinguish between legit and illegit
+        # TODO - Need to distinguish between legit and illegit
+        new_category_id = ticket_row[8]
+        old_category_id = ticket.get_category_id()
+        if new_category_id != old_category_id:
+            changed = True
+            ticket.set_category_id(new_category_id)
+            logging.error("ALERT!  Ticket %s Category was changed! from %s to %s" %
+                          (ticket_id, old_category_id, new_category_id))
         # TODO - location_id changes.  Need to distinguish between legit and illegit
         # TODO - assigned_gid changes.  Need to distinguish between legit and illegit
-        # TODO - assigned_uid changes.  Need to distinguish between legit and illegit
-        # TODO - assigned_date changes.  Need to distinguish between legit and illegit
-        # TODO - assigned_time changes.  Need to distinguish between legit and illegit
-        # TODO - eu_uid changes.  Need to distinguish between legit and illegit
+        # TODO - Need to distinguish between legit and illegit
+        new_assigned_uid = ticket_row[11]
+        old_assigned_uid = ticket.get_assigned_uid()
+        if new_assigned_uid != old_assigned_uid:
+            changed = True
+            ticket.set_assigned_uid(new_assigned_uid)
+            logging.error("ALERT!  Ticket %s assigned UID was changed! from %s to %s" %
+                          (ticket_id, old_assigned_uid, new_assigned_uid))
+        # TODO - Need to distinguish between legit and illegit
+        new_assigned_date = ticket_row[12]
+        old_assigned_date = ticket.get_assigned_date()
+        if new_assigned_date != old_assigned_date:
+            ticket.set_assigned_date(new_assigned_date)
+            logging.error("ALERT!  Ticket %s assigned date was changed! from %s to %s" %
+                          (ticket_id, old_assigned_date, new_assigned_date))
+        # TODO - Need to distinguish between legit and illegit
+        new_assigned_time = ticket_row[13]
+        old_assigned_time = ticket.get_assigned_time()
+        if new_assigned_time != old_assigned_time:
+            ticket.set_assigned_time(new_assigned_time)
+            logging.error("ALERT!  Ticket %s assigned time was changed! from %s to %s" %
+                          (ticket_id, old_assigned_time, new_assigned_time))
+        # TODO - Need to distinguish between legit and illegit
+        new_eu_uid = ticket_row[18]
+        old_eu_uid = ticket.get_eu_uid()
+        if new_eu_uid != old_eu_uid:
+            ticket.set_eu_uid(new_eu_uid)
+            logging.error("ALERT!  Ticket %s eu UID was changed! from %s to %s" %
+                          (ticket_id, old_eu_uid, new_eu_uid))
         ###############################################################
         # Look for expected changes
         new_state_id = ticket_row[14]
         old_state_id = ticket.get_state_id()
         if new_state_id != old_state_id:
+            changed = True
             ticket.set_state_id(new_state_id)
             logging.info("Ticket %s state_id change from %s to %s" % (ticket_id, old_state_id, new_state_id))
         new_resolved_uid = ticket_row[15]
@@ -242,6 +287,21 @@ class TicketManager(Thread):
                 logging.info("Ticket %s logs stated closed by %s" % (ticket_id, closer))
             else:
                 logging.info("Ticket %s logs had no record of who closed it" % ticket_id)
+        old_subject = ticket_row[1]
+        new_subject = ticket.get_subject()
+        if new_subject != old_subject:
+            changed = True
+            ticket.set_subject(new_subject)
+            logging.info("Ticket %s subject changed from %s to %s" %
+                         (ticket_id, old_subject, new_subject))
+        old_issue = ticket_row[2]
+        new_issue = ticket.get_issue()
+        if new_issue != old_issue:
+            changed = True
+            ticket.set_issue(new_issue)
+            logging.info("Ticket %s issue changed from %s to %s" %
+                         (ticket_id, old_issue, new_issue))
+        return changed
 
     def audit_table(self, table):
         name = table.get_name()
@@ -298,4 +358,5 @@ class TicketManager(Thread):
 
 if __name__ == "__main__":
     tmanager = TicketManager("tm_testing.log")
-    tmanager.start()
+    #tmanager.start()
+    tmanager.run()

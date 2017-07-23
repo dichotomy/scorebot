@@ -158,6 +158,15 @@ class Ticket(object):
         else:
             raise Exception("State id %s for ticket %s is too large!" % (state_id, self.get_id()))
 
+    def get_state_bool(self):
+        state_id = int(self.get_state_id())
+        if state_id == 1:
+            return False
+        elif state_id == 2:
+            return True
+        else:
+            raise Exception("State id %s for ticket %s is unknown!" % (state_id, self.get_id()))
+
     def get_json(self):
         return json.dumps(self.ticket)
 
