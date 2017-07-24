@@ -145,7 +145,6 @@ class Ticket(object):
                 return log.get_user_id()
         raise Exception("Ticket %s: Cannot match resolved time with a tickets_log entry!" % self.get_id())
 
-
     def get_base_score(self):
         category = self.get_category()
         if category:

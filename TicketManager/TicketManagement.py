@@ -77,13 +77,9 @@ class TicketManager(object):
         # Mock SBE
         #self.ticket_url = "http://10.200.10.200:8080/api/tickets/"
         self.req = requests.session()
-        self.req.headers['SBE-AUTH'] = "a9718722-f530-454a-9257-cd6922b6b4db"
-        self.team_apis = {
-            "ALPHA":  "1dc86513-ba2e-4b59-8634-dc0565ad86ea",
-            "Gamma":  "76d79133-de32-463f-8ff6-354f8f1e862a",
-            "Delta":  "014d0681-68ca-4fc5-91d9-ebca0fe30320",
-            "Epsilon":  "6b062d8e-3f6c-4ab4-9ad0-99589e7ad0ab"
-        }
+        self.req.headers['SBE-AUTH'] = "33ab8ea2-1258-44d8-ac5e-643e88e2a87c"
+        self.team_apis = {}
+        self.get_map()
 
     def run(self):
         """
@@ -131,8 +127,8 @@ class TicketManager(object):
                                  (ticket_id, category, owner_name, opened_name))
                     to_send.append(ticket_id)
             new_rows = self.tickets_log_table.get_new_rows()
-            print "Found %s new rows for tickets log" % new_rows
             if new_rows:
+                logging.info("Found %s new rows for tickets log" % new_rows)
                 for row_num in new_rows:
                     row = self.tickets_log_table.get_row(row_num)
                     ticket_id = row[0]
@@ -164,23 +160,26 @@ class TicketManager(object):
             time.sleep(1)
 
     def get_map(self):
-        sys.stderr.write("Posting to %s: %s" % (self.url, data))
-        b = self.req.post(self.map_url % self.game_id)
+        logging.info("Requesting GET for %s" % (self.map_url))
+        b = self.req.get(self.map_url % self.game_id)
         r = b.content.decode('utf-8')
         map = json.loads(r)
         if "teams"in map:
             for team in map["teams"]:
-                self.team_
+                name = team["name"]
+                token = team["token"]
+                self.team_apis[name] = token
+        logging.info("Got %s" % json.dumps(self.team_apis))
 
     def submit(self, data):
-        sys.stderr.write("Posting to %s: %s" % (self.ticket_url, data))
+        logging.info("Posting to %s" % (self.ticket_url))
         b = self.req.post(self.ticket_url, data=data)
         r = b.content.decode('utf-8')
-        print r
-        #filename = "%s.log" % time.time()
-        #outfile = open(filename, "w")
-        #outfile.write(r)
-        sys.stderr.write("Received status code: " + str(b.status_code))
+        filename = "%s.log" % time.time()
+        outfile = open(filename, "w")
+        outfile.write(r)
+        logging.info("Saved posted data to %s" % filename)
+        logging.info("Received status code: " + str(b.status_code))
         #if r.status_code == 200:
 
     def get_users(self):
@@ -282,11 +281,14 @@ class TicketManager(object):
             logging.info("Ticket %s resolved time change from %s to %s" %
                          (ticket_id, old_resolved_time, new_resolved_time))
             # Here we look for who closed the ticket
-            closer = ticket.get_closed_uid(new_resolved_time)
-            if closer:
-                logging.info("Ticket %s logs stated closed by %s" % (ticket_id, closer))
-            else:
-                logging.info("Ticket %s logs had no record of who closed it" % ticket_id)
+            try:
+                closer = ticket.get_closed_uid(new_resolved_time)
+                if closer:
+                    logging.info("Ticket %s logs stated closed by %s" % (ticket_id, closer))
+                else:
+                    logging.info("Ticket %s logs had no record of who closed it" % ticket_id)
+            except:
+                logging.exception("Failure in looking up ticket log for closure")
         old_subject = ticket_row[1]
         new_subject = ticket.get_subject()
         if new_subject != old_subject:
@@ -357,6 +359,6 @@ class TicketManager(object):
         return results
 
 if __name__ == "__main__":
-    tmanager = TicketManager("tm_testing.log")
+    tmanager = TicketManager("tm_testing.log", 1)
     #tmanager.start()
     tmanager.run()
