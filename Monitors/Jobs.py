@@ -150,6 +150,8 @@ class Job(object):
         self.factory = None
         self.json["host"]["ping_respond"] = ""
         self.json["host"]["ping_sent"] = ""
+        self.retries = 0
+        self.max = 5
 
 
     def set_factory(self, factory):
@@ -162,6 +164,13 @@ class Job(object):
         # We want to leave enough time to get the job back before SBE gives up
         if "timeout" in self.json:
             return int(self.json["timeout"] * 0.9)
+
+    def get_job_fail(self):
+        if self.retries >= self.max:
+            return True
+        else:
+            self.retries += 1
+            return False
 
     def get_service_timeout(self):
         # We want to leave enough time to get the job ready to go back before SBE gives up
