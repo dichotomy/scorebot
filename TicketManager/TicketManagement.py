@@ -72,13 +72,20 @@ class TicketManager(object):
         self.round_scores = {}
         self.get_users()
         # Real SBE
-        self.ticket_url = "http://10.200.100.110/api/ticket/"
-        self.map_url = "http://10.200.100.110/api/mapper/%s"
+        self.ticket_url = "http://10.150.100.81/api/ticket/"
+        self.map_url = "http://10.150.100.81/api/mapper/%s"
         # Mock SBE
         #self.ticket_url = "http://10.200.10.200:8080/api/tickets/"
         self.req = requests.session()
-        self.req.headers['SBE-AUTH'] = "33ab8ea2-1258-44d8-ac5e-643e88e2a87c"
+        self.req.headers['SBE-AUTH'] = "80d3c4fd-ccfa-43fc-8e1d-a23c9dd0ded9"
         self.team_apis = {}
+        self.team_map = {
+            "EphemeralBlue": "Alpha",
+            "bACKtrace": "Delta",
+            "SOCteam6": "Epsilon",
+            "ShellAntic": "Gamma",
+            "Redcell": ""
+        }
         self.get_map()
 
     def run(self):
@@ -163,13 +170,18 @@ class TicketManager(object):
         logging.info("Requesting GET for %s" % (self.map_url))
         b = self.req.get(self.map_url % self.game_id)
         r = b.content.decode('utf-8')
+        logging.info("Got %s" % r)
         map = json.loads(r)
         if "teams"in map:
             for team in map["teams"]:
                 name = team["name"]
+                if name in self.team_map:
+                    greek = self.team_map[name]
+                else:
+                    logging.info("Team %s is not valid!" % name)
                 token = team["token"]
-                self.team_apis[name] = token
-        logging.info("Got %s" % json.dumps(self.team_apis))
+                self.team_apis[greek] = token
+        logging.info("Processed for %s" % json.dumps(self.team_apis))
 
     def submit(self, data):
         logging.info("Posting to %s" % (self.ticket_url))
