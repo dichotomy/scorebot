@@ -2,18 +2,16 @@ import requests
 
 class Client(object):
     """Scorebot engine api client"""
-    def __init__(self, url, key):
+    def __init__(self, url, key, log):
         auth_header = "SBE-AUTH"
         self.url = url
         self.key = key
         self.session = requests.Session()
         self.session.headers[auth_header] = self.key
+        self.log = log
 
     def logerror(self, func, endpoint, response):
-        error_message = endpoint + " - response code: " + str(response.status_code) + "\n" + response.text + "\n"
-        logfd = open(func + 'sbeclientlog.html', 'a')
-        logfd.write(error_message)
-        logfd.close()
+        self.log.debug("function: {} endpoint: {} - responde code: {} \n {}\n".format('flag', endpoint, response.status_code, response.text))
 
     def request(self, endpoint, data=None):
         """helper request function"""
@@ -84,7 +82,7 @@ class Client(object):
         if response.status_code == 200:
             return response.json()['ports']
         self.logerror('beacon_ports', endpoint, response)
-        return str(response.status_code)
+        return list()
 
     def send_beacon(self, beacon, address):
         """Send a beacon"""
@@ -92,4 +90,4 @@ class Client(object):
         data = {"token": beacon, "address": address}
         response = self.request(endpoint, data)
         self.logerror('send_beacon', endpoint, response)
-        return
+        return (str(response.status_code), response.text)

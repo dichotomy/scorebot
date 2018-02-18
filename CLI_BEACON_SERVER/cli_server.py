@@ -6,6 +6,8 @@ import sys
 import random
 import os
 import json
+import logging
+import logging.handlers
 from sbeapiclient import Client
 
 
@@ -13,10 +15,17 @@ class ScorebotCLIServerHandler(socketserver.BaseRequestHandler):
 
     def __init__(self, request, client_address, server):
 
+        self.log = self.server.log
         # Build server banner
         binjitsu = ""
-        if MODE == "binjitsu":
-            binjitsu = "# submit flag\nflag:<team_token>:<flag>"
+        if MODE == "BINJITSU":
+            binjitsu = "    BLUE CELL:\n"
+            binjitsu += "\t    # submit flag\n"
+            binjitsu += "\t    flag:<team_token>,<flag>\n"
+            binjitsu += "\t    # register for a beacon token\n"
+            binjitsu += "\t    register:<your_nick>,<team_token>\n"
+            binjitsu += "\t    # request beacon port\n"
+            binjitsu += "\t    beacon:<team_token>,<port>"
         self.banner = """\
  ____   ____ ___  ____  _____ ____   ___ _____  _____  ___
 / ___| / ___/ _ \|  _ \| ____| __ ) / _ \_   _||___ / / _ \\
@@ -28,15 +37,13 @@ MODE: {}
 
 This is Scorebot v3.0, I accept the following commands:
     RED CELL:
-            # register to team redcell
-            register:<your_nick>,<team_token>
             # submit flag
             flag:<team_token>,<flag>
-            # request beacon code and port
-            beacon:<team_token>,<port>
-    BLUE CELL:
+            # register for a beacon token
             register:<your_nick>,<team_token>
-            {}
+            # request beacon port
+            beacon:<team_token>,<port>
+{}
 
 Please send your request
 REQ> """.format(MODE, binjitsu)
@@ -63,17 +70,16 @@ REQ> """.format(MODE, binjitsu)
     def handle(self):
         self.request.send(bytes(self.banner, 'ascii'))
         data = str(self.request.recv(1024), 'ascii')
-        sbeclient = Client(api, auth_key)
+        sbeclient = Client(api, auth_key, self.log)
         if data:
             clean_data = data.strip()
             # Flag submission
             if self.flag_re.match(clean_data):
                 reply = self.flag_re.match(clean_data)
-                print("{}:{} sent |{}|\n".format(self.client_address[0], self.client_address[1], clean_data))
+                self.log.info('FLAG', "{}:{} sent |{}|\n".format(self.client_address[0], self.client_address[1], clean_data))
 
                 if reply:
                     msg_id = self.make_id()
-                    # TODO: Make request to api here then check response and
                     # send result to client
                     team_token, flag_value = reply.groups()
                     response = sbeclient.flag(flag_value, team_token)
@@ -83,32 +89,30 @@ REQ> """.format(MODE, binjitsu)
             # Registration
             elif self.reg_re.match(clean_data):
                 reply = self.reg_re.match(clean_data)
-                print("{}:{} sent |{}|\n".format(self.client_address[0], self.client_address[1], clean_data))
+                self.log.info('REGISTRATION', "{}:{} sent |{}|\n".format(self.client_address[0], self.client_address[1], clean_data))
 
                 if reply:
                     player_name, team_token = reply.groups()
                     response = sbeclient.register(player_name, team_token)
                     # msg_id = self.make_id()
-                    # TODO: Make request to api to register then check response
                     # and send result to client
-                    self.request.send(bytes("ACK> {}".format(response), 'ascii'))
+                    self.request.send(bytes("ACK> {}\n".format(response), 'ascii'))
             # request new beacon port
             elif self.beacon_re.match(clean_data):
-                print("beacon")
+                self.log.info("beacon")
                 reply = self.beacon_re.match(clean_data)
-                print("{}:{} sent |{}|\n".format(self.client_address[0], self.client_address[1], clean_data))
+                self.log.info('BEACON', "{}:{} sent |{}|\n".format(self.client_address[0], self.client_address[1], clean_data))
 
                 if reply:
                     beacon_token, port = reply.groups()
                     response = sbeclient.beacon_request(beacon_token, port)
                     # msg_id = self.make_id()
-                    # TODO: Make request to api to register beacon then check response
                     # and send result to client
-                    self.request.send(bytes("ACK> {}".format(response), 'ascii'))
+                    self.request.send(bytes("ACK> {}\n".format(response), 'ascii'))
             else:
                 self.request.send(bytes(data, 'ascii'))
         else:
-            print("No data sent")
+            self.log.debug('CLISERVER', "{}:{} No data sent".format(self.client_address[0], self.client_address[1]))
         return
 
     def make_id(self):
@@ -117,6 +121,10 @@ REQ> """.format(MODE, binjitsu)
 
 
 class ScorebotCLIServer(socketserver.ThreadingTCPServer):
+
+    def __init__(self, host_port_tuple, streamhandler, log):
+        super().__init__(host_port_tuple, streamhandler)
+        self.log = log
 
     def server_bind(self):
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -128,63 +136,75 @@ def read_config(config):
         with open(config, "r") as config_fd:
             #data = config_fd.read()
             data = json.load(config_fd)
-            print(data)
+            slogger.info(data)
         return data
     except Exception as e:
-        print("Error while reading config file: ", e)
+        slogger.debug("Error while reading config file: {}".format(e))
         sys.exit(1)
 
 
 if __name__ == "__main__":
+    # setup logging
+    slogger = logging.getLogger(__file__)
+    slogger.setLevel(logging.DEBUG)
+    # console log handler
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    # log formater
+    default_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(default_formatter)
+    slogger.addHandler(ch)
     # setup argument parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('--host', help="host ip addresss", default="localhost")
-    parser.add_argument('--port', type=int, help="host port number",
-            default=50007)
-    parser.add_argument('--mode', help="scorebot mode, binjitsu or ccdc",
-            default ="ccdc")
-    parser.add_argument('--gameid', help="game id for current game", default="")
-    # TODO: write logic to check --env argument
-    parser.add_argument(
-        '--env',
-        help="indicates that environments variables 'SBEAPI_KEY' and 'SBEAPI_URL' should be used instead of command \
-         line arguments"
-    )
-    # TODO: write logic to check --config argument
     parser.add_argument('--config', help="config to use instead of command line arguments")
     args = parser.parse_args()
 
-    MODE_OPTIONS = ["ccdc", "binjitsu"]
+    MODE_OPTIONS = ["default", "binjitsu"]
 
     if args.config:
         config = read_config(args.config)
         HOST = config["host"]
         PORT = config["port"]
         MODE = config["mode"]
-        GAMEID = config["gameid"]
         api = config["url"]
         auth_key = config["key"]
-    elif args.env:
         try:
-            auth_key = os.environ["SBEAPI_KEY"]
-        except KeyError:
-            print("environment varaible SBEAPI_KEY not set")
-            sys.exit(1)
-        try:
-            api = os.environ["SBEAPI_URL"]
-        except KeyError:
-            print("environment varaible SBEAPI_URL not set")
-            sys.exit(1)
+            logtype = config["logtype"]
+        except KeyError as e:
+            logtype = "file"
+        if logtype == "rsyslog":
+            try:
+                rsyslog = (config["rsyslog"].split(":")[0], int(config["rsyslog"].split(":")[1]))
+                # logger rsyslog handler
+                rsysh = logging.handlers.SysLogHandler(address=rsyslog)
+                rsysh.setLevel(logging.DEBUG)
+                rsyslog_formatter = logging.Formatter('SCOREBOT: %(name)s - %(levelname)s - %(message)s')
+                rsysh.setFormatter(rsyslog_formatter)
+                slogger.addHandler(rsysh)
+            except KeyError as e:
+                slogger.debug("rsyslog property not found in {} config file".format(args.config))
+                sys.exit(1)
+            except IndexError as e:
+                slogger.debug("Invalid rsyslog address format provided in config. Format should be \"rsyslog\": \"<ip address>:<port>\".")
+                sys.exit(1)
+        else:
+            # logger file handler
+            fh = logging.FileHandler("log/cliserver.log")
+            fh.setLevel(logging.DEBUG)
+            fh.setFormatter(default_formatter)
+            slogger.addHandler(fh)
     else:
-        HOST, PORT, MODE, GAMEID = args.host, args.port, args.mode, args.gameid
+        parser.print_help()
+        sys.exit(1)
+
 
     if MODE not in MODE_OPTIONS:
-        print("Invalid mode: {}. Allowed modes: {} or {}".format(MODE,
+        slogger.debug("Invalid mode: {}. Allowed modes: {} or {}".format(MODE,
             MODE_OPTIONS[0], MODE_OPTIONS[1]))
         sys.exit(1)
 
     MODE = MODE.upper()
-    cliserver = ScorebotCLIServer((HOST, PORT), ScorebotCLIServerHandler)
-    print("Listening at {}:{}".format(HOST, PORT))
-    print("MODE: {}".format(MODE))
+    cliserver = ScorebotCLIServer((HOST, PORT), ScorebotCLIServerHandler, slogger)
+    slogger.info("Listening at {}:{}".format(HOST, PORT))
+    slogger.info("MODE: {}".format(MODE))
     cliserver.serve_forever()

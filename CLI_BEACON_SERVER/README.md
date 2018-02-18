@@ -24,12 +24,14 @@ CLI server
 		"key" : "<scorebot api access key>",
 		"port": <listening port(has to be and integer)>,
 		"host": "<listening address>",
-		"mode": "default",
+		"mode": "<default or binjitsu>",
+		"logtype": "<file or rsyslog>",
+   		"rsyslog": "<ip address:port>"
 	}
 
 
 ### Usage
-The cli server is the main way for players to interact with scorebot. It allows players to submit flag, register a beacon token, and open ports on the beacon server for beaconing. 
+The cli server is the main way for players to interact with scorebot. It allows players to submit flag, register a beacon token, and open ports on the beacon server for beaconing. The cli server can run in two modes "default" and "binjitsu". The only difference between the two modes is that binjitus will display submit instructions for both bluecell and redcell.
 
 #### Run cli server
 	cd scorebot/CLI_BEACON_SERVER
@@ -66,6 +68,8 @@ Beacon server
 	{
 	  "api": "<scorebot api url>",
 	  "key": "<scorebot api access key>"
+	  "logtype": "<file or rsyslog>",
+   	  "rsyslog": "<ip address:port>"
 	}
 
 
