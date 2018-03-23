@@ -5,7 +5,7 @@
       <dia:color val="#ffffff"/>
     </dia:attribute>
     <dia:attribute name="pagebreak">
-      <dia:color val="#000099"/>
+      <dia:color val="#ffffff"/>
     </dia:attribute>
     <dia:attribute name="paper">
       <dia:composite type="paper">
@@ -53,7 +53,7 @@
       </dia:composite>
     </dia:attribute>
     <dia:attribute name="color">
-      <dia:color val="#d8e5e5"/>
+      <dia:color val="#ffffff"/>
     </dia:attribute>
     <dia:attribute name="guides">
       <dia:composite type="guides">
@@ -3882,7 +3882,7 @@
         <dia:point val="85.6632,34.6884"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="49.4158,20.5338;85.7277,34.753"/>
+        <dia:rectangle val="49.4158,20.5338;85.7277,34.7529"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
@@ -3944,7 +3944,7 @@
         <dia:point val="85.6632,35.4884"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="61.3631,35.4232;85.7284,45.7822"/>
+        <dia:rectangle val="61.3631,35.4231;85.7285,45.7822"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>

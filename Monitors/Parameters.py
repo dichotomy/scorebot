@@ -8,14 +8,9 @@ class Parameters(object):
     def __init__(self):
         self.debug = False
         self.timeout = 90
-        #self.sbe_auth = "0987654321"
-        #self.sb_ip = "10.200.100.50"
-        self.sbe_auth = "33ab8ea2-1258-44d8-ac5e-643e88e2a87c"
-        self.sb_ip = "10.200.100.110"
+        self.sbe_auth = "2863e4ad-fcc5-4b35-8d31-42112c1c7b5b"
+        self.sb_ip = "10.150.100.81"
         self.sb_port = 80
-        #self.sb_ip = "10.200.100.205"
-        #self.sb_ip = "172.25.20.211"
-        #self.sb_port = 8080
         self.job_url = "/api/job"
         self.reason = ""
         self.headers = {}

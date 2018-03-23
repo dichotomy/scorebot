@@ -1,7 +1,6 @@
 #!/usr/bin/env python2.7
 # requires:  https://pypi.python.org/pypi/http-parser
 from twisted.internet import reactor, protocol, ssl
-from twisted.python import log
 from http_parser.pyparser import HttpParser
 from WebClient import WebServiceCheckFactory, JobFactory
 from GenSocket import GenCheckFactory
@@ -9,10 +8,12 @@ from DNSclient import DNSclient
 from Pingclient import PingProtocol
 from FTPclient import FTP_client
 from SMTPclient import SMTPFactory
-from twisted.python import log
+from twisted.python import syslog
+#from twisted.python import log
 import traceback
 import time
 import sys
+import os
 
 class MonitorCore(object):
 
@@ -87,25 +88,26 @@ class MonitorCore(object):
             fileobj = open(filename, "w")
             fileobj.write(result)
             fileobj.close()
-            sys.stderr.write("Job %s submitted, SBE response in file %s\n" % (job_id, filename))
+            sys.stderr.write("Job %s: submitted, SBE response in file %s\n" % (job_id, filename))
         else:
-            sys.stderr.write("Job %s submitted, SBE response: %s\n" % (job_id, result))
+            sys.stderr.write("Job %s: submitted, SBE response: %s\n" % (job_id, result))
         sys.stderr.write("Job %s: submitted: %s\n" % (job_id, job_json))
 
     def job_submit_pass(self, result, job):
         job_id = job.get_job_id()
+        sys.stderr.write("Job %s: successfully submitted %s \n" % (job_id, result))
         self.proc_result(job, result)
         self.jobs_done.append(job_id)
         self.jobs.submitted_job(job_id)
 
     def job_submit_fail(self, failure, job):
         job_id = job.get_job_id()
-        sys.stderr.write("Job %s failed due to %s \n" % (job_id, failure.getErrorMessage()))
+        sys.stderr.write("Job %s: failed due to %s \n" % (job_id, failure.getErrorMessage()))
         if job.get_job_fail():
             sys.stderr.write("giving up.\n")
         else:
             sys.stderr.write("retrying in %s.\n" % self.resubmit_interval)
-            reactor.callLater(self.resubmit_interval, self.post_job(job))
+            reactor.callLater(self.resubmit_interval, self.post_job, job)
 
     def dns_fail(self, failure, job, dnsobj):
         # Do this if the DNS check failed
@@ -147,13 +149,13 @@ class MonitorCore(object):
 
     def ftp_fail(self, failure, service, job_id):
         if "530 Login incorrect" in failure:
-            sys.stderr.write("Job ID %s: Login failure\n" % job_id)
+            sys.stderr.write("Job %s: Login failure\n" % job_id)
             service.fail_login()
         elif "Connection refused" in failure:
-            sys.stderr.write("Job ID %s: Connection failure\n" % job_id)
+            sys.stderr.write("Job %s: Connection failure\n" % job_id)
             service.fail_conn("refused")
         else:
-            sys.stderr.write("Job ID %s: Failure %s\n" % (job_id, failure))
+            sys.stderr.write("Job %s: Failure %s\n" % (job_id, failure))
             service.fail_conn(failure)
 
     def check_services(self, job):
@@ -187,21 +189,35 @@ class MonitorCore(object):
         proto = service.get_proto()
         port = service.get_port()
         jobid = job.get_job_id()
-        sys.stderr.write("Job %s:  Service %s/%s passed. %s\n" % (jobid, proto, port, result))
+        sys.stderr.write("Job %s:  Service %s/%s passed. %s\n" % (jobid, port, proto, result))
 
     def gen_service_connect_fail(self, failure, job, service):
         service.fail_conn(failure)
         proto = service.get_proto()
         port = service.get_port()
         jobid = job.get_job_id()
-        sys.stderr.write("Job %s:  Service %s/%s failed:\n\t%s\n" % (jobid, proto, port, failure))
+        sys.stderr.write("Job %s:  Service %s/%s failed:\n\t%s\n" % (jobid, port, proto, failure))
+
+def check_dir(dir):
+    try:
+        os.stat(dir)
+    except OSError as e:
+        if e.errno == 2:
+            sys.stderr.write("No such directory %s, creating" % dir)
+            os.mkdir(dir)
+        else:
+            sys.stderr.write("Directory %s - Unknown error%s: %s" % (e.errno, e.strerror))
+
 
 if __name__=="__main__":
     # Testing with an artificial job file
     from Parameters import Parameters
     from Jobs import Jobs
 
-    log.startLogging(open('log/MonitorCore.log', 'w'))
+    for dir in ("log", "raw", "sbe"):
+        check_dir(dir)
+    #log.startLogging(open('log/MonitorCore.log', 'w'))
+    syslog.startLogging(prefix="Scorebot")
     params = Parameters()
     jobs = Jobs()
     mon_obj = MonitorCore(params, jobs)

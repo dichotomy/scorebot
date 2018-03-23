@@ -56,6 +56,7 @@ class GenCoreFactory(protocol.ClientFactory):
         self.fqdn = ""
         self.port = 0
         self.timeout = 30
+        self.noisy = False
 
     def get_deferred(self, key):
         deferred = Deferred()
@@ -66,7 +67,7 @@ class GenCoreFactory(protocol.ClientFactory):
 
     def startedConnecting(self, connector):
         if self.job:
-            sys.stderr.write("Job %s:  Starting connection test\n" % self.job.get_job_id())
+            sys.stderr.write("Job %s:  Starting connection\n" % self.job.get_job_id())
 
     def buildProtocol(self, addr):
         self.addr = addr

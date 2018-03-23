@@ -32,19 +32,19 @@ class Jobs(object):
         self.jobs[self.latest_job_id] = Job(job_json_str, self.debug)
         self.jobs[self.latest_job_id].set_job_id(self.latest_job_id)
         self.todo.append(self.latest_job_id)
-        sys.stderr.write("Job %s added: %s\n" % (self.latest_job_id, job_json_str))
+        sys.stderr.write("Job %s: added %s\n" % (self.latest_job_id, job_json_str))
         return self.latest_job_id
 
     def find_done_jobs(self):
         for job_id in self.proc:
             if self.jobs[job_id].is_done():
-                sys.stderr.write("Job %s is done, processing." % job_id)
+                sys.stderr.write("Job %s: is done, processing.\n" % job_id)
                 self.done.append(job_id)
         for job_id in self.done:
             if job_id in self.proc:
                 self.proc.remove(job_id)
             else:
-                sys.stderr.write("WTF? Job %s is done but not in self.proc!" % job_id)
+                sys.stderr.write("WTF? Job %s is done but not in self.proc!\n" % job_id)
         return self.done
 
     def finish_job(self, job_id, reason):
@@ -73,7 +73,7 @@ class Jobs(object):
             self.pending_submitted.remove(job_id)
             del(self.jobs[job_id])
         else:
-            raise Exception("Job %s: marked submitted but not done.")
+            raise Exception("Job %s: marked submitted but not done.\n")
 
     def get_job(self, job_id=None):
         if job_id:
@@ -624,14 +624,26 @@ class Content(object):
         self.max_index = 0
 
     def verify_page(self, page):
+        if self.debug:
+            sys.stderr.write("Checking contents...\n\tChecking size...\n")
         if len(page)==self.json["size"]:
+            if self.debug:
+                sys.stderr.write("\tSize is good, checking keywords...\n:w")
             for keyword in self.json["keywords"]:
+                if self.debug:
+                    sys.stderr.write("\t\tChecking %s..." % keyword)
                 if keyword in page:
+                    if self.debug:
+                        sys.stderr.write("Good!\n")
                     continue
                 else:
+                    if self.debug:
+                        sys.stderr.write("Bad!\n")
                     self.invalid()
         else:
             self.invalid()
+        if self.debug:
+            sys.stderr.write("Done content check!\n")
         self.success()
 
     def get_size(self):
