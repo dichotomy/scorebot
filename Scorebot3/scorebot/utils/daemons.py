@@ -1,28 +1,31 @@
-#!/usr/bin/python
-
 import os
-import sys
 import time
-import django
 import importlib
 import threading
 import importlib.util
 
-from datetime import datetime, timedelta
-
-SCOREBOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-os.chdir(SCOREBOT_DIR)
-sys.path.insert(0, SCOREBOT_DIR)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "scorebot.settings")
-os.environ['DJANGO_SETTINGS_MODULE'] = 'scorebot.settings'
-
 from django.conf import settings
-# TODO: Fix logging to journalctl to loggin via daemon is separate file than http daemon
-#from scorebot.utils import logger
+from django.utils import timezone
+from scorebot.utils.logger import log_debug, log_error, log_info, log_warning, log_stdout
 
 
-class DaemonEntry:
+def start_daemon():
+    log_stdout('DAEMON', 'DEBUG')
+    log_info('DAEMON', 'Starting the Scorebot3 Daemon process..')
+    daemon_thread = Daemon()
+    daemon_thread.load_daemons(settings.DAEMON_DIR)
+    log_debug('DAEMON', 'Loaded "%d" daemons, [%s]..' % (len(daemon_thread.daemons),
+                                                         ', '.join([str(d.name) for d in daemon_thread.daemons])))
+    try:
+        daemon_thread.start()
+        while daemon_thread.running:
+            pass
+    except KeyboardInterrupt:
+        daemon_thread.stop()
+        log_info('DAEMON', 'Stopping SBE Daemon process..')
+
+
+class DaemonEntry(object):
     """
     Scorebot v3: DaemonEntry
 
@@ -36,7 +39,6 @@ class DaemonEntry:
             raise ValueError('Parameter "trigger" must be a positive "integer" object type!')
         if not callable(method):
             raise ValueError('Parameter "method" must be a "callable" object type!')
-        self.end = None
         self.next = None
         self.name = name
         self.thread = None
@@ -46,21 +48,23 @@ class DaemonEntry:
         self.timeout = timeout
 
     def stop(self):
+        log_debug('DAEMON', 'Attempting to stop daemon "%s"..' % self.name)
         self.running = False
         self.thread.stop()
+        log_debug('DAEMON', 'Stopped daemon "%s"..' % self.name)
         self.thread = None
 
     def start(self):
+        log_debug('DAEMON', 'Attempting to start daemon "%s"..' % self.name)
         if self.timeout > 0:
-            self.end = datetime.now() + timedelta(seconds=self.timeout)
-        else:
-            self.end = None
-        self.next = datetime.now() + timedelta(seconds=self.trigger)
+            log_debug('DAEMON', 'Daemon "%s" has a set timeout of "%d" seconds..' % (self.name, self.timeout))
+        self.next = timezone.now()
         self.running = True
         self.thread = DaemonThread(self)
         self.thread.start()
+        log_debug('DAEMON', 'Started Daemon "%s"!' % self.name)
 
-    def _stop(self):
+    def del_stop(self):
         self.thread = None
         self.running = False
 
@@ -72,14 +76,14 @@ class DaemonEntry:
             return False
         if self.next is None:
             return True
-        if (now - self.next).seconds <= 0:
+        if (now - self.next).seconds >= self.trigger:
             return True
         return False
 
     def is_timeout(self, now):
-        if self.end is None:
+        if self.timeout == 0:
             return False
-        if (now - self.end).seconds <= 0:
+        if (now - self.next).seconds > self.timeout:
             return True
         return False
 
@@ -100,12 +104,11 @@ class Daemon(threading.Thread):
     def run(self):
         self.running = True
         while self.running:
-            now = datetime.now()
+            now = timezone.now()
             for daemon in self.daemons:
                 if daemon.__bool__():
                     if daemon.is_timeout(now):
-                        print('Killing Daemon "%s".' % daemon.name)
-                        #logger.debug('SBE-DAEMON', 'Killing Daemon "%s".' % daemon.name)
+                        log_debug('DAEMON', 'killing Daemon "%s" due to timeout!' % self.name)
                         daemon.stop()
                 else:
                     if daemon.is_ready(now):
@@ -140,18 +143,16 @@ class Daemon(threading.Thread):
                                 daemon_entry = daemon_class_def()
                                 if daemon_entry is not None:
                                     self.daemons.append(daemon_entry)
-                                    print('Loaded Daemon "%s".' % daemon_class.__name__)
-                                    #logger.debug('SBE-DAEMON', 'Loaded Daemon "%s".' % daemon_class.__name__)
+                                    log_debug('DAEMON', 'Loaded Daemon "%s"!' % daemon_class.__name__)
                             del daemon_class
                             del daemon_loader
                         except AttributeError:
-                            print('Class "%s" does not have the "init_daemon" method!' % daemon_class.__name__)
-                            #logger.warning('SBE-DAEMON', 'Class "%s" does not have the "init_daemon" method!' %
-                            #               daemon_class.__name__)
+                            log_warning('DAEMON',
+                                        'Daemon class for "%s" does not have the "init_daemon" method, ignoring!' %
+                                        daemon_class.__name__)
                     except Exception as loadError:
-                        print('Exception occurred when loading Daemon "%s"! %s' % (daemon_file, str(loadError)))
-                        #logger.debug('SBE-DAEMON', 'Exception occurred when loading Daemon "%s"! %s' %
-                        #             (daemon_file, str(loadError)))
+                        log_error('DAEMON', 'An error ocured when attempting to load Daemon "%s"! Exception: "%s' %
+                                  (daemon_file, str(loadError)))
         del daemon_list
 
 
@@ -170,37 +171,16 @@ class DaemonThread(threading.Thread):
     def run(self):
         self.running = True
         print('Starting Daemon "%s".' % self.entry.name)
-        #logger.debug('SBE-DAEMON', 'Starting Daemon "%s".' % self.entry.name)
+        log_info('DAEMON', 'Starting Daemon "%s"..' % self.entry.name)
         try:
             self.entry.method()
         except Exception as threadError:
-            print('Daemon "%s" threw an Exception when called! %s.' % (self.entry.name, str(threadError)))
-            #logger.debug('SBE-DAEMON', 'Daemon "%s" threw an Exception when called! %s.' %
-            #             (self.entry.name, str(threadError)))
-        print('Daemon "%s" Finished.' % self.entry.name)
-        #logger.debug('SBE-DAEMON', 'Daemon "%s" Finished.' % self.entry.name)
+            log_error('DAEMON', 'Daemon "%s" encountered an error when running! Exception: "%s"' %
+                      (self.entry.name, str(threadError)))
+        log_info('DAEMON', 'Daemon "%s" finished running.' % self.entry.name)
         self.running = False
-        self.entry._stop()
+        self.entry.del_stop()
 
     def stop(self):
         # TODO: Not much we can do here to stop a running process
         self.running = False
-
-
-if __name__ == '__main__':
-    django.setup()
-    print('Starting SBE Daemon process..')
-    #logger.info('SBE-DAEMON', 'Starting SBE Daemon process..')
-    daemon = Daemon()
-    daemon.load_daemons(os.path.join(SCOREBOT_DIR, settings.DAEMON_DIR))
-    print('Loading "%s" daemons..' % len(daemon.daemons))
-    #logger.debug('SBE-DAEMON', 'Loading "%s" daemons..' % len(daemon.daemons))
-    try:
-        daemon.start()
-        while daemon.running:
-            pass
-    except KeyboardInterrupt:
-        daemon.stop()
-        print('Stopping SBE Daemon process..')
-        #logger.info('SBE-DAEMON', 'Stopping SBE Daemon process..')
-        sys.exit(0)

@@ -12,18 +12,39 @@
     <link rel="stylesheet" href="{% static 'scoreboard.css' %}" type="text/css" media="screen" />
 </head>
 <body onload="sb3_init()">
+<div id="sb3_events">
+<div id="sb3_events_effects"></div>
+<div id="sb3_events_windows"></div>
+</div>
 <div id="sb3_main">
   <header id="sb3_header">
     <div id="sb3_message"><span id="sb3_message_text" style="left: 0px"></span></div>
   </header>
   <div id="sb3_content">
+
+    <table>
+    <tr>
+    <td id="sb3_messages_td">
+
+    <div id="sb3_messages"></div>
+
+    </td>
+    <td id="sb3_game_td">
+
     <div id="sb3_game">
       <div id="sb3_game_title"></div>
       <div id="sb3_teams">
       </div>
     </div>
+
+    </td>
+    </tr>
+    </table>
+
    </div>
-  <footer id="sb3_footer"></footer>
+  <footer id="sb3_footer">
+  <div id="sb3_credits"></div>
+  </footer>
 </div>
 </body>
 </html>

@@ -5,11 +5,14 @@ Wants=network-online.target httpd.service mysqld.service
 
 [Service]
 Type=simple
-PrivateTmp=true
-ExecStart=/opt/scorebot/3.2beta/daemon
+Environment="PYLIB=/opt/scorebot/python"
+Environment="SCOREBOT_DIR=/opt/scorebot/scorebot"
+ExecStart=/usr/bin/bash -c "source $PYLIB/bin/activate; python3 $SCOREBOT_DIR/daemon.py"
 KillSignal=SIGINT
 ProtectSystem=true
 ProtectHome=true
+User=http
+Group=http
 
 [Install]
 WantedBy=multi-user.target
