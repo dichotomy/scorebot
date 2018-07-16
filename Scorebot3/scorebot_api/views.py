@@ -155,10 +155,7 @@ class ScorebotAPI:
             except json.decoder.JSONDecodeError:
                 api_error('TICKET', 'Data submitted is not in correct JSON format!', request)
                 return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"]')
-            if 'tickets' not in json_data:
-                api_error('TICKET', 'Data submitted is missing JSON fields!', request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"}')
-            if not isinstance(json_data['tickets'], list):
+            if not isinstance(json_data.get('tickets', None), list):
                 api_error('TICKET', 'Data submitted is missing JSON fields!', request)
                 return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"}')
             for ticket in json_data['tickets']:
@@ -303,14 +300,10 @@ class ScorebotAPI:
         elif request.method == 'POST':
             import_form = Scorebot2ImportForm(request.POST)
             if import_form.is_valid():
-                if import_form:
-                # try:
-                    import_game = import_form.save()
-                    if import_game is None:
-                        return HttpResponseServerError('Error importing Game! Game is None!')
-                    return HttpResponseRedirect(reverse('scorebot3:scoreboard', args=(import_game.id,)))
-                # except Exception as importError:
-                #    return HttpResponseServerError(str(importError))
+                import_game = import_form.save()
+                if import_game is None:
+                    return HttpResponseServerError('Error importing Game! Game is None!')
+                return HttpResponseRedirect(reverse('scorebot3:scoreboard', args=(import_game.id,)))
             return render(request, 'scorebot2_import.html', {'import_form': import_form.as_table()})
         return HttpResponseBadRequest(content='SBE API: Not a supported method type!')
 
@@ -351,35 +344,23 @@ class ScorebotAPI:
                     team_token = Token.objects.get(uuid=uuid.UUID(json_data['dest']))
                     team_to = GameTeam.objects.get(token=team_token)
                     del team_token
-                except ValueError:
+                except (ValueError, Token.DoesNotExist, GameTeam.DoesNotExist):
                     api_error('TRANSFER', 'Token given for Destination is invalid!', request)
                     return HttpResponseBadRequest(content='{"message": "SBE API: Invalid Destination Token!"}')
-                except Token.DoesNotExist:
-                    api_error('TRANSFER', 'Token given for Destination is invalid!', request)
-                    return HttpResponseBadRequest(content='{"message": "SBE API: Invalid Destination Token!"}')
-                except GameTeam.DoesNotExist:
-                    api_error('TRANSFER', 'Team given for Destination does not exist!', request)
-                    return HttpResponseBadRequest(content='{"message": "SBE API: Destination Team does not exist!"}')
             if json_data['target'] is not None:
                 try:
                     team_token = Token.objects.get(uuid=uuid.UUID(json_data['target']))
                     team_from = GameTeam.objects.get(token=team_token)
                     del team_token
-                except ValueError:
+                except (ValueError, Token.DoesNotExist, GameTeam.DoesNotExist):
                     api_error('TRANSFER', 'Token given for Source is invalid!', request)
                     return HttpResponseBadRequest(content='{"message": "SBE API: Invalid Source Token!"}')
-                except Token.DoesNotExist:
-                    api_error('TRANSFER', 'Token given for Source is invalid!', request)
-                    return HttpResponseBadRequest(content='{"message": "SBE API: Invalid Source Token!"}')
-                except GameTeam.DoesNotExist:
-                    api_error('TRANSFER', 'Team given for Source does not exist!', request)
-                    return HttpResponseBadRequest(content='{"message": "SBE API: Source Team does not exist!"}')
             if team_to is not None and team_to.game.status != CONST_GAME_GAME_RUNNING:
                 api_error('TRANSFER', 'Game "%s" submitted is not Running!' % team_to.gane.name, request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Team Game ius not running!"}')
+                return HttpResponseBadRequest(content='{"message": "SBE API: Team Game is not running!"}')
             if team_from is not None and team_from.game.status != CONST_GAME_GAME_RUNNING:
                 api_error('TRANSFER', 'Game "%s" submitted is not Running!' % team_from.gane.name, request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Team Game ius not running!"}')
+                return HttpResponseBadRequest(content='{"message": "SBE API: Team Game is not running!"}')
             if team_to is not None and team_from is not None and team_to.game.id != team_from.game.id:
                 api_error('TRANSFER', 'Transfer teams are not in the same Game!', request)
                 return HttpResponseBadRequest(content='{"message": "SBE API: Teams are not in the same Game!"}')
