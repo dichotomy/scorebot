@@ -135,7 +135,8 @@ class Host(GridModel):
     """
     Scorebot v3: Host
 
-    Represents a Hosts used in a game
+    Represents a Hosts used in a game.  These are the individual hosts monitored
+    by Monitors.
     """
 
     class Meta:
@@ -275,7 +276,7 @@ class Service(GridModel):
     Scorebot v3: Service
 
     Stores the data related to a in game service.  The service consists of a port check and returns the status based
-    on the outcome of the port check (pass | timeout | reset | refused).  Services can also be marked as bouns ports
+    on the outcome of the port check (pass | timeout | reset | refused).  Services can also be marked as bonus ports
     which have no value when no opened at all.
     """
 
@@ -303,9 +304,13 @@ class Service(GridModel):
         self.save()
 
     def __str__(self):
-        return '[Service] %s %s<%s|%d/%s> %s'\
-               % (self.get_canonical_name(), ('(B) ' if self.bonus else ''), self.application, self.port,
-                  self.get_protocol_display(), self.get_status_display().upper())
+        return ('[Service] %s %s<%s|%d/%s> %s' %
+                 (self.get_canonical_name(),
+                  '(B) ' if self.bonus else '',
+                  self.application,
+                  self.port,
+                  self.get_protocol_display(),
+                  self.get_status_display().upper()))
 
     def __bool__(self):
         if self.bonus and not self.bonus_started:
@@ -323,7 +328,9 @@ class Service(GridModel):
         content = None
         if self.content is not None:
             content = self.content.get_json_job()
-        return {'port': self.port, 'application': self.application, 'protocol': self.get_protocol_display(),
+        return {'port': self.port,
+                'application': self.application,
+                'protocol': self.get_protocol_display(),
                 'content': content}
 
     def get_canonical_name(self):
