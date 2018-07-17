@@ -25,6 +25,7 @@ METHOD_POST = 'POST'
 
 
 class ScorebotAPI:
+
     @staticmethod
     @csrf_exempt
     @authenticate()
@@ -133,9 +134,7 @@ class ScorebotAPI:
                 if flag_next is not None:
                     api_debug('FLAG', 'Got Flag "%s", sending hint!' % flag_next.get_canonical_name(), request)
                     return HttpResponse(status=200, content='{"message": "%s"}' % flag_next.description)
-            except IndexError:
-                return HttpResponse(status=200)
-            except Flag.DoesNotExist:
+            except (IndexError, Flag.DoesNotExist):
                 return HttpResponse(status=200)
         return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
 
@@ -334,10 +333,10 @@ class ScorebotAPI:
             try:
                 amount = int(json_data['amount'])
             except ValueError:
-                api_error('TRANSFER', 'Amount submitted is is invalid!', request)
+                api_error('TRANSFER', 'Amount submitted is invalid!', request)
                 return HttpResponseBadRequest(content='{"message": "SBE API: Invalid amount!"}')
             if amount <= 0:
-                api_error('TRANSFER', 'Amount submitted is is invalid!', request)
+                api_error('TRANSFER', 'Amount submitted is invalid!', request)
                 return HttpResponseBadRequest(content='{"message": "SBE API: Invalid amount!"}')
             if json_data['dest'] is not None:
                 try:
@@ -356,10 +355,10 @@ class ScorebotAPI:
                     api_error('TRANSFER', 'Token given for Source is invalid!', request)
                     return HttpResponseBadRequest(content='{"message": "SBE API: Invalid Source Token!"}')
             if team_to is not None and team_to.game.status != CONST_GAME_GAME_RUNNING:
-                api_error('TRANSFER', 'Game "%s" submitted is not Running!' % team_to.gane.name, request)
+                api_error('TRANSFER', 'Game "%s" submitted is not Running!' % team_to.game.name, request)
                 return HttpResponseBadRequest(content='{"message": "SBE API: Team Game is not running!"}')
             if team_from is not None and team_from.game.status != CONST_GAME_GAME_RUNNING:
-                api_error('TRANSFER', 'Game "%s" submitted is not Running!' % team_from.gane.name, request)
+                api_error('TRANSFER', 'Game "%s" submitted is not Running!' % team_from.game.name, request)
                 return HttpResponseBadRequest(content='{"message": "SBE API: Team Game is not running!"}')
             if team_to is not None and team_from is not None and team_to.game.id != team_from.game.id:
                 api_error('TRANSFER', 'Transfer teams are not in the same Game!', request)
