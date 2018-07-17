@@ -151,6 +151,9 @@ class Score(models.Model):
 
 
 class Credit(models.Model):
+    """
+    Credits displayed on the scoreboard.
+    """
     class Meta:
         verbose_name = 'Credit'
         verbose_name_plural = 'Credits'
@@ -163,14 +166,14 @@ class Credit(models.Model):
 
     @staticmethod
     def get_next_credit():
-        credit = ''
         try:
             credit_selected = random.choice(Credit.objects.all())
-            if credit_selected is not None:
-                credit = credit_selected.content
+            try:
+                return credit_selected.content
+            except AttributeError:
+                return ''
         except IndexError:
-            pass
-        return credit
+            return ''
 
 
 class Player(models.Model):
@@ -287,6 +290,7 @@ class AccessToken(models.Model):
         super(AccessToken, self).save(*args, **kwargs)
 
     def __getitem__(self, access_level):
+        """Check if an access level is included."""
         if isinstance(access_level, int):
             access_object = access_level
         elif isinstance(access_level, str):
@@ -301,6 +305,9 @@ class AccessToken(models.Model):
         return (self.level & (1 << access_object)) > 0
 
     def __setitem__(self, access_level, access_value):
+        """
+        Set or clear an access level.
+        """
         if isinstance(access_level, int):
             access_object = access_level
         elif isinstance(access_level, str):
