@@ -106,198 +106,198 @@ class ScorebotAPI:
     @csrf_exempt
     @authenticate('__SYS_FLAG')
     def api_flag(request):
-        if request.method == METHOD_POST:
-            team, token, data, exception = game_team_from_token(request, 'Flag', 'token', fields=['flag'])
-            del token
-            if exception is not None:
-                return exception
-            try:
-                flag = Flag.objects.exclude(team=team).get(host__team__game=team.game, flag__exact=data['flag'],
-                                                           enabled=True)
-            except Flag.DoesNotExist:
-                api_error('FLAG', 'Flag submitted by Team "%s" was not found!' % team.get_canonical_name(), request)
-                return HttpResponseNotFound(content='{"message": "SBE API: Flag not valid!"}')
-            except Flag.MultipleObjectsReturned:
-                api_error('FLAG', 'Flag submitted by Team "%s" returned multiple flags!'
-                          % team.get_canonical_name(), request)
-                return HttpResponseNotFound(content='{"message": "SBE API: Flag not valid!"}')
-            if flag.captured is not None:
-                api_error('FLAG', 'Flag "%s" submitted by Team "%s" was already captured!'
-                          % (flag.get_canonical_name(), team.get_canonical_name()), request)
-                return HttpResponse(status=204, content='{"message": "SBE API: Flag already captured!"}')
-            flag.capture(team)
-            api_info('FLAG', 'Flag "%s" was captured by team "%s"!'
-                     % (flag.get_canonical_name(), team.get_canonical_name()), request)
-            try:
-                api_debug('FLAG', 'Attempting to get another non-captured flag for a hint..', request)
-                flag_next = random.choice(Flag.objects.filter(enabled=True, team=flag.team, captured__isnull=True))
-                del flag
-                if flag_next is not None:
-                    api_debug('FLAG', 'Got Flag "%s", sending hint!' % flag_next.get_canonical_name(), request)
-                    return HttpResponse(status=200, content='{"message": "%s"}' % flag_next.description)
-            except (IndexError, Flag.DoesNotExist):
-                return HttpResponse(status=200)
-        return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+        if request.method != METHOD_POST:
+            return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+        team, token, data, exception = game_team_from_token(request, 'Flag', 'token', fields=['flag'])
+        del token
+        if exception is not None:
+            return exception
+        try:
+            flag = Flag.objects.exclude(team=team).get(host__team__game=team.game, flag__exact=data['flag'],
+                                                        enabled=True)
+        except Flag.DoesNotExist:
+            api_error('FLAG', 'Flag submitted by Team "%s" was not found!' % team.get_canonical_name(), request)
+            return HttpResponseNotFound(content='{"message": "SBE API: Flag not valid!"}')
+        except Flag.MultipleObjectsReturned:
+            api_error('FLAG', 'Flag submitted by Team "%s" returned multiple flags!'
+                        % team.get_canonical_name(), request)
+            return HttpResponseNotFound(content='{"message": "SBE API: Flag not valid!"}')
+        if flag.captured is not None:
+            api_error('FLAG', 'Flag "%s" submitted by Team "%s" was already captured!'
+                        % (flag.get_canonical_name(), team.get_canonical_name()), request)
+            return HttpResponse(status=204, content='{"message": "SBE API: Flag already captured!"}')
+        flag.capture(team)
+        api_info('FLAG', 'Flag "%s" was captured by team "%s"!'
+                    % (flag.get_canonical_name(), team.get_canonical_name()), request)
+        try:
+            api_debug('FLAG', 'Attempting to get another non-captured flag for a hint..', request)
+            flag_next = random.choice(Flag.objects.filter(enabled=True, team=flag.team, captured__isnull=True))
+            del flag
+            if flag_next is not None:
+                api_debug('FLAG', 'Got Flag "%s", sending hint!' % flag_next.get_canonical_name(), request)
+                return HttpResponse(status=200, content='{"message": "%s"}' % flag_next.description)
+        except (IndexError, Flag.DoesNotExist):
+            return HttpResponse(status=200)
 
     @staticmethod
     @csrf_exempt
     @authenticate('__SYS_TICKET')
     def api_ticket(request):
-        if request.method == METHOD_POST:
-            try:
-                decoded_data = request.body.decode('UTF-8')
-            except UnicodeDecodeError:
-                api_error('TICKET', 'Data submitted is not encoded properly!', request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Incorrect encoding, please use UTF-8!"}')
-            try:
-                json_data = json.loads(decoded_data)
-                del decoded_data
-            except json.decoder.JSONDecodeError:
-                api_error('TICKET', 'Data submitted is not in correct JSON format!', request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"]')
-            if not isinstance(json_data.get('tickets', None), list):
-                api_error('TICKET', 'Data submitted is missing JSON fields!', request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"}')
-            for ticket in json_data['tickets']:
-                ticket, exception = GameTicket.grab_ticket_json(request, ticket)
-                if exception:
-                    return HttpResponseBadRequest('{"message": "SBE API: d%s"}' % exception)
-                del ticket
-            return HttpResponse(status=200, content='{"message": "Accepted"}')
-        return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+        if request.method != METHOD_POST:
+            return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+        try:
+            decoded_data = request.body.decode('UTF-8')
+        except UnicodeDecodeError:
+            api_error('TICKET', 'Data submitted is not encoded properly!', request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Incorrect encoding, please use UTF-8!"}')
+        try:
+            json_data = json.loads(decoded_data)
+            del decoded_data
+        except json.decoder.JSONDecodeError:
+            api_error('TICKET', 'Data submitted is not in correct JSON format!', request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"]')
+        if not isinstance(json_data.get('tickets', None), list):
+            api_error('TICKET', 'Data submitted is missing JSON fields!', request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"}')
+        for ticket in json_data['tickets']:
+            ticket, exception = GameTicket.grab_ticket_json(request, ticket)
+            if exception:
+                return HttpResponseBadRequest('{"message": "SBE API: d%s"}' % exception)
+            del ticket
+        return HttpResponse(status=200, content='{"message": "Accepted"}')
 
     @staticmethod
     @csrf_exempt
     @authenticate('__SYS_BEACON')
     def api_beacon(request):
-        if request.method == METHOD_POST:
-            team, token, data, exception = game_team_from_token(request, 'CLI', 'token', beacon=True,
-                                                                fields=['address'])
-            if exception is not None:
-                return exception
-            address_raw = data['address']
+        if request.method != METHOD_POST:
+            return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+        team, token, data, exception = game_team_from_token(request, 'CLI', 'token', beacon=True,
+                                                            fields=['address'])
+        if exception is not None:
+            return exception
+        address_raw = data['address']
+        try:
+            address = IPAddress(address_raw)
+        except AddrFormatError:
+            api_error('BEACON', 'IP Reported by Team "%s" is invalid!' % team.get_canonical_name(), request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Invalid IP Address!"}')
+        target_team = None
+        for sel_target_team in team.game.teams.all():
             try:
-                address = IPAddress(address_raw)
+                target_subnet = IPNetwork(sel_target_team.subnet)
             except AddrFormatError:
-                api_error('BEACON', 'IP Reported by Team "%s" is invalid!' % team.get_canonical_name(), request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Invalid IP Address!"}')
-            target_team = None
-            for sel_target_team in team.game.teams.all():
-                try:
-                    target_subnet = IPNetwork(sel_target_team.subnet)
-                except AddrFormatError:
-                    api_warning('BEACON', 'Team "%s" subnet is invalid, skipping Team!' % team.get_canonical_name(),
-                                request)
-                    continue
-                if address in target_subnet:
-                    api_debug('BEACON', 'Beacon from Team "%s" to Team "%s"\'s subnet!'
-                              % (team.get_canonical_name(), sel_target_team.get_canonical_name()), request)
-                    target_team = sel_target_team
-                    del target_subnet
-                    break
+                api_warning('BEACON', 'Team "%s" subnet is invalid, skipping Team!' % team.get_canonical_name(),
+                            request)
+                continue
+            if address in target_subnet:
+                api_debug('BEACON', 'Beacon from Team "%s" to Team "%s"\'s subnet!'
+                            % (team.get_canonical_name(), sel_target_team.get_canonical_name()), request)
+                target_team = sel_target_team
                 del target_subnet
-            del address
+                break
+            del target_subnet
+        del address
+        try:
+            host = Host.objects.get(ip=address_raw, team__game__status=CONST_GAME_GAME_RUNNING)
+            if host.team.game.id != team.game.id:
+                api_error('BEACON', 'Host accessed by Team "%s" is not in the same game as "%s"!'
+                            % (team.get_canonical_name(), host.team.get_canonical_name()), request)
+                return HttpResponseForbidden('{"message": "SBE API: Host is not in the same Game!"}')
             try:
-                host = Host.objects.get(ip=address_raw, team__game__status=CONST_GAME_GAME_RUNNING)
-                if host.team.game.id != team.game.id:
-                    api_error('BEACON', 'Host accessed by Team "%s" is not in the same game as "%s"!'
-                              % (team.get_canonical_name(), host.team.get_canonical_name()), request)
-                    return HttpResponseForbidden('{"message": "SBE API: Host is not in the same Game!"}')
-                try:
-                    beacon = host.beacons.get(beacon__finish__isnull=True, beacon__attacker=team, beacon__token=token)
-                    beacon.checkin = timezone.now()
-                    beacon.save()
-                    api_info('BEACON', 'Team "%s" updated the Beacon on Host "%s"!'
-                             % (team.get_canonical_name(), host.get_canonical_name()), request)
-                    return HttpResponse()
-                except GameCompromiseHost.MultipleObjectsReturned:
+                beacon = host.beacons.get(beacon__finish__isnull=True, beacon__attacker=team, beacon__token=token)
+                beacon.checkin = timezone.now()
+                beacon.save()
+                api_info('BEACON', 'Team "%s" updated the Beacon on Host "%s"!'
+                            % (team.get_canonical_name(), host.get_canonical_name()), request)
+                return HttpResponse()
+            except GameCompromiseHost.MultipleObjectsReturned:
+                api_warning('BEACON', 'Team "%s" attempted to create multiple Beacons on a Host "%s"!' %
+                            (team.get_canonical_name(), host.get_canonical_name()), request)
+                del host
+                del address_raw
+                return HttpResponseForbidden('{"message": "SBE API: Already a Beacon on that Host!"}')
+            except GameCompromiseHost.DoesNotExist:
+                if host.beacons.filter(beacon__finish__isnull=True).count() > 1:
                     api_warning('BEACON', 'Team "%s" attempted to create multiple Beacons on a Host "%s"!' %
                                 (team.get_canonical_name(), host.get_canonical_name()), request)
                     del host
                     del address_raw
                     return HttpResponseForbidden('{"message": "SBE API: Already a Beacon on that Host!"}')
-                except GameCompromiseHost.DoesNotExist:
-                    if host.beacons.filter(beacon__finish__isnull=True).count() > 1:
-                        api_warning('BEACON', 'Team "%s" attempted to create multiple Beacons on a Host "%s"!' %
-                                    (team.get_canonical_name(), host.get_canonical_name()), request)
-                        del host
-                        del address_raw
-                        return HttpResponseForbidden('{"message": "SBE API: Already a Beacon on that Host!"}')
-                    beacon = GameCompromise()
-                    beacon_host = GameCompromiseHost()
-                    beacon_host.ip = address_raw
-                    beacon_host.team = host.team
-                    beacon_host.host = host
-                    beacon.token = token
-                    beacon.attacker = team
-                    beacon.save()
-                    beacon_host.beacon = beacon
-                    beacon_host.save()
-                    api_event(team.game, 'A Host on %s\'s network was compromised by "%s" #PvJCTF #CTF #BSidesLV!' %
-                              (host.team.name, team.name))
-                    beacon_value = int(team.game.get_option('beacon_value'))
-                    team.set_beacons(beacon_value)
-                    api_info('SCORING-ASYNC', 'Beacon score was applied to Team "%s"!' % team.get_canonical_name(),
-                             request)
-                    api_score(beacon.id, 'BEACON-ATTACKER', team.get_canonical_name(), beacon_value,
-                              beacon_host.get_fqdn())
-                    del beacon_value
-                    del beacon
-                    del beacon_host
-                    del address_raw
-                    api_info('BEACON', 'Team "%s" added a Beacon to Host "%s"!'
-                             % (team.get_canonical_name(), host.get_canonical_name()), request)
-                    return HttpResponse(status=201)
-            except Host.DoesNotExist:
-                if target_team is not None:
-                    api_info('BEACON', 'Host accessed by Team "%s" does not exist! Attempting to create a faux Host!'
-                             % team.get_canonical_name(), request)
-                    if GameCompromiseHost.objects.filter(ip=address_raw, beacon__finish__isnull=True).count() > 0:
-                        api_warning('BEACON', 'Team "%s" attempted to create multiple Beacons on a Host "%s"!' %
-                                    (team.get_canonical_name(), address_raw), request)
-                        del address_raw
-                        return HttpResponseForbidden('{"message": "SBE API: Already a Beacon on that Host!"}')
-                    beacon_host = GameCompromiseHost()
-                    beacon_host.ip = address_raw
-                    beacon_host.team = target_team
-                    beacon = GameCompromise()
-                    beacon.token = token
-                    beacon.attacker = team
-                    beacon.save()
-                    beacon_host.beacon = beacon
-                    beacon_host.save()
-                    api_event(team.game, 'A Host on %s\'s network was compromised by "%s" #PvJCTF #CTF #BSidesLV!' %
-                              (target_team.name, team.name))
-                    beacon_value = int(team.game.get_option('beacon_value'))
-                    team.set_beacons(beacon_value)
-                    api_info('SCORING-ASYNC', 'Beacon score was applied to Team "%s"!' % team.get_canonical_name(),
-                             request)
-                    api_score(beacon.id, 'BEACON-ATTACKER', team.get_canonical_name(), beacon_value,
-                              beacon_host.get_fqdn())
-                    del beacon_value
-                    del beacon
-                    del beacon_host
-                    api_info('BEACON', 'Team "%s" added a Beacon to Host "%s"!'
-                             % (team.get_canonical_name(), address_raw), request)
-                    del address_raw
-                    return HttpResponse(status=201)
+                beacon = GameCompromise()
+                beacon_host = GameCompromiseHost()
+                beacon_host.ip = address_raw
+                beacon_host.team = host.team
+                beacon_host.host = host
+                beacon.token = token
+                beacon.attacker = team
+                beacon.save()
+                beacon_host.beacon = beacon
+                beacon_host.save()
+                api_event(team.game, 'A Host on %s\'s network was compromised by "%s" #PvJCTF #CTF #BSidesLV!' %
+                            (host.team.name, team.name))
+                beacon_value = int(team.game.get_option('beacon_value'))
+                team.set_beacons(beacon_value)
+                api_info('SCORING-ASYNC', 'Beacon score was applied to Team "%s"!' % team.get_canonical_name(),
+                            request)
+                api_score(beacon.id, 'BEACON-ATTACKER', team.get_canonical_name(), beacon_value,
+                            beacon_host.get_fqdn())
+                del beacon_value
+                del beacon
+                del beacon_host
                 del address_raw
-                api_error('BEACON', 'Host accessed by Team "%s" does not exist and a hosting team cannot be found!'
-                          % team.get_canonical_name(), request)
-                return HttpResponseNotFound('{"message": "SBE API: Host does not exist!"}')
-            except Host.MultipleObjectsReturned:
-                api_error('BEACON', 'Host accessed by Team "%s" returned multiple Hosts, invalid!'
-                          % team.get_canonical_name(), request)
-                return HttpResponseNotFound('{"message": "SBE API: Host does not exist!"}')
-        return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+                api_info('BEACON', 'Team "%s" added a Beacon to Host "%s"!'
+                            % (team.get_canonical_name(), host.get_canonical_name()), request)
+                return HttpResponse(status=201)
+        except Host.DoesNotExist:
+            if target_team is not None:
+                api_info('BEACON', 'Host accessed by Team "%s" does not exist! Attempting to create a faux Host!'
+                            % team.get_canonical_name(), request)
+                if GameCompromiseHost.objects.filter(ip=address_raw, beacon__finish__isnull=True).count() > 0:
+                    api_warning('BEACON', 'Team "%s" attempted to create multiple Beacons on a Host "%s"!' %
+                                (team.get_canonical_name(), address_raw), request)
+                    del address_raw
+                    return HttpResponseForbidden('{"message": "SBE API: Already a Beacon on that Host!"}')
+                beacon_host = GameCompromiseHost()
+                beacon_host.ip = address_raw
+                beacon_host.team = target_team
+                beacon = GameCompromise()
+                beacon.token = token
+                beacon.attacker = team
+                beacon.save()
+                beacon_host.beacon = beacon
+                beacon_host.save()
+                api_event(team.game, 'A Host on %s\'s network was compromised by "%s" #PvJCTF #CTF #BSidesLV!' %
+                            (target_team.name, team.name))
+                beacon_value = int(team.game.get_option('beacon_value'))
+                team.set_beacons(beacon_value)
+                api_info('SCORING-ASYNC', 'Beacon score was applied to Team "%s"!' % team.get_canonical_name(),
+                            request)
+                api_score(beacon.id, 'BEACON-ATTACKER', team.get_canonical_name(), beacon_value,
+                            beacon_host.get_fqdn())
+                del beacon_value
+                del beacon
+                del beacon_host
+                api_info('BEACON', 'Team "%s" added a Beacon to Host "%s"!'
+                            % (team.get_canonical_name(), address_raw), request)
+                del address_raw
+                return HttpResponse(status=201)
+            del address_raw
+            api_error('BEACON', 'Host accessed by Team "%s" does not exist and a hosting team cannot be found!'
+                        % team.get_canonical_name(), request)
+            return HttpResponseNotFound('{"message": "SBE API: Host does not exist!"}')
+        except Host.MultipleObjectsReturned:
+            api_error('BEACON', 'Host accessed by Team "%s" returned multiple Hosts, invalid!'
+                        % team.get_canonical_name(), request)
+            return HttpResponseNotFound('{"message": "SBE API: Host does not exist!"}')
 
     @staticmethod
     @staff_member_required
     def api_import(request):
-        if request.method == 'GET':
+        if request.method == METHOD_GET:
             import_form = Scorebot2ImportForm()
             return render(request, 'scorebot2_import.html', {'import_form': import_form.as_table()})
-        elif request.method == 'POST':
+        elif request.method == METHOD_POST:
             import_form = Scorebot2ImportForm(request.POST)
             if import_form.is_valid():
                 import_game = import_form.save()
@@ -311,69 +311,69 @@ class ScorebotAPI:
     @csrf_exempt
     @authenticate('__SYS_STORE')
     def api_transfer(request):
-        if request.method == METHOD_POST:
+        if request.method != METHOD_POST:
+            return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+        try:
+            decoded_data = request.body.decode('UTF-8')
+        except UnicodeDecodeError:
+            api_error('TRANSFER', 'Data submitted is not encoded properly!', request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Incorrect encoding, please use UTF-8!"}')
+        try:
+            json_data = json.loads(decoded_data)
+            del decoded_data
+        except json.decoder.JSONDecodeError:
+            api_error('TRANSFER', 'Data submitted is not in correct JSON format!', request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"]')
+        if 'target' not in json_data or 'dest' not in json_data or 'amount' not in json_data:
+            api_error('TRANSFER', 'Data submitted is missing JSON fields!', request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"}')
+        if json_data['target'] is None and json_data['dest'] is None:
+            api_error('TRANSFER', 'Cannot transfer from Gold to Gold!', request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Cannot transfer from Gold to Gold!"}')
+        team_to = None
+        team_from = None
+        try:
+            amount = int(json_data['amount'])
+        except ValueError:
+            api_error('TRANSFER', 'Amount submitted is invalid!', request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Invalid amount!"}')
+        if amount <= 0:
+            api_error('TRANSFER', 'Amount submitted is invalid!', request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Invalid amount!"}')
+        if json_data['dest'] is not None:
             try:
-                decoded_data = request.body.decode('UTF-8')
-            except UnicodeDecodeError:
-                api_error('TRANSFER', 'Data submitted is not encoded properly!', request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Incorrect encoding, please use UTF-8!"}')
+                team_token = Token.objects.get(uuid=uuid.UUID(json_data['dest']))
+                team_to = GameTeam.objects.get(token=team_token)
+                del team_token
+            except (ValueError, Token.DoesNotExist, GameTeam.DoesNotExist):
+                api_error('TRANSFER', 'Token given for Destination is invalid!', request)
+                return HttpResponseBadRequest(content='{"message": "SBE API: Invalid Destination Token!"}')
+        if json_data['target'] is not None:
             try:
-                json_data = json.loads(decoded_data)
-                del decoded_data
-            except json.decoder.JSONDecodeError:
-                api_error('TRANSFER', 'Data submitted is not in correct JSON format!', request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"]')
-            if 'target' not in json_data or 'dest' not in json_data or 'amount' not in json_data:
-                api_error('TRANSFER', 'Data submitted is missing JSON fields!', request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"}')
-            if json_data['target'] is None and json_data['dest'] is None:
-                api_error('TRANSFER', 'Cannot transfer from Gold to Gold!', request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Cannot transfer from Gold to Gold!"}')
-            team_to = None
-            team_from = None
-            try:
-                amount = int(json_data['amount'])
-            except ValueError:
-                api_error('TRANSFER', 'Amount submitted is invalid!', request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Invalid amount!"}')
-            if amount <= 0:
-                api_error('TRANSFER', 'Amount submitted is invalid!', request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Invalid amount!"}')
-            if json_data['dest'] is not None:
-                try:
-                    team_token = Token.objects.get(uuid=uuid.UUID(json_data['dest']))
-                    team_to = GameTeam.objects.get(token=team_token)
-                    del team_token
-                except (ValueError, Token.DoesNotExist, GameTeam.DoesNotExist):
-                    api_error('TRANSFER', 'Token given for Destination is invalid!', request)
-                    return HttpResponseBadRequest(content='{"message": "SBE API: Invalid Destination Token!"}')
-            if json_data['target'] is not None:
-                try:
-                    team_token = Token.objects.get(uuid=uuid.UUID(json_data['target']))
-                    team_from = GameTeam.objects.get(token=team_token)
-                    del team_token
-                except (ValueError, Token.DoesNotExist, GameTeam.DoesNotExist):
-                    api_error('TRANSFER', 'Token given for Source is invalid!', request)
-                    return HttpResponseBadRequest(content='{"message": "SBE API: Invalid Source Token!"}')
-            if team_to is not None and team_to.game.status != CONST_GAME_GAME_RUNNING:
-                api_error('TRANSFER', 'Game "%s" submitted is not Running!' % team_to.game.name, request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Team Game is not running!"}')
-            if team_from is not None and team_from.game.status != CONST_GAME_GAME_RUNNING:
-                api_error('TRANSFER', 'Game "%s" submitted is not Running!' % team_from.game.name, request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Team Game is not running!"}')
-            if team_to is not None and team_from is not None and team_to.game.id != team_from.game.id:
-                api_error('TRANSFER', 'Transfer teams are not in the same Game!', request)
-                return HttpResponseBadRequest(content='{"message": "SBE API: Teams are not in the same Game!"}')
-            if team_from is not None:
-                team_from.set_uptime(-1 * amount)
-                api_score(team_from.id, 'TRANSFER', team_from.get_canonical_name(), -1 * amount,
-                          ('GoldTeam' if team_to is None else team_to.get_canonical_name()))
-            if team_to is not None:
-                team_to.set_uptime(amount)
-                api_score(team_to.id, 'TRANSFER', team_to.get_canonical_name(), amount,
-                          ('GoldTeam' if team_from is None else team_from.get_canonical_name()))
-            return HttpResponse(status=200, content='{"message": "transferred"}')
-        return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+                team_token = Token.objects.get(uuid=uuid.UUID(json_data['target']))
+                team_from = GameTeam.objects.get(token=team_token)
+                del team_token
+            except (ValueError, Token.DoesNotExist, GameTeam.DoesNotExist):
+                api_error('TRANSFER', 'Token given for Source is invalid!', request)
+                return HttpResponseBadRequest(content='{"message": "SBE API: Invalid Source Token!"}')
+        if team_to is not None and team_to.game.status != CONST_GAME_GAME_RUNNING:
+            api_error('TRANSFER', 'Game "%s" submitted is not Running!' % team_to.game.name, request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Team Game is not running!"}')
+        if team_from is not None and team_from.game.status != CONST_GAME_GAME_RUNNING:
+            api_error('TRANSFER', 'Game "%s" submitted is not Running!' % team_from.game.name, request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Team Game is not running!"}')
+        if team_to is not None and team_from is not None and team_to.game.id != team_from.game.id:
+            api_error('TRANSFER', 'Transfer teams are not in the same Game!', request)
+            return HttpResponseBadRequest(content='{"message": "SBE API: Teams are not in the same Game!"}')
+        if team_from is not None:
+            team_from.set_uptime(-1 * amount)
+            api_score(team_from.id, 'TRANSFER', team_from.get_canonical_name(), -1 * amount,
+                        ('GoldTeam' if team_to is None else team_to.get_canonical_name()))
+        if team_to is not None:
+            team_to.set_uptime(amount)
+            api_score(team_to.id, 'TRANSFER', team_to.get_canonical_name(), amount,
+                        ('GoldTeam' if team_from is None else team_from.get_canonical_name()))
+        return HttpResponse(status=200, content='{"message": "transferred"}')
 
     @staticmethod
     @csrf_exempt
@@ -456,23 +456,22 @@ class ScorebotAPI:
         new_service.save()
         return HttpResponse(status=200, content='{message: "Created"}')
 
-
     @staticmethod
     @csrf_exempt
     @authenticate('__SYS_CLI')
     def api_register(request):
-        if request.method == METHOD_POST:
-            team, token, data, exception = game_team_from_token(request, 'CLI', 'token')
-            del token
-            if exception is not None:
-                return exception
-            beacon = token_create_new(30)
-            team.beacons.add(beacon)
-            team.save()
-            api_info('CLI', 'Team "%s" requested a new Beacon token!' % team.get_canonical_name(), request)
-            del team
-            return HttpResponse(status=201, content='{"token": "%s"}' % str(beacon.uuid))
-        return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+        if request.method != METHOD_POST:
+            return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+        team, token, data, exception = game_team_from_token(request, 'CLI', 'token')
+        del token
+        if exception is not None:
+            return exception
+        beacon = token_create_new(30)
+        team.beacons.add(beacon)
+        team.save()
+        api_info('CLI', 'Team "%s" requested a new Beacon token!' % team.get_canonical_name(), request)
+        del team
+        return HttpResponse(status=201, content='{"token": "%s"}' % str(beacon.uuid))
 
     @staticmethod
     @csrf_exempt
@@ -486,8 +485,7 @@ class ScorebotAPI:
                         port_list.append(port.port)
             return HttpResponse(content='{"ports": [%s]}' % ','.join([str(i) for i in port_list]))
         if request.method == METHOD_POST:
-            team, token, data, exception = game_team_from_token(request, 'CLI', 'token', fields=['port'])
-            del token
+            team, _, data, exception = game_team_from_token(request, 'CLI', 'token', fields=['port'])
             if exception is not None:
                 return exception
             try:
@@ -519,25 +517,25 @@ class ScorebotAPI:
     @staticmethod
     @authenticate()
     def api_uuid(request, game_id):
-        if request.method == METHOD_GET:
-            try:
-                game = Game.objects.get(id=int(game_id))
-            except ValueError:
-                api_error('MAPPER', 'Attempted to get non-existent Game "%d"!' % game_id, request)
-                return HttpResponseNotFound()
-            except Game.DoesNotExist:
-                api_error('MAPPER', 'Attempted to get non-existent Game "%d"!' % game_id, request)
-                return HttpResponseNotFound()
-            except Game.MultipleObjectsReturned:
-                api_error('MAPPER', 'Attempted to get non-existent Game "%d"!' % game_id, request)
-                return HttpResponseNotFound()
-            if game.status != CONST_GAME_GAME_RUNNING:
-                api_error('MAPPER', 'Attempted to get a non-running Game "%s"!' % game.name, request)
-                return HttpResponseForbidden(content='{"message": "SBE API: Game "%s" is not Running!"}' % game.name)
-            api_info('MAPPER', 'Returned UUID mappings for Game "%s"!' % game.name, request)
-            json_data = {'teams': [t.get_json_mapper() for t in game.teams.all()]}
-            return HttpResponse(status=200, content=json.dumps(json_data))
-        return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+        if request.method != METHOD_GET:
+            return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+        try:
+            game = Game.objects.get(id=int(game_id))
+        except ValueError:
+            api_error('MAPPER', 'Attempted to get non-existent Game "%d"!' % game_id, request)
+            return HttpResponseNotFound()
+        except Game.DoesNotExist:
+            api_error('MAPPER', 'Attempted to get non-existent Game "%d"!' % game_id, request)
+            return HttpResponseNotFound()
+        except Game.MultipleObjectsReturned:
+            api_error('MAPPER', 'Attempted to get non-existent Game "%d"!' % game_id, request)
+            return HttpResponseNotFound()
+        if game.status != CONST_GAME_GAME_RUNNING:
+            api_error('MAPPER', 'Attempted to get a non-running Game "%s"!' % game.name, request)
+            return HttpResponseForbidden(content='{"message": "SBE API: Game "%s" is not Running!"}' % game.name)
+        api_info('MAPPER', 'Returned UUID mappings for Game "%s"!' % game.name, request)
+        json_data = {'teams': [t.get_json_mapper() for t in game.teams.all()]}
+        return HttpResponse(status=200, content=json.dumps(json_data))
 
     @staticmethod
     @csrf_exempt
@@ -563,7 +561,7 @@ class ScorebotAPI:
             api_debug('STORE', 'The exchange rate for Team "%s" is "%.2f"!' % (team.get_canonical_name(), rate),
                       request)
             return HttpResponse(status=200, content='{"rate": %.2f}' % rate)
-        if request.method == METHOD_POST:
+        elif request.method == METHOD_POST:
             try:
                 decoded_data = request.body.decode('UTF-8')
             except UnicodeDecodeError:
@@ -620,12 +618,12 @@ class ScorebotAPI:
 
     @staticmethod
     def api_scoreboard_json(request, game_id):
-        if request.method == METHOD_GET:
-            try:
-                return HttpResponse(content=Game.objects.get(id=int(game_id)).get_json_scoreboard())
-            except Game.DoesNotExist:
-                return HttpResponseNotFound()
-        return HttpResponseBadRequest()
+        if request.method != METHOD_GET:
+            return HttpResponseBadRequest()
+        try:
+            return HttpResponse(content=Game.objects.get(id=int(game_id)).get_json_scoreboard())
+        except Game.DoesNotExist:
+            return HttpResponseNotFound()
 
     @staticmethod
     @staff_member_required
