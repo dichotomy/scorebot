@@ -386,7 +386,7 @@ class ScorebotAPI:
             host: A dictionary of the host, containing:
                 name: Display name for the host.
                 fqdn: FQDN for the host to be scored.
-            service: A dictionary definition of the service on the host, containing:
+            services: An array of dictionary definition of the services on the host, containing:
                 port: Integer port for the service
                 name: String name for the service
                 bonus: Boolean if service is bonus (optional)
@@ -420,40 +420,46 @@ class ScorebotAPI:
         except KeyError:
             api_error('NEW_RESOURCE', 'Invalid JSON for new host!')
             return HttpResponseBadRequest(content='{"message": "SBE API: Invalid JSON for new host!')
-        new_service = Service()
-        try:
-            svc_data = json_data['service']
-            new_service.port = int(svc_data['port'])
-            new_service.name = svc_data['name']
-            new_service.bonus = svc_data.get('bonus', False)
-            new_service.value = svc_data.get('value', new_service.value)
-            protocol = svc_data.get('protocol', 'tcp')
-            found = False
-            for k, v in CONST_GRID_SERVICE_PROTOCOL_CHOICES:
-                if v == protocol:
-                    new_service.protocol = k
-                    found = True
-                    break
-            if not found:
-                raise ValueError('Invalid protocol: ' + protocol)
-        except (KeyError, ValueError):
-            api_error('NEW_RESOURCE', 'Invalid JSON for new service!')
-            return HttpResponseBadRequest(content='{"message": "SBE API: Invalid JSON for new service!')
-        if 'content' in svc_data:
+        if 'services' not in json_data:
+            api_error('NEW_RESOURCE', 'Invalid JSON for new host!')
+            return HttpResponseBadRequest(content='{"message": "SBE API: Invalid JSON for new host!')
+        services = []
+        for svc_data in json_data['services']:
+            new_service = Service()
             try:
-                content = svc_data['content']
-                if isinstance(content, dict):
-                    content = json.dumps(content)
-                new_service.content = Content(data=content)
+                    new_service.port = int(svc_data['port'])
+                    new_service.name = svc_data['name']
+                    new_service.bonus = svc_data.get('bonus', False)
+                    new_service.value = svc_data.get('value', new_service.value)
+                    protocol = svc_data.get('protocol', 'tcp')
+                    found = False
+                    for k, v in CONST_GRID_SERVICE_PROTOCOL_CHOICES:
+                        if v == protocol:
+                            new_service.protocol = k
+                            found = True
+                            break
+                    if not found:
+                        raise ValueError('Invalid protocol: ' + protocol)
             except (KeyError, ValueError):
                 api_error('NEW_RESOURCE', 'Invalid JSON for new service!')
                 return HttpResponseBadRequest(content='{"message": "SBE API: Invalid JSON for new service!')
+            if 'content' in svc_data:
+                try:
+                    content = svc_data['content']
+                    if isinstance(content, dict):
+                        content = json.dumps(content)
+                    new_service.content = Content(data=content)
+                except (KeyError, ValueError):
+                    api_error('NEW_RESOURCE', 'Invalid JSON for new service!')
+                    return HttpResponseBadRequest(content='{"message": "SBE API: Invalid JSON for new service!')
+            services.append(new_service)
         # Save all the new data
         new_host.save()
-        if new_service.content:
-            new_service.content.save()
-        new_service.host = new_host
-        new_service.save()
+        for new_service in services:
+            if new_service.content:
+                new_service.content.save()
+            new_service.host = new_host
+            new_service.save()
         return HttpResponse(status=200, content='{message: "Created"}')
 
     @staticmethod
