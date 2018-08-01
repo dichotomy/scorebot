@@ -129,10 +129,13 @@ class Game(GameModel):
         pass
 
     def get_json_scoreboard(self):
-        game_json = {'name': html.escape(self.name), 'message': html.escape(get_scoreboard_message(self.id)),
-                     'mode': self.mode, 'teams': [t.get_json_scoreboard() for t in self.teams.all()],
+        game_json = {'name': html.escape(self.name),
+                     'message': html.escape(get_scoreboard_message(self.id)),
+                     'mode': self.mode,
+                     'teams': [t.get_json_scoreboard() for t in self.teams.all()],
                      'events': [e.get_json_scoreboard() for e in GameEvent.objects.filter(game=self)],
-                     'credit': Credit.get_next_credit()}
+                     'credit': Credit.get_next_credit(),
+                     }
         game_json_data = json.dumps(game_json)
         del game_json
         return game_json_data
@@ -230,15 +233,26 @@ class GameTeam(GameModel):
         return self.name
 
     def get_json_scoreboard(self):
-        team_json = {'id': self.id, 'name': html.escape(self.name),
+        team_json = {'id': self.id,
+                     'name': html.escape(self.name),
                      'color': '#%s' % str(hex(self.color)).replace('0x', '').zfill(6),
-                     'score': {'total': self.score.get_score(), 'health': self.score.uptime},
+                     'score': {
+                         'total': self.score.get_score(),
+                         'health': self.score.uptime,
+                         'beacons': self.score.beacons,
+                         'tickets': self.score.tickets,
+                         'flags': self.score.flags,
+                         },
                      'offense': self.offensive,
-                     'flags': {'open': self.flags.filter(enabled=True, captured__isnull=True).count(),
-                               'lost': self.flags.filter(enabled=True, captured__isnull=False).count(),
-                               'captured': self.attacker_flags.filter(enabled=True).count()},
-                     'tickets': {'open': self.tickets.filter(closed=False).count(),
-                                 'closed': self.tickets.filter(closed=True).count()},
+                     'flags': {
+                         'open': self.flags.filter(enabled=True, captured__isnull=True).count(),
+                         'lost': self.flags.filter(enabled=True, captured__isnull=False).count(),
+                         'captured': self.attacker_flags.filter(enabled=True).count()
+                         },
+                     'tickets': {
+                         'open': self.tickets.filter(closed=False).count(),
+                         'closed': self.tickets.filter(closed=True).count()
+                         },
                      'hosts': [h.get_json_scoreboard() for h in self.hosts.all()],
                      'logo': (self.logo.url if self.logo.__bool__() else 'default.png'),
                      'beacons': self.get_beacons(), 'minimal': self.minimal}
