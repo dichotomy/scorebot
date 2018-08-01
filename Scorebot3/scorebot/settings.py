@@ -85,6 +85,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Allow local settings without modifying this file
 try:
-    from local_settings import *
+    from scorebot.local_settings import *
 except ImportError:
     pass
