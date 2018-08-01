@@ -1,0 +1,24 @@
+{% extends "bootstrap/base.html" %}
+{% block title %}Maven Blog{% endblock %}
+
+{% block styles %}
+{{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/simplex.css') }}">
+{% endblock %}
+
+{% block navbar %}
+<div class="navbar navbar-inverse" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>C.A.R.E. search</h1>
+    </div>
+{% endblock %}
+
+{% block scripts %}{% endblock %}

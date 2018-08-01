@@ -18,7 +18,7 @@ from scorebot_game.models import GameMonitor, Job, Game, GamePort, GameTeam, Gam
     GameCompromiseHost, GameTicket
 from scorebot_grid.models import Host, Service, Content
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponse, HttpResponseNotFound,\
-    HttpResponseServerError, HttpResponseRedirect
+    HttpResponseServerError, HttpResponseRedirect, JsonResponse
 
 
 METHOD_GET = 'GET'
@@ -165,6 +165,27 @@ class ScorebotAPI:
                 return HttpResponseBadRequest('{"message": "SBE API: d%s"}' % exception)
             del ticket
         return HttpResponse(status=200, content='{"message": "Accepted"}')
+    
+    @staticmethod
+    @csrf_exempt
+    @authenticate('__SYS_BEACON')
+    def api_beacon_active(request):
+        if request.method == METHOD_GET:
+            all_beacons = GameCompromise.objects.filter(finish__isnull=True)
+            beacon_list = list()
+            for beacon in all_beacons:
+                beacon_info = dict()
+                beacon_info['host'] = str(beacon.host)
+                beacon_info['token'] = str(beacon.token)
+                beacon_info['attacker'] = str(beacon.attacker)
+                beacon_info['start'] = str(beacon.start)
+                beacon_info['finish'] = str(beacon.finish)
+                beacon_list.append(beacon_info)
+            return JsonResponse(beacon_list, safe=False) 
+        else:
+            return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
+        team, token, data, exception = game_team_from_token(request, 'CLI', 'token', beacon=True,
+                                                            fields=['address'])
 
     @staticmethod
     @csrf_exempt

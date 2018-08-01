@@ -19,6 +19,8 @@ urlpatterns = [
     url(r'^new_resource$', ScorebotAPI.api_new_resource),
     url(r'^beacon/port$', ScorebotAPI.api_register_port),
     url(r'^beacon/port/$', ScorebotAPI.api_register_port),
+    url(r'^beacon/active$', ScorebotAPI.api_beacon_active),
+    url(r'^beacon/active/$', ScorebotAPI.api_beacon_active),
     url(r'^mapper/(?P<game_id>[0-9]+)$', ScorebotAPI.api_uuid),
     url(r'^mapper/(?P<game_id>[0-9]+)/$', ScorebotAPI.api_uuid),
     url(r'^purchase/(?P<team_id>[0-9]+)$', ScorebotAPI.api_purchase),
