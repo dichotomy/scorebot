@@ -30,6 +30,9 @@ SECRET_KEY = 'mvn+$y(2lz%!nga3h@p7jf*zsrop^(ojp1)=mdn1gz+im-c%re'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGIN_DIR = os.path.join(BASE_DIR, 'scorebot_assets', 'plugins')
 DAEMON_DIR = os.path.join(BASE_DIR, 'scorebot_assets', 'daemons')
+STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, 'scorebot_static'),
+        ]
 log_init(LOG_DIR, 'DEBUG')
 INSTALLED_APPS = [
     'django.contrib.admin',
