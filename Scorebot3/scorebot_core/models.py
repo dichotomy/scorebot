@@ -46,7 +46,7 @@ class Team(models.Model):
     name = models.CharField('Team Name', max_length=150, unique=True)
     players = models.ManyToManyField('scorebot_core.Player', blank=True)
     color = models.IntegerField('Team Color', default=team_create_new_color)
-    last = models.DateTimeField('Team Last Game', null=True, blank=TrTrueue, editable=False)
+    last = models.DateTimeField('Team Last Game', null=True, blank=True, editable=False)
     created = models.DateTimeField('Team Registration', auto_now_add=True, editable=False)
     score = models.OneToOneField('scorebot_core.Score', on_delete=models.SET_NULL, null=True, blank=True)
 
