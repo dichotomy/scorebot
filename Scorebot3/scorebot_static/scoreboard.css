@@ -83,6 +83,11 @@ body {
 .sb3_team_logo {
   width: 100px;
   height: 100px;
+  text-align: center;
+}
+.sb3_team_logo img {
+  margin-right: auto;
+  margin-left: auto;
 }
 .sb3_team_health_status_name {
   text-align: right !important;
