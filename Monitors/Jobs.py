@@ -610,7 +610,7 @@ class Content(object):
     
     """
 
-    def __init__(self, json, job):
+    def __init__(self, json, job, debug=False):
         self.job = job
         self.json = json
         # todo - handle headers centrally somewhere, not here.
@@ -622,6 +622,7 @@ class Content(object):
         self.headers["Accept"] = "*/*"
         self.current_index = 0
         self.max_index = 0
+        self.debug = debug
 
     def verify_page(self, page):
         if self.debug:
