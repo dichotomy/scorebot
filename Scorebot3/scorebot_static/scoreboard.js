@@ -64,7 +64,12 @@ function _sb3_team_draw()
                 '<div class="sb3_team_health"><table><tr><td class="sb3_team_health_left" id="sb3_team_div_left_' + this.id +
                 '"></td><td class="sb3_team_health_right"><table id="sb3_team_div_health_' + this.id +
                 '" class="sb3_team_health_stats"></table></td></tr></table></div><div class="sb3_team_stats">' +
-                '<table><tr><td class="" id="sb3_team_div_status_flags_' + this.id +
+                '<table>' +
+                '<tr><td class="sb3_score_health" id="sb3_team_div_score_health_' + this.id + '"></td>' +
+                '<td class="sb3_score_flags" id="sb3_team_div_score_flags_' + this.id + '"></td>' +
+                '<td class="sb3_score_tickets" id="sb3_team_div_score_tickets_' + this.id + '"></td>' +
+                '<td class="sb3_score_beacons" id="sb3_team_div_score_beacons_' + this.id + '"></td></tr>' +
+                '<tr><td></td><td class="" id="sb3_team_div_status_flags_' + this.id +
                 '"></td><td class="" id="sb3_team_div_status_tickets_' + this.id +
                 '"></td><td class="sb3_team_status_beacons" id="sb3_team_div_status_beacons_' + this.id +
                 '"></td></tr></table></div>';
@@ -78,7 +83,7 @@ function _sb3_team_draw()
     if(_sb3_team_div_pointer !== null)
     {
         if(this.minimal) _sb3_team_div_pointer.innerHTML = this.name;
-        else _sb3_team_div_pointer.innerHTML = this.name + ' : ' + this.score.total;
+        else _sb3_team_div_pointer.innerHTML = this.name + ': ' + this.score.total;
         if(this.offense === true)
         {
             _sb3_team_div_pointer.innerHTML += '<div class="sb3_team_info_off"></div>';
@@ -182,6 +187,16 @@ function _sb3_team_draw()
     for(var sb3_beacon_index = 0; sb3_beacon_index < this.beacons.length; sb3_beacon_index++)
         sb3_add_beacon(this.id, this.beacons[sb3_beacon_index].team, this.beacons[sb3_beacon_index].color);
 
+    // Add score components
+    var components = ['health', 'flags', 'beacons', 'tickets'];
+    for(var i=0; i<components.length; i++) {
+      var c = components[i];
+      var score_div = document.getElementById('sb3_team_div_score_' + c + '_' + this.id);
+      if (score_div == null)
+        continue;
+      score_div.textContent = this.score[c];
+    }
+
     var _sb3_team_div_style = window.getComputedStyle(_sb3_team_div);
     if(_sb3_team_box_max_width === null)
         _sb3_team_box_max_width = parseInt(_sb3_team_div_style.width.replace('px', ''));
@@ -274,12 +289,12 @@ function sb3_get_realWidth(element)
 {
     var origWidth = element.style.maxWidth;
     var origOverflow = element.style.overflow;
-	element.style.overflow = '';
-	element.style.maxWidth = '';
-	var realWidth = element.offsetWidth;
-	element.style.overflow = origOverflow;
-	element.style.maxWidth = origWidth;
-	return realWidth;
+  element.style.overflow = '';
+  element.style.maxWidth = '';
+  var realWidth = element.offsetWidth;
+  element.style.overflow = origOverflow;
+  element.style.maxWidth = origWidth;
+  return realWidth;
 }
 function sb3_update_json(http_request)
 {
@@ -375,6 +390,9 @@ function _sb3_team_update(team_update)
     this.flags['lost'] = parseInt(team_update['flags']['lost']);
     this.score['total'] = parseInt(team_update['score']['total']);
     this.score['health'] = parseInt(team_update['score']['health']);
+    this.score['beacons'] = parseInt(team_update['score']['beacons']);
+    this.score['flags'] = parseInt(team_update['score']['flags']);
+    this.score['tickets'] = parseInt(team_update['score']['tickets']);
     this.tickets['open'] = parseInt(team_update['tickets']['open']);
     this.flags['captured'] = parseInt(team_update['flags']['captured']);
     this.tickets['closed'] = parseInt(team_update['tickets']['closed']);
@@ -450,28 +468,28 @@ function sb3_add_beacon(team_id, beacon_team_id, beacon_color)
     if(beaconTestDiv !== null) return;
     var beaconColor = sb3_get_rgb(beacon_color);
     var beaconLogo = new Image();
-	beaconLogo.onload = function(){
-		var beaconCanvas = document.createElement("canvas");
-		beaconCanvas.width = 25;
-		beaconCanvas.height = 25;
-		var beaconImage = document.createElement("img");
-		beaconImage.width = 25;
-		beaconImage.height = 25;
-        beaconImage.id = 'sb3_team_div_beacon_' + team_id + '_' + beacon_team_id;
-		var beaconDraw = beaconCanvas.getContext("2d");
-		beaconDraw.drawImage(beaconLogo, 0, 0);
-		var beaconCanvasImg = beaconDraw.getImageData(0, 0, 128, 128);
-		for(var beaconInt = 0; beaconInt < beaconCanvasImg.data.length; beaconInt += 4)
-		{
-			beaconCanvasImg.data[beaconInt] = beaconColor[0];
-			beaconCanvasImg.data[beaconInt + 1] = beaconColor[1];
-			beaconCanvasImg.data[beaconInt + 2] = beaconColor[2];
-		}
-		beaconDraw.putImageData(beaconCanvasImg, 0, 0);
-		beaconImage.src = beaconCanvas.toDataURL("image/png");
-		beaconDiv.append(beaconImage)
-	}
-	beaconLogo.src = sb3_server + '/static/img/beacon.png';
+    beaconLogo.onload = function(){
+      var beaconCanvas = document.createElement("canvas");
+      beaconCanvas.width = 25;
+      beaconCanvas.height = 25;
+      var beaconImage = document.createElement("img");
+      beaconImage.width = 25;
+      beaconImage.height = 25;
+      beaconImage.id = 'sb3_team_div_beacon_' + team_id + '_' + beacon_team_id;
+      var beaconDraw = beaconCanvas.getContext("2d");
+      beaconDraw.drawImage(beaconLogo, 0, 0);
+      var beaconCanvasImg = beaconDraw.getImageData(0, 0, 128, 128);
+      for(var beaconInt = 0; beaconInt < beaconCanvasImg.data.length; beaconInt += 4)
+      {
+        beaconCanvasImg.data[beaconInt] = beaconColor[0];
+        beaconCanvasImg.data[beaconInt + 1] = beaconColor[1];
+        beaconCanvasImg.data[beaconInt + 2] = beaconColor[2];
+      }
+      beaconDraw.putImageData(beaconCanvasImg, 0, 0);
+      beaconImage.src = beaconCanvas.toDataURL("image/png");
+      beaconDiv.append(beaconImage)
+    };
+    beaconLogo.src = sb3_server + '/static/img/beacon.png';
 }
 
 

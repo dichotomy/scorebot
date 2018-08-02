@@ -148,9 +148,26 @@ body {
   margin-left: 5px;
   border-left: 1px solid black;
 }
-.sb3_team_stats, .sb3_team_stats table {
+.sb3_team_stats table tr {
   height: 25px;
 }
-.sb3_team_stats table, .sb3_team_stats td {
+.sb3_team_stats td {
   vertical-align: middle;
+  min-width: 50px;
+}
+
+td.sb3_score_health {
+  background: url('img/health.png') no-repeat;
+}
+
+td.sb3_score_beacons {
+  background: url('img/beacon.png') no-repeat;
+}
+
+td.sb3_score_tickets {
+  background: url('img/ticket.png') no-repeat;
+}
+
+td.sb3_score_flags {
+  background: url('img/flag.png') no-repeat;
 }
