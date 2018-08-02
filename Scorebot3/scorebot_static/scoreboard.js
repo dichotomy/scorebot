@@ -15,14 +15,21 @@ var _sb3_team_box_max_width = null;
 var _sb3_message_text_length = null;
 var _sb3_team_box_max_height = null;
 
+var _sb3_active_timers = [];
 
 function sb3_init()
 {
     sb3_update_teams();
     sb3_set_message(null);
-    setInterval(sb3_marquee, 25);
-    setInterval(sb3_update_teams, 5000);
-    setInterval(sb3_update_beacons, 50);
+    _sb3_active_timers.push(setInterval(sb3_marquee, 25));
+    _sb3_active_timers.push(setInterval(sb3_update_teams, 5000));
+    _sb3_active_timers.push(setInterval(sb3_update_beacons, 50));
+}
+function sb3_freeze()
+{
+  while(_sb3_active_timers.length > 0) {
+    clearInterval(_sb3_active_timers.pop());
+  }
 }
 function sb3_marquee()
 {
