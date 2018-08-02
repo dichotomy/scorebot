@@ -8,6 +8,11 @@ from scorebot.utils.general import import_all_models
 from scorebot.utils.constants import CONST_CORE_ACCESS_KEY_LEVELS
 
 
+class TokenAdmin(admin.ModelAdmin):
+    exclude = ('uuid',)
+    readonly_fields = ('uuid',)
+
+
 class AccessTokenForm(forms.ModelForm):
     class Meta:
         model = scorebot_core.models.AccessToken

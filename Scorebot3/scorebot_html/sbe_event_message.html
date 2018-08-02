@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scorebot3 Event Message</title>
+</head>
+<body>
+<form name=message_form" method="post" action="{% url 'scorebot3:form_event_message' %}">
+{{ form_event_message }}
+{% csrf_token %}
+<input type="submit" value="Update"/>
+</form>
+</body>
+</html>

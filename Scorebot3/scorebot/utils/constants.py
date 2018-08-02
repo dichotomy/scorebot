@@ -1,10 +1,16 @@
 CONST_GRID_FLAG_VALUE = 100
+CONST_GAME_GAME_RUNNING = 1
 CONST_GAME_GAME_MODE_CHOICES = (
     (0, 'Red-v-Blue'),
     (1, 'Blue-v-Blue'),
     (2, 'King'),
     (3, 'Rush'),
     (4, 'Defend'),
+)
+CONST_FORM_EVENT_CREATE_CHOICES = (
+    ('message', 'message'),
+    ('window', 'window'),
+    ('effect', 'effect'),
 )
 CONST_CORE_ACCESS_KEY_LEVELS = {
     '__ALL_READ': 1,
@@ -77,22 +83,29 @@ CONST_GAME_GAME_STATUS_CHOICES = (
     (3, 'Canceled'),
     (4, 'Completed'),
 )
+CONST_GAME_EVENT_TYPE_CHOICES = (
+    (0, 'Message'),
+    (1, 'Window'),
+    (2, 'Effect'),
+)
+CONST_EVENT_DEFAULT_TIMEOUT = 10
+CONST_GAME_EVENT_TIMEOUT_DEFAULT = 5
 CONST_GAME_GAME_OPTIONS_DEFAULTS = {
+    'ticket_cost': 125,
     'round_time': 300,
     'beacon_time': 300,
     'job_timeout': 300,
     'beacon_value': 100,
     'host_ping_ratio': 50,
     'job_cleanup_time': 900,
-    'flag_start_percent': 60,
-    'ticket_start_wait': 180,
-    'ticket_start_percent': 65,
+    'ticket_max_score': 6000,
+    'flag_stolen_rate': 8400,
     'score_exchange_rate': 100,
-    'ticket_expire_time_modify': 0,
+    'ticket_grace_period': 900,
+    'ticket_max_scoring': 14400,
+    'ticket_reopen_multiplier': 10,
     'flag_captured_multiplier': 300,
-    'ticket_severity_level_modify': 0,
 }
-CONST_GRID_TICKET_VALUE_DEFAULT = 500
 CONST_GRID_SERVICE_STATUS_CHOICES = (
     (0, 'pass'),
     (1, 'reset'),
@@ -101,9 +114,8 @@ CONST_GRID_SERVICE_STATUS_CHOICES = (
     (4, 'invalid'),
 )
 CONST_GRID_SERVICE_APPLICATION = 'http'
-CONST_GRID_TICKET_CATEGORY_DEFAULT = 0
-CONST_GRID_TICKET_CATEGORY_CHOICES = (
-    (0, 'None'),
+CONST_GRID_TICKET_CATEGORIES_CHOICES = (
+    (0, 'No Category'),
     (1, 'Outage'),
     (2, 'Service Request'),
     (3, 'Change'),
@@ -117,5 +129,4 @@ CONST_GRID_SERVICE_PROTOCOL_CHOICES = (
 )
 CONST_GRID_CONTENT_TYPE_DEFAULT = 'text'
 CONST_GRID_TICKET_EXPIRE_TIME_DEFAULT = 1800
-CONST_GAME_GAME_TEAM_LOGO_DIR = 'team_logos'
 CONST_GAME_GAME_MESSAGE = 'This is Scorebot v3'

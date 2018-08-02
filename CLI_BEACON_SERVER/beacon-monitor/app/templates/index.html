@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html data-wf-site="56fc3da4f54bafca33e3b734" data-wf-page="56fc3da5f54bafca33e3b737">
+<head>
+  <meta charset="utf-8">
+  <title>Gallery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="Webflow">
+  <link rel="Shortcut Icon" href="{{ url_for('static', filename="pvj-hood.png") }}" type="image/x-icon" >
+  <link rel="stylesheet" type="text/css" href="{{  url_for('static', filename="css/normalize.css") }}">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="css/webflow.css") }}">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="css/care-cmd-injection.webflow.css") }}">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="css/beacons.css") }}">
+</head>
+<body>
+  <div data-collapse="medium" data-animation="default" data-duration="400" data-contain="1" class="w-nav navigation-bar">
+    <div class="w-container"><a href="{{ url_for('main') }}" class="w-nav-brand brand-link"><h1 class="brand-text">Beacons</h1></a>
+      <nav role="navigation" class="w-nav-menu navigation-menu"><a href="{{ url_for('main') }}" class="w-nav-link navigation-link">Beacons</a>
+      </nav>
+      <div class="w-nav-button hamburger-button">
+        <div class="w-icon-nav-menu"></div>
+      </div>
+    </div>
+  </div>
+  <div class="w-section section">
+    <div class="w-container">
+      <div class="w-dyn-list">
+          <div class="w-dyn-items w-row">
+          {% block content %}{% endblock %}
+          </div>
+      </div>
+    </div>
+  </div>
+  <div class="w-section footer">
+    <div class="w-container">
+      <div>
+        <a href="#" class="w-inline-block social-icon-link"></a>
+        <a href="#" class="w-inline-block social-icon-link"></a>
+        <a href="#" class="w-inline-block social-icon-link"></a>
+      </div>
+    </div>
+    <div class="footer-text"></div>
+  </div>
+</body>
+</html>

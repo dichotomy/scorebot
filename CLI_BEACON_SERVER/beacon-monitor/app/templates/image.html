@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        {% for img in imgs %}
+        <div class="col-lg-5 thumbnail">
+            <a href="{{ url_for('image', image=img, size="300x300") }}"><img src="{{ url_for("static", filename="img/"+img) }}"</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

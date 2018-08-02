@@ -3,12 +3,11 @@ import math
 import html
 
 from django.db import models
-from datetime import timedelta
-from django.utils import timezone
-from scorebot.utils import logger
-from scorebot.utils.constants import *
 from scorebot_game.models import GameTeam
 from django.core.exceptions import ValidationError
+from scorebot.utils import api_info, api_debug, api_error, api_warning, api_score, api_event
+from scorebot.utils.constants import CONST_GRID_FLAG_VALUE, CONST_GRID_SERVICE_APPLICATION, \
+    CONST_GRID_SERVICE_PROTOCOL_CHOICES, CONST_GRID_SERVICE_STATUS_CHOICES, CONST_GRID_CONTENT_TYPE_DEFAULT
 
 
 # TODO: Expand this class with automated functions
@@ -52,9 +51,6 @@ class DNS(GridModel):
     def __str__(self):
         return '[DNS] %s' % str(self.address)
 
-    def get_json_export(self):
-        return {'dns': str(self.address)}
-
 
 class Flag(GridModel):
     """
@@ -89,23 +85,28 @@ class Flag(GridModel):
         return self.captured is None
 
     def round_score(self):
-        if self.__bool__() and self.enabled:
-            self.team.score.set_flags(self.value)
-
-    def get_json_export(self):
-        return {'name': self.name, 'flag': self.flag, 'enabled': self.enabled, 'description': self.description,
-                'value': self.value, 'captured': (self.captured.id if self.captured is not None else None),
-                'team': (self.team.id if self.team is not None else None)}
+        pass
 
     def capture(self, attacker):
         if attacker is None:
             raise ValueError('Parameter "attacker" cannot be None!')
         if isinstance(attacker, GameTeam):
+            api_info('SCORING-ASYNC', 'Flag "%s" was captured by "%s"!'
+                     % (self.get_canonical_name(), attacker.get_canonical_name()))
             self.captured = attacker
-            multiplier = self.team.game.get_option('flag_captured_multiplier')
-            self.team.score.set_flags(-1 * self.value * multiplier)
-            attacker.score.set_flags(self.value * multiplier)
-            del multiplier
+            flag_stolen_value = int(self.team.game.get_option('flag_stolen_rate'))
+            if flag_stolen_value > 0:
+                self.team.set_flags(-1 * flag_stolen_value)
+            else:
+                multiplier = self.team.game.get_option('flag_captured_multiplier')
+                self.team.set_flags(-1 * self.value * multiplier)
+                api_score(self.id, 'FLAG-STOLEN', self.get_canonical_name(), -1 * self.value * multiplier,
+                          self.team.get_canonical_name())
+                attacker.set_flags(self.value * multiplier)
+                api_score(self.id, 'FLAG-STOLEN-ATTCKER', self.get_canonical_name(), self.value * multiplier,
+                          attacker.get_canonical_name())
+                del multiplier
+            api_event(self.team.game, 'A Flag from %s was stolen by %s!' % (self.team.name, attacker.name))
             self.save()
         else:
             raise ValueError('Parameter "attacker" must be a "GameTeam" object type!')
@@ -120,7 +121,8 @@ class Flag(GridModel):
             try:
                 flags_find = self.team.flags.all().get(flag=self.flag)
                 if flags_find.id != self.id:
-                    raise ValidationError({'flag': 'Flags on a Team cannot have the same flag value! %s-%s' % (self.name, flags_find.name)})
+                    raise ValidationError({'flag': 'Flags on a Team cannot have the same flag value! %s-%s'
+                                                   % (self.name, flags_find.name)})
                 del flags_find
             except Flag.DoesNotExist:
                 pass
@@ -133,14 +135,14 @@ class Host(GridModel):
     """
     Scorebot v3: Host
 
-    Represents a Hosts used in a game
+    Represents a Hosts used in a game.  These are the individual hosts monitored
+    by Monitors.
     """
 
     class Meta:
         verbose_name = 'Host'
         verbose_name_plural = 'Hosts'
 
-    hidden = models.BooleanField('Host Hidden', default=False)
     fqdn = models.CharField('Host Full Domain Name', max_length=150)
     online = models.BooleanField('Host Online', default=False, editable=False)
     name = models.SlugField('Host Display Name', max_length=150, null=True, blank=True)
@@ -160,18 +162,16 @@ class Host(GridModel):
             service.reset()
         for flag in self.flags.all():
             flag.reset()
-        for beacon in self.beacons.all():
-            beacon.delete()
         self.save()
 
     def __str__(self):
         return '[Host] %s <%s> %s' % (self.get_canonical_name(), self.fqdn, ('UP' if self.online else 'DOWN'))
 
     def __bool__(self):
-        return self.get_beacon_count() > 0
+        return self.beacons.count() > 1
 
     def get_score(self):
-        if not self.online or self.hidden:
+        if not self.online:
             return 0
         host_score = 0
         for service in self.services.all():
@@ -180,25 +180,19 @@ class Host(GridModel):
 
     def round_score(self):
         self.scored = None
-        for beacon in self.beacons.filter(finish__isnull=True):
-            beacon.round_score()
-        #for flag in self.flags.filter(captured__isnull=True, enabled=True):
-        #    flag.round_score()
-        self.team.score.set_uptime(self.get_score())
+        api_debug('SCORING', 'Host "%s" is being scored!' % self.get_canonical_name())
+        score = self.get_score()
+        api_score(self.id, 'HOST', self.get_canonical_name(), score)
+        self.team.set_uptime(score)
+        del score
         self.save()
 
     def get_json_job(self):
-        if self.team is None or self.hidden:
+        if self.team is None:
             return None
         return {'host': {'fqdn': self.fqdn, 'services': [s.get_json_job() for s in self.services.all()]},
                 'dns': [str(dns.address) for dns in self.team.dns.all()],
                 'timeout': self.team.game.get_option('round_time')}
-
-    def get_json_export(self):
-        return {'name': self.name}
-
-    def get_beacon_count(self):
-        return self.beacons.all().filter(finish__isnull=True).count()
 
     def get_canonical_name(self):
         if self.team is not None:
@@ -206,7 +200,7 @@ class Host(GridModel):
         return self.name
 
     def get_json_scoreboard(self):
-        if self.team is None or self.hidden:
+        if self.team is None:
             return None
         host_json = {'name': html.escape(self.name), 'id': self.id, 'online': self.online,
                      'services': [s.get_json_scoreboard() for s in self.services.all()]}
@@ -225,8 +219,8 @@ class Host(GridModel):
                 except Host.MultipleObjectsReturned:
                     raise ValidationError({'ip': 'Hosts on a Team cannot have the same IP address!'})
             else:
-                logger.warning('SBE-GENERAL',
-                               'Host "%s" has a null value IP address and will not receive beacon scoring!' % self.fqdn)
+                api_warning('BACKEND',
+                            'Host "%s" has a null value IP address and will not receive beacon scoring!' % self.fqdn)
         if self.name is None or len(self.name) == 0:
             if '.' in self.fqdn:
                 self.name = self.fqdn.split('.')[0]
@@ -235,13 +229,11 @@ class Host(GridModel):
         super(Host, self).save(*args, **kwargs)
 
     def score_job(self, job, job_data):
+        api_debug('SCORING', 'Begin Host scoring on Host "%s"' % self.get_canonical_name())
         if self.ping_min == 0:
             ping_ratio = int(self.team.game.get_option('host_ping_ratio'))
         else:
             ping_ratio = self.ping_min
-        if 'ping_sent' not in job_data or 'ping_respond' not in job_data:
-            logger.warning('SBE-JOB', 'Invalid Host "%s" JSON data by Job "%d"!' % (self.fqdn, job.id))
-            return
         try:
             ping_sent = int(job_data['ping_sent'])
             ping_respond = int(job_data['ping_respond'])
@@ -251,18 +243,16 @@ class Host(GridModel):
             except ZeroDivisionError:
                 self.online = False
                 self.ping_last = 0
-            logger.debug('SBE-JOB', 'Host "%s" was set "%s" by Job "%d".' % (self.fqdn,
-                                                                             ('Online' if self.online else 'Offline'),
-                                                                             job.id))
+            api_debug('SCORING', 'Host "%s" was set "%s" by Job "%d".'
+                      % (self.fqdn, ('Online' if self.online else 'Offline'), job.id))
             self.save()
         except ValueError:
-            logger.warning('SBE-JOB', 'Error translating ping responses from Job "%d"!' % job.id)
+            api_error('SCORING', 'Error translating ping responses from Job "%d"!' % job.id)
             self.online = False
             self.ping_last = 0
             self.save()
         if 'services' not in job_data and self.online:
-            logger.warning('SBE-JOB', 'Host "%s" was set online by Job "%d" but is missing services!'
-                           % (self.fqdn, job.id))
+            api_error('SCORING', 'Host "%s" was set online by Job "%d" but is missing services!' % (self.fqdn, job.id))
             return
         for service in self.services.all():
             if not self.online:
@@ -277,83 +267,8 @@ class Host(GridModel):
                             break
                     except ValueError:
                         pass
-        logger.info('SBE-JOB', 'Finished scoring Host "%s" by Job "%d".' % (self.fqdn, job.id))
-
-
-class Ticket(GridModel):
-    """
-    Scorebot v3: GameTicket
-
-    Stores the data related to tickets assigned to teams in a game. Tickets can be included and excluded from a game.
-    This is based on the option (ticket_start_percent) which chooses a random percentage of tickets to be enabled.
-    Tickets, once assigned, will be checked by the SBE daemon for expire time.
-
-    Also referred to as an Inject
-    """
-
-    class Meta:
-        verbose_name = 'Ticket'
-        verbose_name_plural = 'Tickets'
-
-    name = models.SlugField('Ticket Name', max_length=150)
-    expired = models.BooleanField('Ticket Expired', default=False)
-    description = models.TextField('Ticket Description', max_length=1000)
-    started = models.DateTimeField('Ticket Assigned', blank=True, null=True)
-    completed = models.DateTimeField('Ticket Completed', blank=True, null=True)
-    reopen_count = models.PositiveSmallIntegerField('Ticket Reopen Count', default=0)
-    ticket_id = models.PositiveIntegerField('Ticket System ID', null=True, blank=True)
-    value = models.SmallIntegerField('Ticket Value', default=CONST_GRID_TICKET_VALUE_DEFAULT)
-    expires_date = models.DateTimeField('Ticket Expires DateTime', editable=False, null=True)
-    expires = models.PositiveSmallIntegerField('Ticket Expires (seconds)',
-                                               default=CONST_GRID_TICKET_EXPIRE_TIME_DEFAULT)
-    team = models.ForeignKey('scorebot_game.GameTeam', on_delete=models.SET_NULL, null=True, blank=True,
-                             related_name='tickets')
-    category = models.PositiveSmallIntegerField('Ticket Category', default=CONST_GRID_TICKET_CATEGORY_DEFAULT,
-                                                choices=CONST_GRID_TICKET_CATEGORY_CHOICES)
-
-    def reset(self):
-        self.started = None
-        self.expired = False
-        self.completed = None
-        self.expires_date = None
-        self.reopen_count = 0
-        self.save()
-
-    def __str__(self):
-        return '[Ticket] %s <%s|%d> %s' % (self.get_canonical_name(), self.get_category_display(), self.reopen_count,
-                                           ('Open' if self.completed is None else 'Expired'
-                                           if self.expired else 'Completed'))
-
-    def __bool__(self):
-        return self.started is not None and (self.completed is not None or self.expired is not None)
-
-    def time_open(self):
-        if self.started is None:
-            return 0
-        if self.completed is not None:
-            return (self.completed - self.started).seconds
-        return (timezone.now() - self.started).seconds
-
-    def get_canonical_name(self):
-        if self.team is not None:
-            return '%s\\%s' % (self.team.get_canonical_name(), self.name)
-        return self.name
-
-    def close(self, expired=False):
-        self.reopen_count = self.reopen_count + 1
-        self.completed = timezone.now()
-        if expired:
-            self.expired = True
-        self.save()
-
-    def assign(self, reassign=False):
-        if self.completed is not None or reassign:
-            if reassign:
-                self.completed = None
-            self.started = timezone.now()
-            self.expired = False
-            self.expires_date = self.started + timedelta(seconds=self.expires)
-            self.save()
+        api_debug('SCORING', 'Finished scoring Host "%s" by Job "%d".' % (self.fqdn, job.id))
+        api_score(self.id, 'HOST-JOB', self.get_canonical_name(), 0)
 
 
 class Service(GridModel):
@@ -361,7 +276,7 @@ class Service(GridModel):
     Scorebot v3: Service
 
     Stores the data related to a in game service.  The service consists of a port check and returns the status based
-    on the outcome of the port check (pass | timeout | reset | refused).  Services can also be marked as bouns ports
+    on the outcome of the port check (pass | timeout | reset | refused).  Services can also be marked as bonus ports
     which have no value when no opened at all.
     """
 
@@ -380,8 +295,8 @@ class Service(GridModel):
                                                 choices=CONST_GRID_SERVICE_PROTOCOL_CHOICES)
     status = models.PositiveSmallIntegerField('Service Status', default=2, choices=CONST_GRID_SERVICE_STATUS_CHOICES,
                                               editable=False)
-    content = models.ForeignKey('scorebot_grid.Content', on_delete=models.SET_NULL, null=True, blank=True,
-                                related_name='service')
+    content = models.OneToOneField('scorebot_grid.Content', on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='service')
 
     def reset(self):
         self.status = 1
@@ -389,9 +304,13 @@ class Service(GridModel):
         self.save()
 
     def __str__(self):
-        return '[Service] %s %s<%s|%d/%s> %s' % (self.get_canonical_name(), ('(B) ' if self.bonus else ''),
-                                                 self.application, self.port, self.get_protocol_display(),
-                                                 self.get_status_display().upper())
+        return ('[Service] %s %s<%s|%d/%s> %s' %
+                 (self.get_canonical_name(),
+                  '(B) ' if self.bonus else '',
+                  self.application,
+                  self.port,
+                  self.get_protocol_display(),
+                  self.get_status_display().upper()))
 
     def __bool__(self):
         if self.bonus and not self.bonus_started:
@@ -409,7 +328,9 @@ class Service(GridModel):
         content = None
         if self.content is not None:
             content = self.content.get_json_job()
-        return {'port': self.port, 'application': self.application, 'protocol': self.get_protocol_display(),
+        return {'port': self.port,
+                'application': self.application,
+                'protocol': self.get_protocol_display(),
                 'content': content}
 
     def get_canonical_name(self):
@@ -428,8 +349,7 @@ class Service(GridModel):
 
     def score_job(self, job, job_data):
         if 'status' not in job_data:
-            logger.warning('SBE-JOB', 'Invalid Service "%s" JSON data by Job "%d"!' % (self.get_canonical_name(),
-                                                                                       job.id))
+            api_error('SCORING', 'Invalid Service "%s" JSON data by Job "%d"!' % (self.get_canonical_name(), job.id))
             return
         service_status = self.status
         job_status = job_data['status'].lower()
@@ -441,29 +361,30 @@ class Service(GridModel):
             self.bonus_started = True
         self.status = service_status
         self.save()
-        logger.debug('SBE-JOB', 'Service "%s" was set "%s" by Job "%d".' % (self.get_canonical_name(),
-                                                                            self.get_status_display(), job.id))
+        api_debug('SCORING', 'Service "%s" was set "%s" by Job "%d".'
+                  % (self.get_canonical_name(), self.get_status_display(), job.id))
         if 'content' in job_data and self.content is not None:
             if 'status' in job_data['content']:
                 try:
                     self.content.status = int(job_data['content']['status'])
-                    logger.debug('SBE-JOB', 'Service Content for "%s" was set to "%d" by Job "%d".' %
-                                 (self.get_canonical_name(), self.content.status, job.id))
+                    api_debug('SCORING', 'Service Content for "%s" was set to "%d" by Job "%d".' %
+                              (self.get_canonical_name(), self.content.status, job.id))
                 except ValueError:
                     self.content.status = 0
-                    logger.warning('SBE-JOB', 'Service Content for "%s" was invalid in Job "%d".' %
-                                   (self.get_canonical_name(), job.id))
+                    api_error('SCORING', 'Service Content for "%s" was invalid in Job "%d".' %
+                              (self.get_canonical_name(), job.id))
             else:
                 self.content.status = 0
-                logger.warning('SBE-JOB', 'Service Content for "%s" was invalid in Job "%d".' %
-                               (self.get_canonical_name(), job.id))
+                api_error('SCORING', 'Service Content for "%s" was invalid in Job "%d".' %
+                          (self.get_canonical_name(), job.id))
             self.content.save()
         elif self.content is not None:
             self.content.status = 0
             self.content.save()
-            logger.warning('SBE-JOB', 'Service Content for "%s" was ignored by Job "%d".' %
-                           (self.get_canonical_name(), job.id))
-        logger.info('SBE-JOB', 'Finished scoring Service "%s" by Job "%d".' % (self.get_canonical_name(), job.id))
+            api_error('SCORING', 'Service Content for "%s" was ignored by Job "%d".' %
+                      (self.get_canonical_name(), job.id))
+        api_debug('SCORING', 'Finished scoring Service "%s" by Job "%d".' % (self.get_canonical_name(), job.id))
+        api_score(self.id, 'SERVICE-JOB', self.get_canonical_name(), 0)
 
 
 class Content(GridModel):
@@ -488,8 +409,8 @@ class Content(GridModel):
         self.save()
 
     def __str__(self):
-        return '[Content] %s <%s>' % ((self.service.all().last().get_canonical_name()
-                                       if self.service.all().count() > 0 is not None else '(null)'), self.type)
+        return '[Content] %s <%s>' % ((self.service.get_canonical_name()
+                                       if self.service is not None else '(null)'), self.type)
 
     def get_json_job(self):
         try:
@@ -497,11 +418,6 @@ class Content(GridModel):
         except json.decoder.JSONDecodeError:
             content = self.data
         return {'type': self.type, 'content': content}
-
-    def save(self, *args, **kwargs):
-        if self.service.all().count() > 1:
-            raise ValidationError({'service': 'Content objects cannot be linked to multiple Service objects!'})
-        super(Content, self).save(*args, **kwargs)
 
 
 # TODO: Add Hypervisor hooks to this class

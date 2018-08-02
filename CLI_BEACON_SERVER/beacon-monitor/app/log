@@ -1,0 +1,320 @@
+2016-03-29 13:11:17 [1493] [INFO] Starting gunicorn 17.5
+2016-03-29 13:11:17 [1493] [DEBUG] Arbiter booted
+2016-03-29 13:11:17 [1493] [INFO] Listening at: http://127.0.0.1:8003 (1493)
+2016-03-29 13:11:17 [1493] [INFO] Using worker: sync
+2016-03-29 13:11:17 [1499] [INFO] Booting worker with pid: 1499
+2016-03-29 13:11:46 [1499] [DEBUG] GET /image
+2016-03-29 13:11:51 [1499] [DEBUG] GET /image
+2016-03-29 13:12:54 [1499] [INFO] Worker exiting (pid: 1499)
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+2016-03-29 13:12:54 [1493] [INFO] Handling signal: term
+2016-03-29 13:12:54 [1493] [INFO] Shutting down: Master
+2016-03-29 13:14:20 [1578] [INFO] Starting gunicorn 17.5
+2016-03-29 13:14:20 [1578] [DEBUG] Arbiter booted
+2016-03-29 13:14:20 [1578] [INFO] Listening at: http://127.0.0.1:8003 (1578)
+2016-03-29 13:14:20 [1578] [INFO] Using worker: sync
+2016-03-29 13:14:20 [1584] [INFO] Booting worker with pid: 1584
+2016-03-29 13:14:28 [1584] [DEBUG] GET /image
+2016-03-29 13:14:29 [1584] [DEBUG] GET /image
+2016-03-29 13:14:31 [1584] [DEBUG] GET /image
+2016-03-29 13:14:33 [1584] [DEBUG] GET /image
+2016-03-29 13:30:06 [1584] [DEBUG] GET /image
+2016-03-29 13:30:08 [1584] [DEBUG] GET /image
+2016-03-29 13:30:22 [1578] [INFO] Handling signal: term
+2016-03-29 13:30:22 [1584] [INFO] Worker exiting (pid: 1584)
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+2016-03-29 13:30:22 [1578] [INFO] Shutting down: Master
+2016-03-29 13:30:51 [4102] [INFO] Starting gunicorn 17.5
+2016-03-29 13:30:51 [4102] [DEBUG] Arbiter booted
+2016-03-29 13:30:51 [4102] [INFO] Listening at: http://127.0.0.1:8003 (4102)
+2016-03-29 13:30:51 [4102] [INFO] Using worker: sync
+2016-03-29 13:30:51 [4107] [INFO] Booting worker with pid: 4107
+2016-03-29 13:30:58 [4107] [DEBUG] GET /image
+2016-03-29 13:31:10 [4102] [INFO] Handling signal: int
+2016-03-29 13:31:10 [4107] [INFO] Worker exiting (pid: 4107)
+2016-03-29 13:31:10 [4102] [INFO] Shutting down: Master
+2016-03-29 13:31:24 [4110] [INFO] Starting gunicorn 17.5
+2016-03-29 13:31:24 [4110] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:25 [4110] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:26 [4110] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:27 [4110] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:28 [4110] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:29 [4110] [ERROR] Can't connect to ('lo0.0.0.8003', 8000)
+2016-03-29 13:31:33 [4115] [INFO] Starting gunicorn 17.5
+2016-03-29 13:31:33 [4115] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:34 [4115] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:35 [4115] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:35 [4115] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:36 [4115] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:37 [4115] [ERROR] Can't connect to ('lo0.0.0.8003', 8000)
+2016-03-29 13:31:47 [4122] [INFO] Starting gunicorn 17.5
+2016-03-29 13:31:47 [4122] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:48 [4122] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:49 [4122] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:50 [4122] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:51 [4122] [ERROR] Retrying in 1 second.
+2016-03-29 13:31:52 [4122] [ERROR] Can't connect to ('0.0.0.0.8003', 8000)
+2016-03-29 13:32:05 [4127] [INFO] Starting gunicorn 17.5
+2016-03-29 13:32:05 [4127] [DEBUG] Arbiter booted
+2016-03-29 13:32:05 [4127] [INFO] Listening at: http://0.0.0.0:8003 (4127)
+2016-03-29 13:32:05 [4127] [INFO] Using worker: sync
+2016-03-29 13:32:05 [4132] [INFO] Booting worker with pid: 4132
+2016-03-29 13:32:11 [4132] [DEBUG] GET /image
+2016-03-29 13:32:11 [4132] [DEBUG] GET /favicon.ico
+2016-03-29 13:32:13 [4132] [DEBUG] GET /image
+2016-03-29 13:32:15 [4132] [DEBUG] GET /image
+2016-03-29 13:32:17 [4132] [DEBUG] GET /image
+2016-03-29 13:32:23 [4132] [DEBUG] GET /image
+2016-03-29 13:32:25 [4132] [DEBUG] GET /image
+2016-03-29 13:32:27 [4127] [INFO] Handling signal: int
+2016-03-29 13:32:27 [4132] [INFO] Worker exiting (pid: 4132)
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+result: 
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+result: 
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+result: 
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+result: 
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+result: 
+2016-03-29 13:32:27 [4127] [INFO] Shutting down: Master
+2016-03-29 13:32:34 [4146] [INFO] Starting gunicorn 17.5
+2016-03-29 13:32:34 [4146] [DEBUG] Arbiter booted
+2016-03-29 13:32:34 [4146] [INFO] Listening at: http://127.0.0.1:8003 (4146)
+2016-03-29 13:32:34 [4146] [INFO] Using worker: sync
+2016-03-29 13:32:34 [4152] [INFO] Booting worker with pid: 4152
+2016-03-29 13:32:36 [4152] [DEBUG] GET /image
+2016-03-29 13:32:37 [4152] [DEBUG] GET /image
+2016-03-29 13:32:38 [4152] [DEBUG] GET /image
+2016-03-29 13:32:39 [4152] [DEBUG] GET /image
+2016-03-29 13:32:40 [4152] [DEBUG] GET /image
+2016-03-29 13:32:41 [4152] [DEBUG] GET /image
+2016-03-29 13:32:43 [4152] [DEBUG] GET /image
+2016-03-29 13:32:45 [4152] [DEBUG] GET /image
+2016-03-29 13:32:46 [4152] [DEBUG] GET /image
+2016-03-29 13:32:47 [4152] [DEBUG] GET /image
+2016-03-29 13:32:48 [4152] [DEBUG] GET /image
+2016-03-29 13:32:49 [4152] [DEBUG] GET /image
+2016-03-29 13:32:50 [4152] [DEBUG] GET /image
+2016-03-29 13:32:51 [4152] [DEBUG] GET /image
+2016-03-29 13:32:52 [4152] [DEBUG] GET /image
+2016-03-29 13:32:54 [4152] [DEBUG] GET /image
+2016-03-29 13:32:55 [4152] [DEBUG] GET /image
+2016-03-29 13:32:57 [4152] [DEBUG] GET /image
+2016-03-29 13:32:58 [4152] [DEBUG] GET /image
+2016-03-29 13:32:59 [4152] [DEBUG] GET /image
+2016-03-29 13:33:00 [4152] [DEBUG] GET /image
+2016-03-29 13:33:01 [4152] [DEBUG] GET /image
+2016-03-29 13:33:02 [4152] [DEBUG] GET /image
+2016-03-29 13:33:03 [4152] [DEBUG] GET /image
+2016-03-29 13:33:04 [4152] [DEBUG] GET /image
+2016-03-29 13:33:05 [4152] [DEBUG] GET /image
+2016-03-29 13:33:05 [4152] [DEBUG] GET /image
+2016-03-29 13:33:07 [4152] [DEBUG] GET /image
+2016-03-29 13:33:08 [4152] [DEBUG] GET /image
+2016-03-29 13:33:10 [4152] [DEBUG] GET /image
+2016-03-29 13:33:51 [4152] [INFO] Worker exiting (pid: 4152)
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+2016-03-29 13:33:51 [4146] [INFO] Handling signal: term
+2016-03-29 13:33:51 [4146] [INFO] Shutting down: Master
+2016-03-29 13:35:22 [4280] [INFO] Starting gunicorn 17.5
+2016-03-29 13:35:22 [4280] [DEBUG] Arbiter booted
+2016-03-29 13:35:22 [4280] [INFO] Listening at: http://127.0.0.1:8003 (4280)
+2016-03-29 13:35:22 [4280] [INFO] Using worker: sync
+2016-03-29 13:35:22 [4286] [INFO] Booting worker with pid: 4286
+2016-03-29 13:35:25 [4286] [DEBUG] GET /image
+2016-03-29 13:35:50 [4286] [DEBUG] GET /image
+2016-03-29 13:35:52 [4286] [DEBUG] GET /image
+2016-03-29 13:35:54 [4286] [DEBUG] GET /image
+2016-03-29 13:35:55 [4286] [DEBUG] GET /image
+2016-03-29 13:35:57 [4286] [DEBUG] GET /image
+2016-03-29 13:36:34 [4286] [INFO] Worker exiting (pid: 4286)
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+2016-03-29 13:36:34 [4280] [INFO] Handling signal: term
+2016-03-29 13:36:34 [4280] [INFO] Shutting down: Master
+2016-03-29 13:37:56 [4462] [INFO] Starting gunicorn 17.5
+2016-03-29 13:37:56 [4462] [DEBUG] Arbiter booted
+2016-03-29 13:37:56 [4462] [INFO] Listening at: http://127.0.0.1:8003 (4462)
+2016-03-29 13:37:56 [4462] [INFO] Using worker: sync
+2016-03-29 13:37:56 [4468] [INFO] Booting worker with pid: 4468
+2016-03-29 13:37:59 [4468] [DEBUG] GET /image
+2016-03-29 13:38:01 [4468] [DEBUG] GET /image
+2016-03-29 13:38:03 [4468] [DEBUG] GET /image
+2016-03-29 13:38:04 [4468] [DEBUG] GET /image
+2016-03-29 13:38:05 [4468] [DEBUG] GET /image
+2016-03-29 13:38:08 [4468] [DEBUG] GET /image
+2016-03-29 13:38:09 [4468] [DEBUG] GET /image
+2016-03-29 13:38:11 [4468] [DEBUG] GET /image
+2016-03-29 13:39:41 [4468] [DEBUG] GET /image
+2016-03-29 13:39:45 [4468] [DEBUG] GET /image
+2016-03-29 13:44:18 [4468] [INFO] Worker exiting (pid: 4468)
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600;ls
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600;ls /tmp/field.jpg_resized
+result: convert.im6: option requires an argument `-resize' @ error/convert.c/ConvertImageCommand/2380.
+/tmp/field.jpg_resized
+
+2016-03-29 13:44:18 [4462] [INFO] Handling signal: term
+2016-03-29 13:44:18 [4462] [INFO] Shutting down: Master
+2016-03-29 13:44:26 [4567] [INFO] Starting gunicorn 17.5
+2016-03-29 13:44:26 [4567] [DEBUG] Arbiter booted
+2016-03-29 13:44:26 [4567] [INFO] Listening at: http://127.0.0.1:8003 (4567)
+2016-03-29 13:44:26 [4567] [INFO] Using worker: sync
+2016-03-29 13:44:26 [4573] [INFO] Booting worker with pid: 4573
+2016-03-29 13:44:32 [4573] [DEBUG] GET /image
+2016-03-29 13:44:35 [4573] [DEBUG] GET /image
+2016-03-29 13:44:35 [4573] [DEBUG] GET /image
+2016-03-29 13:44:42 [4573] [DEBUG] GET /image
+2016-03-29 13:44:44 [4573] [DEBUG] GET /image
+2016-03-29 13:45:51 [4573] [DEBUG] GET /image
+2016-03-29 13:45:53 [4573] [DEBUG] GET /image
+2016-03-29 13:48:50 [4573] [DEBUG] GET /image
+2016-03-29 13:49:04 [4573] [INFO] Worker exiting (pid: 4573)
+600x600;ls
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600;ls /tmp/field.jpg_resized
+result: convert.im6: option requires an argument `-resize' @ error/convert.c/ConvertImageCommand/2380.
+/tmp/field.jpg_resized
+
+600x600;ls
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600;ls /tmp/field.jpg_resized
+result: convert.im6: option requires an argument `-resize' @ error/convert.c/ConvertImageCommand/2380.
+/tmp/field.jpg_resized
+
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /tmp/field.jpg_resized
+2016-03-29 13:49:04 [4567] [INFO] Handling signal: term
+2016-03-29 13:49:04 [4567] [INFO] Shutting down: Master
+2016-03-29 13:49:16 [4680] [INFO] Starting gunicorn 17.5
+2016-03-29 13:49:16 [4680] [DEBUG] Arbiter booted
+2016-03-29 13:49:16 [4680] [INFO] Listening at: http://127.0.0.1:8003 (4680)
+2016-03-29 13:49:16 [4680] [INFO] Using worker: sync
+2016-03-29 13:49:16 [4686] [INFO] Booting worker with pid: 4686
+2016-03-29 13:49:17 [4686] [DEBUG] GET /image
+2016-03-29 13:49:19 [4686] [DEBUG] GET /image
+2016-03-29 13:49:20 [4686] [DEBUG] GET /image
+2016-03-29 13:50:17 [4686] [INFO] Worker exiting (pid: 4686)
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /opt/care-cmd-injection/static/img/tmp/field.jpg_resized
+result: 
+600x600
+convert /opt/care-cmd-injection/static/img/field.jpg -resize 600x600 /opt/care-cmd-injection/static/img/tmp/field.jpg_resized
+result: 
+2016-03-29 13:50:17 [4680] [INFO] Handling signal: term
+2016-03-29 13:50:17 [4680] [INFO] Shutting down: Master
+2016-03-29 13:50:37 [4757] [INFO] Starting gunicorn 17.5
+2016-03-29 13:50:37 [4757] [DEBUG] Arbiter booted
+2016-03-29 13:50:37 [4757] [INFO] Listening at: http://127.0.0.1:8003 (4757)
+2016-03-29 13:50:37 [4757] [INFO] Using worker: sync
+2016-03-29 13:50:37 [4763] [INFO] Booting worker with pid: 4763
+2016-03-29 13:50:39 [4763] [DEBUG] GET /image
+2016-03-29 13:50:40 [4763] [DEBUG] GET /image
+2016-03-29 13:50:41 [4763] [DEBUG] GET /image
+2016-03-29 13:50:43 [4763] [DEBUG] GET /image
+2016-03-29 13:50:49 [4763] [DEBUG] GET /image
+2016-03-29 13:50:56 [4763] [DEBUG] GET /image
+2016-03-29 13:51:05 [4763] [DEBUG] GET /image

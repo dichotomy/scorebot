@@ -1,24 +1,39 @@
 import os
-import scorebot.utils.logger
 
+from scorebot.utils.logger import log_init
 
 DEBUG = True
 USE_TZ = True
 USE_I18N = True
 USE_L10N = True
 TIME_ZONE = 'UTC'
+DUMP_DATA = True
+TWITTER_API = {
+    'ENABLED': True,
+    'CONSUMER_KEY': '',
+    'ACCESS_TOKEN': '',
+    'CONSUMER_SECRET': '',
+    'ACCESS_TOKEN_SECRET': '',
+}
 APPEND_SLASH = False
+SBE_VERSION = 'v3.3.4'
+MEDIA_URL = '/upload/'
 ALLOWED_HOSTS = ['*']
 LANGUAGE_CODE = 'en-us'
 STATIC_URL = '/static/'
-SBE_VERSION = 'v3.1beta'
+LOG_DIR = '/tmp/scorebot3'
 ROOT_URLCONF = 'scorebot.urls'
-LOG_FILE = '/tmp/scorebot.log' # os.path.join(BASE_DIR, 'scorebot.log')
+DUMP_DIR = '/tmp/scorebot3_dumps'
+MEDIA_ROOT = '/home/scorebot3/logos'
 WSGI_APPLICATION = 'scorebot.wsgi.application'
 SECRET_KEY = 'mvn+$y(2lz%!nga3h@p7jf*zsrop^(ojp1)=mdn1gz+im-c%re'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PLUGIN_DIR = os.path.join(BASE_DIR, 'plugins')
-DAEMON_DIR = os.path.join(BASE_DIR, 'scorebot', 'utils', 'daemons')
+PLUGIN_DIR = os.path.join(BASE_DIR, 'scorebot_assets', 'plugins')
+DAEMON_DIR = os.path.join(BASE_DIR, 'scorebot_assets', 'daemons')
+STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, 'scorebot_static'),
+        ]
+log_init(LOG_DIR, 'DEBUG')
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -55,7 +70,6 @@ TEMPLATES = [
         },
     },
 ]
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -71,4 +85,3 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
-scorebot.utils.logger.init_simple(LOG_FILE, 'DEBUG')

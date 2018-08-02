@@ -4,18 +4,32 @@ var sb3_delete_on_missing = true;
 var sb3_message_default = 'This is Scorebot v3';
 
 var _sb3_teams = [];
+var _sb3_events = [];
 var _sb3_game_mode = 0;
 var _sb3_message_div = null;
 var _sb3_message_text = null;
+var _sb3_active_effect = null;
+var _sb3_active_window = null;
 var _sb3_game_name_div = null;
+var _sb3_team_box_max_width = null;
 var _sb3_message_text_length = null;
+var _sb3_team_box_max_height = null;
+
+var _sb3_active_timers = [];
 
 function sb3_init()
 {
     sb3_update_teams();
     sb3_set_message(null);
-    setInterval(sb3_marquee, 25);
-    setInterval(sb3_update_teams, 5000);
+    _sb3_active_timers.push(setInterval(sb3_marquee, 25));
+    _sb3_active_timers.push(setInterval(sb3_update_teams, 5000));
+    _sb3_active_timers.push(setInterval(sb3_update_beacons, 50));
+}
+function sb3_freeze()
+{
+  while(_sb3_active_timers.length > 0) {
+    clearInterval(_sb3_active_timers.pop());
+  }
 }
 function sb3_marquee()
 {
@@ -57,8 +71,13 @@ function _sb3_team_draw()
                 '<div class="sb3_team_health"><table><tr><td class="sb3_team_health_left" id="sb3_team_div_left_' + this.id +
                 '"></td><td class="sb3_team_health_right"><table id="sb3_team_div_health_' + this.id +
                 '" class="sb3_team_health_stats"></table></td></tr></table></div><div class="sb3_team_stats">' +
-                '<table><tr><td class="sb3_team_status_flags" id="sb3_team_div_status_flags_' + this.id +
-                '"></td><td class="sb3_team_status_tickets" id="sb3_team_div_status_tickets_' + this.id +
+                '<table>' +
+                '<tr><td class="sb3_score_health" id="sb3_team_div_score_health_' + this.id + '"></td>' +
+                '<td class="sb3_score_flags" id="sb3_team_div_score_flags_' + this.id + '"></td>' +
+                '<td class="sb3_score_tickets" id="sb3_team_div_score_tickets_' + this.id + '"></td>' +
+                '<td class="sb3_score_beacons" id="sb3_team_div_score_beacons_' + this.id + '"></td></tr>' +
+                '<tr><td></td><td class="" id="sb3_team_div_status_flags_' + this.id +
+                '"></td><td class="" id="sb3_team_div_status_tickets_' + this.id +
                 '"></td><td class="sb3_team_status_beacons" id="sb3_team_div_status_beacons_' + this.id +
                 '"></td></tr></table></div>';
         _sb3_team_div.classList.add('sb3_team');
@@ -70,7 +89,8 @@ function _sb3_team_draw()
     var _sb3_team_div_pointer = document.getElementById('sb3_team_div_info_' + this.id);
     if(_sb3_team_div_pointer !== null)
     {
-        _sb3_team_div_pointer.innerHTML = this.name + ' : ' + this.score.total;
+        if(this.minimal) _sb3_team_div_pointer.innerHTML = this.name;
+        else _sb3_team_div_pointer.innerHTML = this.name + ': ' + this.score.total;
         if(this.offense === true)
         {
             _sb3_team_div_pointer.innerHTML += '<div class="sb3_team_info_off"></div>';
@@ -82,8 +102,8 @@ function _sb3_team_draw()
     if(_sb3_team_div_pointer !== null)
     {
         _sb3_team_div_pointer.style.background = this.color;
-        _sb3_team_div_pointer.innerHTML = '<div class="sb3_team_logo" style="background: url(\'' +
-            window.location.origin + '/static/img/team/' + this.logo + '\'); no-repeat;"></div>';
+        _sb3_team_div_pointer.innerHTML = '<div class="sb3_team_logo"><img width="100" height="100" src="' +
+            window.location.origin + this.logo + '"/></div>';
     }
     var _sb3_max_services = 0;
     var _sb3_host_index;
@@ -135,29 +155,75 @@ function _sb3_team_draw()
         }
         _sb3_team_div_pointer.innerHTML = _sb3_host_health;
     }
-    //_sb3_team_div_pointer = document.getElementById('sb3_team_div_status_health_' + this.id);
-    //if(_sb3_team_div_pointer !== null)
-    //    _sb3_team_div_pointer.innerText = this.score.health;
     _sb3_team_div_pointer = document.getElementById('sb3_team_div_status_flags_' + this.id);
     if(_sb3_team_div_pointer !== null)
         if(this.offense)
         {
-            if(this.flags.lost > 0)
-                _sb3_team_div_pointer.innerHTML = '<span class="sb3_team_status_taken>' + this.flags.captured + '</span> / ' + this.flags.lost;
-            else _sb3_team_div_pointer.innerHTML = this.flags.lost;
+            if(this.flags.captured > 0)
+            {
+                _sb3_team_div_pointer.classList.add('sb3_team_status_flags');
+                _sb3_team_div_pointer.innerHTML = '<span class="sb3_team_status_taken">' + this.flags.captured + '</span>';
+                if(this.flags.lost > 0) _sb3_team_div_pointer.innerHTML = '/ ' + this.flags.lost;
+            }
+            else
+            {
+                if(this.flags.lost > 0)
+                {
+                    _sb3_team_div_pointer.classList.add('sb3_team_status_flags');
+                    _sb3_team_div_pointer.innerHTML = this.flags.lost;
+                }
+                else _sb3_team_div_pointer.classList.remove('sb3_team_status_flags');
+            }
         }
-        else _sb3_team_div_pointer.innerHTML = this.flags.lost;
+        else
+        {
+            if(this.flags.open > 0 || this.flags.lost > 0)
+            {
+                _sb3_team_div_pointer.innerHTML = this.flags.lost;
+                _sb3_team_div_pointer.classList.add('sb3_team_status_flags');
+            }
+            else _sb3_team_div_pointer.classList.remove('sb3_team_status_flags');
+        }
     _sb3_team_div_pointer = document.getElementById('sb3_team_div_status_tickets_' + this.id);
-    if(_sb3_team_div_pointer !== null)
-        _sb3_team_div_pointer.innerHTML = this.tickets.open + ' / <span class="sb3_team_status_lost">' + this.tickets.closed + '</span>';
-    _sb3_team_div_pointer = document.getElementById('sb3_team_div_status_beacons_' + this.id);
-    if(_sb3_team_div_pointer !== null)
+    if(_sb3_team_div_pointer !== null && (this.tickets.open > 0 || this.tickets.closed))
     {
-        if(this.beacons > 0) _sb3_team_div_pointer.classList.add('sb3_team_div_status_beacons_pwned');
-        else  _sb3_team_div_pointer.classList.remove('sb3_team_div_status_beacons_pwned');
-        if(this.offense) _sb3_team_div_pointer.innerHTML = this.compromises;
-        else _sb3_team_div_pointer.innerHTML = '';
+        _sb3_team_div_pointer.classList.add('sb3_team_status_tickets');
+        _sb3_team_div_pointer.innerHTML = this.tickets.closed + ' / <span class="sb3_team_status_lost">' + this.tickets.open + '</span>';
     }
+    else _sb3_team_div_pointer.classList.remove('sb3_team_status_tickets');
+    for(var sb3_beacon_index = 0; sb3_beacon_index < this.beacons.length; sb3_beacon_index++)
+        sb3_add_beacon(this.id, this.beacons[sb3_beacon_index].team, this.beacons[sb3_beacon_index].color);
+
+    // Add score components
+    var components = ['health', 'flags', 'beacons', 'tickets'];
+    for(var i=0; i<components.length; i++) {
+      var c = components[i];
+      var score_div = document.getElementById('sb3_team_div_score_' + c + '_' + this.id);
+      if (score_div == null)
+        continue;
+      score_div.textContent = this.score[c];
+    }
+
+    var _sb3_team_div_style = window.getComputedStyle(_sb3_team_div);
+    if(_sb3_team_box_max_width === null)
+        _sb3_team_box_max_width = parseInt(_sb3_team_div_style.width.replace('px', ''));
+    if(_sb3_team_box_max_width < parseInt(_sb3_team_div_style.width.replace('px', '')))
+        _sb3_team_box_max_width = parseInt(_sb3_team_div_style.width.replace('px', ''));
+    if(_sb3_team_box_max_height === null)
+        _sb3_team_box_max_height = parseInt(_sb3_team_div_style.height.replace('px', ''));
+    if(_sb3_team_box_max_height < parseInt(_sb3_team_div_style.height.replace('px', '')))
+        _sb3_team_box_max_height = parseInt(_sb3_team_div_style.height.replace('px', ''));
+
+    if(_sb3_team_box_max_width !== null)
+        _sb3_team_div.style.width = _sb3_team_box_max_width + 'px';
+    if(_sb3_team_box_max_height !== null)
+        _sb3_team_div.style.height = _sb3_team_box_max_height + 'px';
+
+}
+function sb3_get_rgb(hex)
+{
+    var res = hex.match(/[a-f0-9]{2}/gi);
+    return res && res.length === 3 ? res.map(function(v) { return parseInt(v, 16) }) : null;
 }
 function sb3_update_teams()
 {
@@ -165,6 +231,39 @@ function sb3_update_teams()
     _sb3_get.onreadystatechange = function() { sb3_update_json(_sb3_get); };
     _sb3_get.open("GET", sb3_server + '/api/scoreboard/' + sb3_game + '/', true);
     _sb3_get.send(sb3_update_json);
+}
+function sb3_update_beacons()
+{
+    for(var sb3_int = 0; sb3_int < _sb3_teams.length; sb3_int++)
+    {
+        var beaconDiv = document.getElementById('sb3_team_div_status_beacons_' + _sb3_teams[sb3_int].id);
+        if(beaconDiv === null) continue;
+        var beaconDivWidth = beaconDiv.offsetWidth, beaconDivReal = sb3_get_realWidth(beaconDiv),
+            beaconDist = (beaconDivReal - beaconDivWidth);
+        if(beaconDist > 25)
+        {
+            if(beaconDiv.scrollLeft > 0)
+            {
+                if(beaconDiv.scrollLeft > beaconDist)
+                {
+                    _sb3_teams[sb3_int].draw_beacon_left = true;
+                    beaconDiv.scrollLeft -= 1;
+                }
+                else
+                {
+                    if(_sb3_teams[sb3_int].draw_beacon_left)
+                        beaconDiv.scrollLeft -= 1;
+                    else
+                        beaconDiv.scrollLeft += 1;
+                }
+            }
+            else
+            {
+                beaconDiv.scrollLeft += 1;
+                _sb3_teams[sb3_int].draw_beacon_left = false;
+            }
+        }
+    }
 }
 function sb3_add_team(team_dict)
 {
@@ -183,6 +282,7 @@ function sb3_add_team(team_dict)
     else return;
     team_dict.draw = _sb3_team_draw;
     team_dict.update = _sb3_team_update;
+    team_dict.draw_beacon_left = false;
     _sb3_teams.push(team_dict);
     return team_dict;
 }
@@ -191,6 +291,17 @@ function sb3_set_message(message)
     if(message !== null && message.length > 0) sb3_message = message;
     else sb3_message = sb3_message_default;
     _sb3_message_text_length = null;
+}
+function sb3_get_realWidth(element)
+{
+    var origWidth = element.style.maxWidth;
+    var origOverflow = element.style.overflow;
+  element.style.overflow = '';
+  element.style.maxWidth = '';
+  var realWidth = element.offsetWidth;
+  element.style.overflow = origOverflow;
+  element.style.maxWidth = origWidth;
+  return realWidth;
 }
 function sb3_update_json(http_request)
 {
@@ -202,7 +313,13 @@ function sb3_update_json(http_request)
             try
             {
                 var _sb3_json_data = JSON.parse(_sb3_data), _sb3_json_int;
-                _sb3_game_mode = parseInt(_sb3_json_data.mode);
+                _sb3_game_mode = parseInt(_sb3_json_data.mode)
+                if(_sb3_json_data.credit !== null)
+                {
+                    var _sb3_credit_div = document.getElementById('sb3_credits');
+                    if(_sb3_credit_div !== null) _sb3_credit_div.innerHTML = _sb3_json_data.credit;
+                }
+                _sb3_events = _sb3_json_data.events;
                 if(_sb3_game_name_div === null) _sb3_game_name_div = document.getElementById('sb3_game_title');
                 if(_sb3_game_name_div !== null) _sb3_game_name_div.innerText = _sb3_json_data.name;
                 if(_sb3_json_data.message !== null && _sb3_json_data.message.length > 0)
@@ -239,6 +356,7 @@ function sb3_update_json(http_request)
                 }
                 for(_sb3_json_int = 0; _sb3_json_int < _sb3_teams.length; _sb3_json_int++)
                     _sb3_teams[_sb3_json_int].draw();
+                for(_sb3_json_int = 0; _sb3_json_int < _sb3_teams.length; _sb3_json_int++);
 
             }
             catch(exception)
@@ -260,12 +378,28 @@ function _sb3_team_update(team_update)
     this.logo = team_update['logo'];
     this.color = team_update['color'];
     this.offense = team_update['offense'];
-    this.beacons = parseInt(team_update['beacons']);
+    var team_old_beacons = this.beacons;
+    this.beacons = team_update['beacons'];
+    this.minimal = team_update['minimal'];
+    for(var sb3_beacon_index = 0; sb3_beacon_index < team_old_beacons.length; sb3_beacon_index++)
+    {
+        var team_beacon_exists = false;
+        for(var sb3_beacon_index1 = 0; sb3_beacon_index1 < this.beacons; sb3_beacon_index1++)
+            if(team_old_beacons[sb3_beacon_index].team === this.beacons[sb3_beacon_index1])
+            {
+                team_old_beacons = true;
+                break;
+            }
+        if(!team_beacon_exists) sb3_delete_beacon(this.id, team_old_beacons[sb3_beacon_index].team);
+    }
     this.compromises = parseInt(team_update['compromises']);
     this.flags['open'] = parseInt(team_update['flags']['open']);
     this.flags['lost'] = parseInt(team_update['flags']['lost']);
     this.score['total'] = parseInt(team_update['score']['total']);
     this.score['health'] = parseInt(team_update['score']['health']);
+    this.score['beacons'] = parseInt(team_update['score']['beacons']);
+    this.score['flags'] = parseInt(team_update['score']['flags']);
+    this.score['tickets'] = parseInt(team_update['score']['tickets']);
     this.tickets['open'] = parseInt(team_update['tickets']['open']);
     this.flags['captured'] = parseInt(team_update['flags']['captured']);
     this.tickets['closed'] = parseInt(team_update['tickets']['closed']);
@@ -325,6 +459,71 @@ function _sb3_team_update(team_update)
                 }
             if(_sb3_host_mark)
                 this.hosts[_sb3_host_inc].delete = true;
+        }
+    }
+}
+function sb3_delete_beacon(team_id, beacon_team_id)
+{
+    var beaconDiv = document.getElementById('sb3_team_div_beacon_' + team_id + '_' + beacon_team_id);
+    if(beaconDiv !== null) beaconDiv.outerHTML = '';
+}
+function sb3_add_beacon(team_id, beacon_team_id, beacon_color)
+{
+    var beaconDiv = document.getElementById('sb3_team_div_status_beacons_' + team_id);
+    var beaconTestDiv = document.getElementById('sb3_team_div_beacon_' + team_id + '_' + beacon_team_id);
+    if(beaconDiv === null) return;
+    if(beaconTestDiv !== null) return;
+    var beaconColor = sb3_get_rgb(beacon_color);
+    var beaconLogo = new Image();
+    beaconLogo.onload = function(){
+      var beaconCanvas = document.createElement("canvas");
+      beaconCanvas.width = 25;
+      beaconCanvas.height = 25;
+      var beaconImage = document.createElement("img");
+      beaconImage.width = 25;
+      beaconImage.height = 25;
+      beaconImage.id = 'sb3_team_div_beacon_' + team_id + '_' + beacon_team_id;
+      var beaconDraw = beaconCanvas.getContext("2d");
+      beaconDraw.drawImage(beaconLogo, 0, 0);
+      var beaconCanvasImg = beaconDraw.getImageData(0, 0, 128, 128);
+      for(var beaconInt = 0; beaconInt < beaconCanvasImg.data.length; beaconInt += 4)
+      {
+        beaconCanvasImg.data[beaconInt] = beaconColor[0];
+        beaconCanvasImg.data[beaconInt + 1] = beaconColor[1];
+        beaconCanvasImg.data[beaconInt + 2] = beaconColor[2];
+      }
+      beaconDraw.putImageData(beaconCanvasImg, 0, 0);
+      beaconImage.src = beaconCanvas.toDataURL("image/png");
+      beaconDiv.append(beaconImage)
+    };
+    beaconLogo.src = sb3_server + '/static/img/beacon.png';
+}
+
+
+function sb3_draw_event()
+{
+    if(_sb3_active_effect !== null)
+    {
+        if(_sb3_active_effect.timeout === 0)
+        {
+            var _sb3_effect_div = document.getElementById('sb3_events_effects');
+            _sb3_effect_div.innerHTML = '';
+        }
+    }
+    if(_sb3_active_window !== null)
+    {
+        if(_sb3_active_window.timeout === 0)
+        {
+            var _sb3_window_div = document.getElementById('sb3_events_windows');
+            _sb3_window_div.innerHTML = '';
+        }
+    }
+    for(var sb3_event_int = 0; sb3_event_int < _sb3_events.length; sb3_event_int++)
+    {
+        if(_sb3_events[sb3_event_int].type === 'message')
+        {
+            var _sb3_message_div = document.getElementById('sb3_messages');
+            _sb3_message_div.innerHTML += '<div class="sb3_event_message">' + _sb3_events[sb3_event_int].data.message + '</div>';
         }
     }
 }

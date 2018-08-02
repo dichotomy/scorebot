@@ -1,0 +1,78 @@
+---
+- hosts: "{{ host }}"
+  remote_user: root
+  vars:
+    ansible_ssh_user: root
+    ansible_password: abcd1234
+    ansible_python_interpreter: /usr/bin/python3
+    required_vars:
+        - hostname
+        - address
+        - gateway
+        - netmask
+        - dnsnameservers
+  tasks:
+      
+      - name: "Check required variables"
+        fail: msg="Variable '{{ item }}' is not defined"
+        when: item not in vars
+        with_items: "{{ required_vars }}"
+
+      - name: install postfix with aptitude
+        apt:
+          name: "{{ item }}"
+          state: present
+          update_cache: yes
+        with_items:
+            - git
+
+      - name: copy beacon monitor server files
+        copy:
+          src: ./app
+          dest: /root/
+
+      - name: download pip
+        get_url:
+          url: https://bootstrap.pypa.io/get-pip.py
+          dest: /tmp/get-pip.py
+      
+      - name: install pip
+        shell: python3 /tmp/get-pip.py
+
+      - name: install beacon-monitor server pip requirements
+        shell: pip install -r /root/app/requirements.txt
+      
+      - name: change hostname
+        shell: echo "{{ hostname }}" > /etc/hostname
+
+      - name: change hostname RedHat family
+        shell: sed -i "s/^HOSTNAME=.*/HOSTNAME={{ hostname }}/g" /etc/sysconfig/network
+        when: ansible_os_family == "RedHat"
+      
+      - name: copy network config files debian family
+        template:
+          src: ./conf/interfaces
+          dest: /etc/network/interfaces
+          owner: root
+          group: root
+          mode: 0644
+        when: ansible_os_family == "Debian"
+      
+      - name: copy network config files RedHat family
+        template:
+          src: ./conf/ifcfg-eth0
+          dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+          owner: root
+          group: root
+          mode: 0644
+        when: ansible_os_family == "RedHat"
+
+      - name: restart system
+        command: shutdown -r 1
+
+      - name: check if ip change was successfull
+        local_action:
+            module: wait_for
+            port: 22
+            host: "{{ address }}"
+            timeout: 600

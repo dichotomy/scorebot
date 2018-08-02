@@ -4,9 +4,45 @@ import random
 
 from django import forms
 from django.utils.text import slugify
+from scorebot.utils.events import EVENT_HOST
 from scorebot.utils import logger, constants
-from scorebot_game.models import Game, GameTeam
-from scorebot_grid.models import Host, Ticket, Flag, Service, DNS, Content
+from scorebot_game.models import Game, GameTeam, GameTicket
+from scorebot_grid.models import Host, Flag, Service, DNS, Content
+
+
+class CreateEventForm(forms.Form):
+    game = forms.ModelChoiceField(Game.objects.all())
+    type = forms.ChoiceField(label='Type', choices=constants.CONST_FORM_EVENT_CREATE_CHOICES)
+    data = forms.CharField(label='Data', widget=forms.Textarea, required=False)
+
+    def save(self):
+        import_data = self.clean()
+        if import_data:
+            event_manager = EVENT_HOST.get_game(import_data.get('game').id)
+            data = import_data.get('data')
+            try:
+                data = json.loads(data)
+            except:
+                pass
+            event_manager.add_event(import_data.get('type'), data)
+            return event_manager.game_id
+
+
+class EventMessageForm(forms.Form):
+    game = forms.ModelChoiceField(queryset=Game.objects.all())
+    message = forms.CharField(label='Event Game Message', max_length=250)
+
+    def save(self):
+        event_data = self.clean()
+        if event_data:
+            event_manager = EVENT_HOST.get_game(event_data.get('game').id)
+            new_message = str(event_data.get('message'))
+            if len(new_message) > 0:
+                event_manager.message = new_message
+            else:
+                event_manager.message = constants.CONST_GAME_GAME_MESSAGE
+            return event_manager.game_id
+        raise Exception('Cannot find Event Manager for Game!')
 
 
 class Scorebot2ImportForm(forms.Form):
@@ -85,45 +121,38 @@ class Scorebot2ImportForm(forms.Form):
                         blue_content.save()
                         blue_service.content = blue_content
                         blue_service.save()
-            for flag_name, flag_data in blueteam['flags'].items():
-                blue_flag = Flag()
-                blue_flag.name = slugify(flag_name)
-                try:
-                    blue_flag_check = blueteam_team.flags.all().get(flag=str(flag_data['value']))
-                except Flag.DoesNotExist:
-                    blue_flag_check = None
-                except Flag.MultipleObjectsReturned:
-                    blue_flag_check = True
-                if blue_flag_check is not None:
-                    blue_flag.flag = '%s-%d' % (flag_data['value'], random.randint(0, 255))
-                else:
-                    blue_flag.flag = flag_data['value']
-                blue_flag.description = flag_data['answer']
-                blue_flag.team = blueteam_team
-                blue_flag.host = random.choice(blueteam_team.hosts.all())
-                blue_flag.save()
-        for inject in json_data['injects']:
-            for team in game.teams.all():
-                blue_ticket = Ticket()
-                blue_ticket.name = slugify(inject['inject_name'])
-                if isinstance(inject['inject_body'], list):
-                    blue_ticket.description = '\r\n'.join(inject['inject_body'])
-                else:
-                    blue_ticket.description = str(inject['inject_body'])
-                try:
-                    blue_ticket.value = int(inject['inject_value'])
-                except ValueError:
-                    logger.warning('SBE-CONVERT', 'Conversion to value for ticket "%s" failed! Defaulting to 500.' %
-                                   blue_ticket.name)
-                try:
-                    blue_ticket.expires = int(inject['inject_duration'])
-                except ValueError:
-                    logger.warning('SBE-CONVERT', 'Conversion to expire time for ticket "%s" failed! Defaulting to 300.'
-                                   % blue_ticket.name)
-                if inject['category'].lower() != 'no category':
-                    for category in constants.CONST_GRID_TICKET_CATEGORY_CHOICES:
-                        if category[1].lower() == inject['category'].lower():
-                            blue_ticket.category = category[0]
-                blue_ticket.team = team
-                blue_ticket.save()
+            if 'flags' in blueteam:
+                for flag_name, flag_data in blueteam['flags'].items():
+                    blue_flag = Flag()
+                    blue_flag.name = slugify(flag_name)
+                    try:
+                        blue_flag_check = blueteam_team.flags.all().get(flag=str(flag_data['value']))
+                    except Flag.DoesNotExist:
+                        blue_flag_check = None
+                    except Flag.MultipleObjectsReturned:
+                        blue_flag_check = True
+                    if blue_flag_check is not None:
+                        blue_flag.flag = '%s-%d' % (flag_data['value'], random.randint(0, 255))
+                    else:
+                        blue_flag.flag = flag_data['value']
+                    blue_flag.description = flag_data['answer']
+                    blue_flag.team = blueteam_team
+                    blue_flag.host = random.choice(blueteam_team.hosts.all())
+                    blue_flag.save()
+        if 'injects' in json_data:
+            for inject in json_data['injects']:
+                for team in game.teams.all():
+                    blue_ticket = GameTicket()
+                    blue_ticket.ticket_id = random.randint(0, 4096)
+                    blue_ticket.name = slugify(inject['inject_name'])
+                    if isinstance(inject['inject_body'], list):
+                        blue_ticket.description = '\r\n'.join(inject['inject_body'])
+                    else:
+                        blue_ticket.description = str(inject['inject_body'])
+                    if inject['category'].lower() != 'no category':
+                        for category in constants.CONST_GRID_TICKET_CATEGORIES_CHOICES:
+                            if category[1].lower() == inject['category'].lower():
+                                blue_ticket.type = category[0]
+                    blue_ticket.team = team
+                    blue_ticket.save()
         return game

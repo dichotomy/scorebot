@@ -4,8 +4,8 @@ import random
 from django.db import models
 from datetime import timedelta
 from django.utils import timezone
-from scorebot.utils.constants import *
 from django.contrib.auth.models import User
+from scorebot.utils.constants import CONST_CORE_ACCESS_KEY_LEVELS
 
 
 def score_create_new():
@@ -30,23 +30,6 @@ def token_create_new(expire_days=0):
     return token_object
 
 
-class PlayerManager(models.Manager):
-    """
-    Scorebot v3: PlayerManager
-
-    Enables the "get_player" method to call on players by username or create new ones on the fly.
-    """
-
-    def get_player(self, player_name):
-        try:
-            player_object = self.get(name=player_name)
-        except Player.DoesNotExist:
-            player_object = Player()
-            player_object.name = player_name
-            player_object.save()
-        return player_object
-
-
 class Team(models.Model):
     """
     Scorebot v3: Team
@@ -59,19 +42,16 @@ class Team(models.Model):
         verbose_name = 'Team'
         verbose_name_plural = 'Teams'
 
+    logo = models.ImageField('Team Logo', null=True, blank=True)
     name = models.CharField('Team Name', max_length=150, unique=True)
     players = models.ManyToManyField('scorebot_core.Player', blank=True)
     color = models.IntegerField('Team Color', default=team_create_new_color)
     last = models.DateTimeField('Team Last Game', null=True, blank=True, editable=False)
     created = models.DateTimeField('Team Registration', auto_now_add=True, editable=False)
-    logo = models.ImageField('Team Logo', upload_to=CONST_GAME_GAME_TEAM_LOGO_DIR, null=True, blank=True)
     score = models.OneToOneField('scorebot_core.Score', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return '[Team] %s (%d)' % (self.name, self.score.get_score())
-
-    def __len__(self):
-        return self.score.__len__()
 
     def __lt__(self, other):
         return isinstance(other, Team) and other.score > self.score
@@ -101,7 +81,7 @@ class Token(models.Model):
         verbose_name_plural = 'Tokens'
 
     expires = models.DateTimeField('Token Expire', null=True, blank=True)
-    uuid = models.UUIDField('Token ID', primary_key=True, default=token_create_new_uuid, editable=False)
+    uuid = models.UUIDField('Token ID', primary_key=True, default=token_create_new_uuid)
 
     def __str__(self):
         return '[Token] %s - %s' % (self.uuid, (self.expires.strftime('%m/%d/%y %H:%M:%S')
@@ -113,9 +93,6 @@ class Token(models.Model):
     def __bool__(self):
         return self.__len__() > 0 if self.expires is not None else True
 
-    def get_json_export(self):
-        return {'expires': (self.expires.toordinal() if self.expires is not None else None), 'uuid': self.uuid}
-
 
 class Score(models.Model):
     """
@@ -126,14 +103,13 @@ class Score(models.Model):
 
     class Meta:
         verbose_name = 'Score'
-        get_latest_by = 'date'
         verbose_name_plural = 'Scores'
 
     flags = models.IntegerField('Flags', default=0)
     uptime = models.IntegerField('Uptime', default=0)
+    date = models.DateTimeField('Time', auto_now=True)
     tickets = models.IntegerField('Tickets', default=0)
     beacons = models.IntegerField('Beacons', default=0)
-    date = models.DateTimeField('Time', auto_now_add=True)
 
     def __str__(self):
         return '[Score] F:%d U:%d T:%d B:%d @ %s' % (self.flags, self.uptime, self.tickets, self.beacons,
@@ -157,10 +133,6 @@ class Score(models.Model):
     def __eq__(self, other):
         return isinstance(other, Score) and len(other) == self.__len__()
 
-    def get_json_export(self):
-        return {'flags': self.flags, 'uptime': self.uptime, 'tickets': self.tickets, 'beacons': self.beacons,
-                'date': self.date.toordinal()}
-
     def set_flags(self, flags_score):
         self.flags = self.flags + flags_score
         self.save()
@@ -178,6 +150,32 @@ class Score(models.Model):
         self.save()
 
 
+class Credit(models.Model):
+    """
+    Credits displayed on the scoreboard.
+    """
+    class Meta:
+        verbose_name = 'Credit'
+        verbose_name_plural = 'Credits'
+
+    name = models.SlugField('Credit Name', max_length=75)
+    content = models.TextField('Credit HTML Code', max_length=2500, blank=True)
+
+    def __str__(self):
+        return '[Credit] %s' % self.name
+
+    @staticmethod
+    def get_next_credit():
+        try:
+            credit_selected = random.choice(Credit.objects.all())
+            try:
+                return credit_selected.content
+            except AttributeError:
+                return ''
+        except IndexError:
+            return ''
+
+
 class Player(models.Model):
     """
     Scorebot v3: Player
@@ -190,7 +188,6 @@ class Player(models.Model):
         verbose_name = 'Player'
         verbose_name_plural = 'Players'
 
-    objects = PlayerManager()
     name = models.CharField('Player Display Name', max_length=150, unique=True)
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.SET_NULL)
     token = models.ForeignKey('scorebot_core.Token', on_delete=models.SET_NULL, blank=True, null=True)
@@ -198,9 +195,6 @@ class Player(models.Model):
 
     def __str__(self):
         return '[Player] %s <%d>' % (self.name, self.score.get_score())
-
-    def __len__(self):
-        return self.score.__len__()
 
     def __lt__(self, other):
         return isinstance(other, Player) and other.score > self.score
@@ -210,9 +204,6 @@ class Player(models.Model):
 
     def __eq__(self, other):
         return isinstance(other, Player) and other.score == self.score
-
-    def get_json_export(self):
-        return {'name': self.name, 'score': self.score.get_json_export(), 'token': self.token.get_json_export()}
 
     def save(self, *args, **kwargs):
         if self.score is None:
@@ -236,39 +227,30 @@ class Options(models.Model):
         verbose_name_plural = 'Game Presets'
 
     name = models.SlugField('Preset Name', max_length=150)
+    ticket_cost = models.PositiveSmallIntegerField('Ticket Cost', default=50)
     round_time = models.PositiveSmallIntegerField('Round Time (seconds)', default=300)
-    beacon_value = models.PositiveSmallIntegerField('Beacon Scoring Value', default=100)
-    host_ping_ratio = models.PositiveSmallIntegerField('Default Host Ping Percent', default=50)
+    beacon_value = models.PositiveSmallIntegerField('Beacon Scoring Value', default=300)
+    ticket_max_score = models.PositiveSmallIntegerField('Ticket Max Score', default=6000)
+    flag_stolen_rate = models.PositiveSmallIntegerField('Flag Stolen Rate', default=8400)
+    host_ping_ratio = models.PositiveSmallIntegerField('Default Host Ping Percent', default=125)
     beacon_time = models.PositiveSmallIntegerField('Default Beacon Timeout (seconds)', default=300)
     job_timeout = models.PositiveSmallIntegerField('Unfinished Job Timeout (seconds)', default=300)
-    ticket_expire_time_modify = models.SmallIntegerField('Ticket Expire Modifiy (seconds)', default=0)
+    ticket_reopen_multiplier = models.PositiveSmallIntegerField('Ticket Reopen Multiplier', default=10)
     flag_captured_multiplier = models.PositiveSmallIntegerField('Flag Captured Multiplier', default=300)
-    ticket_severity_level_modify = models.SmallIntegerField('Ticket Severity Level Modifier', default=0)
-    flag_start_percent = models.PositiveSmallIntegerField('Starting Flag Enabled Percentage', default=60)
     job_cleanup_time = models.PositiveSmallIntegerField('Finished Job Cleanup Time (seconds)', default=900)
     score_exchange_rate = models.PositiveIntegerField('Score to Coin Exchange Rate Percentage', default=100)
-    ticket_start_percent = models.PositiveSmallIntegerField('Starting Ticket Enabled Percentage', default=65)
-    ticket_start_wait = models.PositiveSmallIntegerField('Starting Ticket First Deploy Time (seconds)', default=180)
+    ticket_max_scoring = models.PositiveSmallIntegerField('Ticket Max Scoring Time (seconds)', default=14400)
+    ticket_grace_period = models.PositiveSmallIntegerField('Ticket Scoring Grace Period (seconds)', default=900)
 
     def __str__(self):
         return '[Options] %s' % self.name
-
-    def get_json_export(self):
-        return {'name': self.name, 'round_time': self.round_time, 'beacon_value': self.beacon_value,
-                'host_ping_ratio': self.host_ping_ratio, 'beacon_time': self.beacon_time,
-                'ticket_expire_time_modify': self.ticket_expire_time_modify,
-                'flag_captured_multiplier': self.flag_captured_multiplier,
-                'ticket_severity_level_modify': self.ticket_severity_level_modify,
-                'flag_start_percent': self.flag_start_percent, 'score_exchange_rate': self.score_exchange_rate,
-                'ticket_start_percent': self.ticket_start_percent, 'ticket_start_wait': self.ticket_start_wait}
 
 
 class Monitor(models.Model):
     """
     Scorebot v3: Monitor
 
-    Monitors are the servers that run the checking algorithms on the Hosts.  Monitors require an access key with
-    the '__SYS_MONITOR' bit set.
+    Monitors are the servers that run the checking algorithms on the Hosts.
     """
 
     class Meta:
@@ -308,6 +290,7 @@ class AccessToken(models.Model):
         super(AccessToken, self).save(*args, **kwargs)
 
     def __getitem__(self, access_level):
+        """Check if an access level is included."""
         if isinstance(access_level, int):
             access_object = access_level
         elif isinstance(access_level, str):
@@ -322,6 +305,9 @@ class AccessToken(models.Model):
         return (self.level & (1 << access_object)) > 0
 
     def __setitem__(self, access_level, access_value):
+        """
+        Set or clear an access level.
+        """
         if isinstance(access_level, int):
             access_object = access_level
         elif isinstance(access_level, str):

@@ -1,0 +1,13 @@
+{% extends "index.html" %}
+
+{% block content %}
+        {% for beacon in beacons %}
+        <div class="col-sm beacons">
+            <p>Token ID: {{ beacon.get("token") }}</p>
+            <p>Attacker: {{ beacon.get("attacker") }}</p>
+            <p>Start: {{ beacon.get("start") }}</p>
+            <p>Finish: {{ beacon.get("finish") }}</p>
+            <p>Victim: {{ beacon.get("host") }}</p>
+        </div>
+        {% endfor %}
+{% endblock %}
