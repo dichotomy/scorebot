@@ -9,7 +9,8 @@ from django.shortcuts import render, reverse
 from scorebot_api.forms import Scorebot2ImportForm, CreateEventForm, EventMessageForm
 from django.views.decorators.csrf import csrf_exempt
 from netaddr import IPNetwork, IPAddress, AddrFormatError
-from scorebot.utils.constants import CONST_GAME_GAME_RUNNING
+from scorebot.utils.constants import CONST_GAME_GAME_RUNNING,\
+        CONST_GRID_SERVICE_PROTOCOL_CHOICES
 from scorebot_core.models import Monitor, token_create_new, Token
 from django.contrib.admin.views.decorators import staff_member_required
 from scorebot.utils.general import authenticate, game_team_from_token, dump_data
