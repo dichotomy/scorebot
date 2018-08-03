@@ -17,6 +17,7 @@ urlpatterns = [
     url(r'^purchase/$', ScorebotAPI.api_purchase),
     url(r'^transfer/$', ScorebotAPI.api_transfer),
     url(r'^new_resource$', ScorebotAPI.api_new_resource),
+    url(r'^token$', ScorebotAPI.api_token_check),
     url(r'^beacon/port$', ScorebotAPI.api_register_port),
     url(r'^beacon/port/$', ScorebotAPI.api_register_port),
     url(r'^beacon/active$', ScorebotAPI.api_beacon_active),

@@ -321,3 +321,16 @@ class AccessToken(models.Model):
             self.level = (self.level | (1 << access_object))
         else:
             self.level = (self.level & (~(1 << access_object)))
+
+    def permission_strings(self):
+        """Return a list of permissions this token has."""
+        results = []
+        for k, v in CONST_CORE_ACCESS_KEY_LEVELS.items():
+            if self[v]:
+                results.append(k)
+        return results
+
+    @property
+    def uuid(self):
+        """Return UUID."""
+        return self.token.uuid

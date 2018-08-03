@@ -686,5 +686,18 @@ class ScorebotAPI:
         return HttpResponseBadRequest(content='SBE API: Not a supported method type!')
 
     @staticmethod
+    @authenticate()
+    def api_token_check(request):
+        try:
+            token = request.authentication
+        except AttributeError:
+            return HttpResponseForbidden(content='SBE API: No authentication!')
+        resp = {
+                'token': str(token.uuid),
+                'permissions': token.permission_strings(),
+                }
+        return JsonResponse(resp)
+
+    @staticmethod
     def api_default_page(request):
         return HttpResponseRedirect('/scoreboard/1/')
