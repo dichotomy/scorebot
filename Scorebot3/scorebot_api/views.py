@@ -404,7 +404,7 @@ class ScorebotAPI:
         """Create a new monitored resource.
 
         Requires a JSON post with the following fields:
-            team: A valid team token
+            team: A valid game team id
             host: A dictionary of the host, containing:
                 name: Display name for the host.
                 fqdn: FQDN for the host to be scored.
@@ -429,11 +429,10 @@ class ScorebotAPI:
             api_error('NEW_RESOURCE', 'Data submitted is not in correct JSON format!', request)
             return HttpResponseBadRequest(content='{"message": "SBE API: Not in a valid JSON format!"]')
         try:
-            team_token = Token.objects.get(uuid=uuid.UUID(json_data['team']))
-            team = GameTeam.objects.get(token=team_token)
-        except (KeyError, ValueError, Token.DoesNotExist, GameTeam.DoesNotExist):
-            api_error('NEW_RESOURCE', 'Invalid or missing team UUID.')
-            return HttpResponseBadRequest(content='{"message": "SBE API: Incorrect or missing team UUID."}')
+            team = GameTeam.objects.get(store=int(json_data['team']), game__status=CONST_GAME_GAME_RUNNING)
+        except ValueError:
+            api_error('NEW_RESOURCE', 'Attempted to use an invalid Team ID "%s"!' % str(team_id), request)
+            return HttpResponseNotFound('{"message": "SBE API: Invalid Team ID!"}')
         new_host = Host()
         try:
             new_host.fqdn = json_data['host']['fqdn']
