@@ -34,7 +34,7 @@ def game_event_create(game, event_message):
     event = GameEvent()
     event.game = game
     event.data = event_message
-    event.timeout = timezone.now() + timedelta(minutes=3)
+    event.timeout = (timezone.now() + timedelta(minutes=3)).seconds
     if game.start is not None:
         try:
             event_dist = (timezone.now() - game.start).seconds
