@@ -1,43 +1,35 @@
-import twitter
-
-from django.conf import settings
-from scorebot.utils.logger import log_warning, log_debug
+from datetime import timedelta
+from django.utils import timezone
+from scorebot.utils.logger import log_debug, log_error
 from scorebot.utils.constants import CONST_GAME_GAME_MESSAGE
 
 
 class EventHost(object):
     def __init__(self):
         self.games = dict()
-        try:
-            self.twitter = twitter.Api(consumer_key=settings.TWITTER_API['CONSUMER_KEY'],
-                                       consumer_secret=settings.TWITTER_API['CONSUMER_SECRET'],
-                                       access_token_key=settings.TWITTER_API['ACCESS_TOKEN'],
-                                       access_token_secret=settings.TWITTER_API['ACCESS_TOKEN_SECRET'])
-        except twitter.TwitterError:
-            log_warning('EVENT', 'Error authenticating the Twitter API! Posts will be unavailable!')
-            self.twitter = None
 
     def post_tweet(self, status):
-        if not settings.TWITTER_API['ENABLED']:
-            log_debug('EVENT-TWITTER', 'Twitter not enabled.  Post: "%s"' % status)
-            return
-        if self.twitter is None:
-            log_warning('EVENT', 'Twitter API in not available! Posts will be unavailable!')
-            return
-        try:
-            self.twitter.PostUpdate(status)
-        except twitter.TwitterError as twitterError:
-            if 'Status is a duplicate' in str(twitterError.message):
-                log_debug('EVENT', 'Posted a duplicate status! "%s"' % status)
-            else:
-                self.twitter = None
+        post_tweet(status)
 
 
 EVENT_HOST = EventHost()
 
 
-def post_tweet(tweet_message):
-    EVENT_HOST.post_tweet(tweet_message)
+def post_tweet(message):
+    # Hack
+    from scorebot_game.models import GameEvent, Game
+
+    a = GameEvent()
+    a.type = 0
+    a.timeout = timezone.now() + timedelta(minutes=5)
+    a.data = '%s #PvJCTF #CTF #BSidesDC' % message
+    try:
+        b = Game.objects.filter(finish__isnull=True, status=1, start__isnull=False)
+        a.game = b.first()
+        a.save()
+        log_debug("TWITTER", 'Added tweet to be sent "%s"!' % message)
+    except Exception as err:
+        log_error("TWITTER", "Error adding tweet! (%s)" % str(err))
 
 
 def get_scoreboard_message(game_id):

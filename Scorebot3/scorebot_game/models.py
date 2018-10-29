@@ -31,10 +31,10 @@ def store_score_history(team, score):
 
 
 def game_event_create(game, event_message):
-    event = GameEvent()
-    event.game = game
-    event.data = event_message
-    event.timeout = timezone.now() + timedelta(minutes=3)
+    #event = GameEvent()
+    #event.game = game
+    #event.data = event_message
+    #event.timeout = timezone.now() + timedelta(minutes=3)
     if game.start is not None:
         try:
             event_dist = (timezone.now() - game.start).seconds
@@ -42,7 +42,7 @@ def game_event_create(game, event_message):
             del event_dist
         except:
             pass
-    event.save()
+    #event.save()
 
 
 # TODO: Expand this class with automated functions
@@ -72,12 +72,12 @@ class Job(GameModel):
     host = models.ForeignKey('scorebot_grid.Host', on_delete=models.CASCADE, related_name='jobs')
 
     def __len__(self):
-        return 0 if self.finish is not None else (timezone.now() - self.host).seconds
+        return 0 if self.finish is not None else ((timezone.now() - self.start).seconds - 1200)
 
     def __str__(self):
         return '[Job] %s <%s> (%s)' % (self.monitor.monitor.name, self.host.get_canonical_name(),
                                        ('DONE' if self.finish is not None else
-                                        'WAIT %s' % (timezone.now() - self.start).seconds))
+                                        'WAIT %s' % self.__len__()))
 
     def __bool__(self):
         return self.finish is not None
@@ -87,14 +87,15 @@ class Job(GameModel):
 
     def is_expired(self, score_time):
         expired = self.finish is None and \
-                  (score_time - self.start).seconds > int(self.monitor.game.get_option('job_timeout'))
+                  self.__len__() > int(self.monitor.game.get_option('job_timeout'))
+                  #(score_time - self.start).seconds > int(self.monitor.game.get_option('job_timeout'))
         if expired:
             api_debug('CLEANUP', 'Job "%d" has expired!' % self.id)
         return expired
 
     def can_cleanup(self, score_time):
         cleanup = self.finish is not None and \
-                  (score_time - self.finish).seconds > int(self.monitor.game.get_option('job_cleanup_time'))
+                  ((score_time - self.finish).seconds -1200) > int(self.monitor.game.get_option('job_cleanup_time'))
         if cleanup:
             api_debug('CLEANUP', 'Job "%d" has passed the cleanup time!' % self.id)
         return cleanup
@@ -130,7 +131,7 @@ class Game(GameModel):
 
     def get_json_scoreboard(self):
         game_json = {'name': html.escape(self.name),
-                     'message': html.escape(get_scoreboard_message(self.id)),
+                     'message': html.escape('This ProsVJoes CTF!'), #get_scoreboard_message(self.id)),
                      'mode': self.mode,
                      'teams': [t.get_json_scoreboard() for t in self.teams.all()],
                      'events': [e.get_json_scoreboard() for e in GameEvent.objects.filter(game=self)],
@@ -652,12 +653,12 @@ class GameCompromise(GameModel):
 
     finish = models.DateTimeField('Beacon Completed', null=True, blank=True)
     start = models.DateTimeField('Beacon Start', auto_now_add=True, editable=False)
-    token = models.ForeignKey('scorebot_core.Token', null=True, blank=True, editable=False)
+    token = models.ForeignKey('scorebot_core.Token', null=True, blank=True, editable=False, on_delete=models.SET_NULL)
     checkin = models.DateTimeField('Beacon Checkedin', null=True, blank=True, editable=False)
     attacker = models.ForeignKey('scorebot_game.GameTeam', on_delete=models.CASCADE, related_name='attack_beacons')
 
     def __len__(self):
-        return (self.finish - self.start).seconds if self.finish is not None else (timezone.now() - self.start).seconds
+        return (self.finish - self.start).seconds if self.finish is not None else ((timezone.now() - self.start).seconds - 1200)
 
     def __str__(self):
         return '[Beacon] %s -> %s (%d seconds)' % (self.attacker.name, self.host.get_fqdn(), self.__len__())
@@ -679,9 +680,10 @@ class GameCompromise(GameModel):
             del beacon_value
 
     def is_expired(self, now):
-        if self.checkin is None:
-            return (now - self.start).seconds > int(self.host.team.game.get_option('beacon_time'))
-        return (now - self.checkin).seconds > int(self.host.team.game.get_option('beacon_time'))
+        return self.__len__() > int(self.host.team.game.get_option('beacon_time'))
+#        if self.checkin is None:
+#            return (now - self.start).seconds > int(self.host.team.game.get_option('beacon_time'))
+#        return (now - self.checkin).seconds > int(self.host.team.game.get_option('beacon_time'))
 
 
 class GameCompromiseHost(GameModel):

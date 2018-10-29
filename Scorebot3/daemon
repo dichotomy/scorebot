@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [[ ! -e /usr/bin/python3 ]]; then
+  printf "No python3 installed!\n"
+  exit 1
+fi
+
+SCOREBOT_DIR="/opt/Scorebot3"
+PYTHON_LIB="/opt/scorebot/python-lib"
+
+source "$PYTHON_LIB/bin/activate"
+python3 "$SCOREBOT_DIR/daemon.py"

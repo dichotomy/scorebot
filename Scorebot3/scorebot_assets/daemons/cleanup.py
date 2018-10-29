@@ -1,5 +1,6 @@
 from django.utils import timezone
 
+from datetime import datetime,timedelta
 from daemon import DaemonEntry
 from scorebot.utils.logger import log_debug
 from scorebot_game.models import Job, GameCompromise, GameEvent
@@ -30,8 +31,9 @@ def job_cleanup():
     beacons_open = GameCompromise.objects.filter(finish__isnull=True)
     log_debug('DAEMON', 'Looking for expired Beacons..')
     if beacons_open is not None and len(beacons_open) > 0:
-        expire_time = timezone.now()
+        expire_time = timezone.now() - timedelta(seconds=1200)
         for beacon in beacons_open:
+            print("beacon %s, %s, %s, %s" % (expire_time, beacon.checkin, beacon.start, beacon.finish))
             if beacon.is_expired(expire_time):
                 log_debug('DAEMON', 'Closing an expired Beacon "%s"..' % beacon.__str__())
                 beacon.finish = expire_time

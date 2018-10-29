@@ -2,6 +2,7 @@ import json
 import uuid
 import random
 
+from datetime import timedelta
 from django.utils import timezone
 from scorebot.utils import logger
 from scorebot_grid.models import Flag, Host
@@ -166,10 +167,10 @@ class ScorebotAPI:
                 return HttpResponseBadRequest('{"message": "SBE API: d%s"}' % exception)
             del ticket
         return HttpResponse(status=200, content='{"message": "Accepted"}')
-    
+
     @staticmethod
     @csrf_exempt
-    @authenticate('__SYS_BEACON')
+    @authenticate()
     def api_beacon_active(request):
         if request.method == METHOD_GET:
             all_beacons = GameCompromise.objects.filter(finish__isnull=True)
@@ -182,7 +183,7 @@ class ScorebotAPI:
                 beacon_info['start'] = str(beacon.start)
                 beacon_info['finish'] = str(beacon.finish)
                 beacon_list.append(beacon_info)
-            return JsonResponse(beacon_list, safe=False) 
+            return JsonResponse(beacon_list, safe=False)
         else:
             return HttpResponseBadRequest(content='{"message": "SBE API: Not a supported method type!"}')
         team, token, data, exception = game_team_from_token(request, 'CLI', 'token', beacon=True,
@@ -251,12 +252,13 @@ class ScorebotAPI:
                 beacon_host.ip = address_raw
                 beacon_host.team = host.team
                 beacon_host.host = host
+                beacon.start = timezone.now() - timedelta(seconds=1200)
                 beacon.token = token
                 beacon.attacker = team
                 beacon.save()
                 beacon_host.beacon = beacon
                 beacon_host.save()
-                api_event(team.game, 'A Host on %s\'s network was compromised by "%s" #PvJCTF #CTF #BSidesLV!' %
+                api_event(team.game, 'A Host on %s\'s network was compromised by "%s"!' %
                             (host.team.name, team.name))
                 beacon_value = int(team.game.get_option('beacon_value'))
                 team.set_beacons(beacon_value)
@@ -285,11 +287,12 @@ class ScorebotAPI:
                 beacon_host.team = target_team
                 beacon = GameCompromise()
                 beacon.token = token
+                beacon.start = timezone.now() - timedelta(seconds=1200)
                 beacon.attacker = team
                 beacon.save()
                 beacon_host.beacon = beacon
                 beacon_host.save()
-                api_event(team.game, 'A Host on %s\'s network was compromised by "%s" #PvJCTF #CTF #BSidesLV!' %
+                api_event(team.game, 'A Host on %s\'s network was compromised by "%s"!' %
                             (target_team.name, team.name))
                 beacon_value = int(team.game.get_option('beacon_value'))
                 team.set_beacons(beacon_value)
@@ -641,7 +644,7 @@ class ScorebotAPI:
 
     @staticmethod
     def api_scoreboard(request, game_id):
-        return render(request, 'scoreboard.html', {'game_id': game_id})
+        return render(request, 'scoreboard.html', {'game_id': game_id, 'board': request.GET.get('main', '0')})
 
     @staticmethod
     def api_scoreboard_json(request, game_id):
@@ -700,4 +703,7 @@ class ScorebotAPI:
 
     @staticmethod
     def api_default_page(request):
-        return HttpResponseRedirect('/scoreboard/1/')
+        a = Game.objects.filter(finish__isnull=True, status=1, start__isnull=False)
+        if len(a) > 0:
+                return HttpResponseRedirect('/scoreboard/%d/' % a[len(a)-1].pk)
+        return HttpResponseRedirect('/scoreboard/7/')

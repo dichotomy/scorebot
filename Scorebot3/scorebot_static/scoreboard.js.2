@@ -20,12 +20,8 @@ var _sb3_active_timers = [];
 function sb3_init() {
     sb3_update_teams();
     sb3_set_message(null);
-    var t = 60000;
-    if (sb3_main === 1) {
-        t = 15000;
-    }
     _sb3_active_timers.push(setInterval(sb3_marquee, 25));
-    _sb3_active_timers.push(setInterval(sb3_update_teams, t));
+    _sb3_active_timers.push(setInterval(sb3_update_teams, 60000));
     _sb3_active_timers.push(setInterval(sb3_update_beacons, 50));
 }
 function sb3_freeze() {
@@ -68,18 +64,16 @@ function _sb3_team_draw() {
             '"></td><td class="sb3_team_health_right"><table id="sb3_team_div_health_' + this.id +
             '" class="sb3_team_health_stats"></table></td></tr></table></div><div class="sb3_team_stats">' +
             '<table>' +
-            '<tr>' + //<td></td>' +
-            '<td class="sb3_team_status_beacons" id="sb3_team_div_status_beacons_' + this.id + '"></td>' +
-            '<td class="" id="sb3_team_div_status_flags_' + this.id + '"></td>' +
-            '<td class="" id="sb3_team_div_status_tickets_' + this.id + '"></td>' +
-            '</tr>' +
             '<tr>' +
+            '<td class="sb3_score_beacons" id="sb3_team_div_score_beacons_' + this.id + '"></td>' +
             '<td class="sb3_score_health" id="sb3_team_div_score_health_' + this.id + '"></td>' +
             '<td class="sb3_score_flags" id="sb3_team_div_score_flags_' + this.id + '"></td>' +
-            //'<td class="sb3_score_tickets" id="sb3_team_div_score_tickets_' + this.id + '"></td>' +
-            '<td class="sb3_score_beacons" id="sb3_team_div_score_beacons_' + this.id + '"></td>' +
+            '<td class="sb3_score_tickets" id="sb3_team_div_score_tickets_' + this.id + '"></td>' +
             '</tr>' +
-            '</table></div>';
+            '<tr><td></td><td class="" id="sb3_team_div_status_flags_' + this.id +
+            '"></td><td class="" id="sb3_team_div_status_tickets_' + this.id +
+            '"></td><td class="sb3_team_status_beacons" id="sb3_team_div_status_beacons_' + this.id +
+            '"></td></tr></table></div>';
         _sb3_team_div.classList.add('sb3_team');
         var _sb3_board = document.getElementById('sb3_teams');
         if (_sb3_board !== null)
@@ -189,20 +183,20 @@ function _sb3_team_draw() {
         score_div.textContent = this.score[c];
     }
 
-    /* var _sb3_team_div_style = window.getComputedStyle(_sb3_team_div);
-     if (_sb3_team_box_max_width === null)
-         _sb3_team_box_max_width = parseInt(_sb3_team_div_style.width.replace('px', ''));
-     if (_sb3_team_box_max_width < parseInt(_sb3_team_div_style.width.replace('px', '')))
-         _sb3_team_box_max_width = parseInt(_sb3_team_div_style.width.replace('px', ''));
-     if (_sb3_team_box_max_height === null)
-         _sb3_team_box_max_height = parseInt(_sb3_team_div_style.height.replace('px', ''));
-     if (_sb3_team_box_max_height < parseInt(_sb3_team_div_style.height.replace('px', '')))
-         _sb3_team_box_max_height = parseInt(_sb3_team_div_style.height.replace('px', ''));
- 
-     if (_sb3_team_box_max_width !== null)
-         _sb3_team_div.style.width = _sb3_team_box_max_width + 'px';
-     if (_sb3_team_box_max_height !== null)
-         _sb3_team_div.style.height = _sb3_team_box_max_height + 'px';*/
+    var _sb3_team_div_style = window.getComputedStyle(_sb3_team_div);
+    if (_sb3_team_box_max_width === null)
+        _sb3_team_box_max_width = parseInt(_sb3_team_div_style.width.replace('px', ''));
+    if (_sb3_team_box_max_width < parseInt(_sb3_team_div_style.width.replace('px', '')))
+        _sb3_team_box_max_width = parseInt(_sb3_team_div_style.width.replace('px', ''));
+    if (_sb3_team_box_max_height === null)
+        _sb3_team_box_max_height = parseInt(_sb3_team_div_style.height.replace('px', ''));
+    if (_sb3_team_box_max_height < parseInt(_sb3_team_div_style.height.replace('px', '')))
+        _sb3_team_box_max_height = parseInt(_sb3_team_div_style.height.replace('px', ''));
+
+    if (_sb3_team_box_max_width !== null)
+        _sb3_team_div.style.width = _sb3_team_box_max_width + 'px';
+    if (_sb3_team_box_max_height !== null)
+        _sb3_team_div.style.height = _sb3_team_box_max_height + 'px';
 
 }
 function sb3_get_rgb(hex) {

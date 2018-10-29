@@ -3,7 +3,6 @@ import math
 import html
 
 from django.db import models
-from scorebot_game.models import GameTeam
 from django.core.exceptions import ValidationError
 from scorebot.utils import api_info, api_debug, api_error, api_warning, api_score, api_event
 from scorebot.utils.constants import CONST_GRID_FLAG_VALUE, CONST_GRID_SERVICE_APPLICATION, \
@@ -90,7 +89,7 @@ class Flag(GridModel):
     def capture(self, attacker):
         if attacker is None:
             raise ValueError('Parameter "attacker" cannot be None!')
-        if isinstance(attacker, GameTeam):
+        if attacker:
             api_info('SCORING-ASYNC', 'Flag "%s" was captured by "%s"!'
                      % (self.get_canonical_name(), attacker.get_canonical_name()))
             self.captured = attacker
@@ -106,7 +105,7 @@ class Flag(GridModel):
                 api_score(self.id, 'FLAG-STOLEN-ATTCKER', self.get_canonical_name(), self.value * multiplier,
                           attacker.get_canonical_name())
                 del multiplier
-            api_event(self.team.game, 'A Flag from %s was stolen by %s!' % (self.team.name, attacker.name))
+            api_event(self.team.game.id, 'A Flag from %s was stolen by %s!' % (self.team.name, attacker.name))
             self.save()
         else:
             raise ValueError('Parameter "attacker" must be a "GameTeam" object type!')
@@ -135,8 +134,7 @@ class Host(GridModel):
     """
     Scorebot v3: Host
 
-    Represents a Hosts used in a game.  These are the individual hosts monitored
-    by Monitors.
+    Represents a Hosts used in a game
     """
 
     class Meta:
@@ -276,7 +274,7 @@ class Service(GridModel):
     Scorebot v3: Service
 
     Stores the data related to a in game service.  The service consists of a port check and returns the status based
-    on the outcome of the port check (pass | timeout | reset | refused).  Services can also be marked as bonus ports
+    on the outcome of the port check (pass | timeout | reset | refused).  Services can also be marked as bouns ports
     which have no value when no opened at all.
     """
 
@@ -304,13 +302,9 @@ class Service(GridModel):
         self.save()
 
     def __str__(self):
-        return ('[Service] %s %s<%s|%d/%s> %s' %
-                 (self.get_canonical_name(),
-                  '(B) ' if self.bonus else '',
-                  self.application,
-                  self.port,
-                  self.get_protocol_display(),
-                  self.get_status_display().upper()))
+        return '[Service] %s %s<%s|%d/%s> %s'\
+               % (self.get_canonical_name(), ('(B) ' if self.bonus else ''), self.application, self.port,
+                  self.get_protocol_display(), self.get_status_display().upper())
 
     def __bool__(self):
         if self.bonus and not self.bonus_started:
@@ -328,9 +322,7 @@ class Service(GridModel):
         content = None
         if self.content is not None:
             content = self.content.get_json_job()
-        return {'port': self.port,
-                'application': self.application,
-                'protocol': self.get_protocol_display(),
+        return {'port': self.port, 'application': self.application, 'protocol': self.get_protocol_display(),
                 'content': content}
 
     def get_canonical_name(self):
@@ -409,8 +401,8 @@ class Content(GridModel):
         self.save()
 
     def __str__(self):
-        return '[Content] %s <%s>' % ((self.service.get_canonical_name()
-                                       if self.service is not None else '(null)'), self.type)
+        return '[Content] %s <%s>' % ((self.service.all().last().get_canonical_name()
+                                       if self.service.all().count() > 0 is not None else '(null)'), self.type)
 
     def get_json_job(self):
         try:
@@ -418,6 +410,12 @@ class Content(GridModel):
         except json.decoder.JSONDecodeError:
             content = self.data
         return {'type': self.type, 'content': content}
+
+    def save(self, *args, **kwargs):
+        # TODO: Check if this is needed now
+        #if self.service.all().count() > 1:
+        #    raise ValidationError({'service': 'Content objects cannot be linked to multiple Service objects!'})
+        super(Content, self).save(*args, **kwargs)
 
 
 # TODO: Add Hypervisor hooks to this class
