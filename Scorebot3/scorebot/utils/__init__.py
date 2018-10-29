@@ -4,8 +4,6 @@ SCORE_EVENTS = []
 
 
 def api_event(game_id, event_message):
-    if not game_id:
-        return
     try:
         from scorebot_game.models import game_event_create
         game_event_create(game_id, event_message)
