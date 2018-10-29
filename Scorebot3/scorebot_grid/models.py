@@ -259,8 +259,8 @@ class Host(GridModel):
             else:
                 for job_service in job_data['services']:
                     try:
-                        if service.port == int(job_service['port']) and \
-                                        service.get_protocol_display().lower() == job_service['protocol'].lower():
+                        if (service.port == int(job_service['port']) and
+                                service.get_protocol_display().lower() == job_service['protocol'].lower()):
                             service.score_job(job, job_service)
                             break
                     except ValueError:
@@ -356,7 +356,7 @@ class Service(GridModel):
         api_debug('SCORING', 'Service "%s" was set "%s" by Job "%d".'
                   % (self.get_canonical_name(), self.get_status_display(), job.id))
         if 'content' in job_data and self.content is not None:
-            if 'status' in job_data['content']:
+            if job_data['content'] is not None and 'status' in job_data['content']:
                 try:
                     self.content.status = int(job_data['content']['status'])
                     api_debug('SCORING', 'Service Content for "%s" was set to "%d" by Job "%d".' %
