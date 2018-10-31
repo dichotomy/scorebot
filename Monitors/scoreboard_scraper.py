@@ -2,9 +2,12 @@
 
 '''
 
-@autor:  dichotomy@riseup.net
+@author:  dichotomy@riseup.net
 
-scorebot.py is the main script of the scorebot program.  It is run from the command prompt of a Linux box for game time, taking in all options from the command line and config files, instanciating and running classes from all modules.
+scorebot.py is the main script of the scorebot program.  It is run
+from the command prompt of a Linux box for game time, taking in all
+options from the command line and config files, instantiating and
+running classes from all modules.
 
 Copyright (C) 2017 Dichotomy
 
@@ -26,7 +29,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import urllib.request
 import json
 import time
-import sys
 
 
 class ScoreMachine(object):
@@ -37,7 +39,8 @@ class ScoreMachine(object):
         self.this_check = self.proc_json(f.read().decode('utf-8'))
         self.last_check = None
 
-    def proc_json(self, json_str):
+    @staticmethod
+    def proc_json(json_str):
         json_obj = json.loads(json_str)
         this_check = {}
         for team in json_obj["teams"]:
@@ -66,16 +69,16 @@ class ScoreMachine(object):
                 old_online = self.last_check[team][host]["online"]
                 new_online = self.this_check[team][host]["online"]
                 if old_online != new_online:
-                    sys.stdout.write("INFO     %s changed: old %s | new %s | %s %s online state \n" %
-                                        (now, old_online, new_online, team, host))
+                    print("INFO     %s changed: old %s | new %s | %s %s online state \n" %
+                        (now, old_online, new_online, team, host))
                 for service_name in self.this_check[team][host]["services"]:
                     old_status = self.last_check[team][host]["services"][service_name]
                     new_status = self.this_check[team][host]["services"][service_name]
                     if old_status != new_status:
-                        sys.stdout.write("INFO     %s changed: old %s | new %s | %s %s service %s \n" %
-                                         (now, old_status, new_status, team, host, service_name ))
+                        print("INFO     %s changed: old %s | new %s | %s %s service %s \n" %
+                            (now, old_status, new_status, team, host, service_name))
 
 if __name__ == "__main__":
-    sm = ScoreMachine()
+    score_machine = ScoreMachine()
     while True:
-        sm.get_json()
+        score_machine.get_json()
