@@ -4,10 +4,12 @@ import sys
 import json
 
 class Parameters(object):
-
+    # TODO Document methods and attributes
     def __init__(self):
         self.debug = False
         self.timeout = 90
+        # TODO read this from a file so its not exposed in repository
+        # IDEA - configuration file??
         self.sbe_auth = "2863e4ad-fcc5-4b35-8d31-42112c1c7b5b"
         self.sb_ip = "10.150.100.81"
         self.sb_port = 80
@@ -22,6 +24,8 @@ class Parameters(object):
         self.headers["Accept"] = "*/*"
         self.scheme = "http"
 
+    # TODO figure out if there is a real reason for these methods rather than
+    # just referring to the attributes directly.
     def get_debug(self):
         return self.debug
 
@@ -49,13 +53,3 @@ class Parameters(object):
             header_txt += "%s: %s\r\n" % (header, self.headers[header])
         return header_txt
 
-    def fin_conn(self, status, errmsg, headers, body):
-        #sys.stderr.write("Got status:\n%s\n" % status)
-        #sys.stderr.write("Got errmsg:\n%s\n" % errmsg)
-        #sys.stderr.write("Got headers:\n%s\n" % headers)
-        #sys.stderr.write("Got body:\n%s\n" % body)
-        if int(status) == 201:
-            json_job = json.loads("[%s]" % body)
-
-
-        #sys.stderr.write("Got body:\n%s\n" % json.dumps(json_body, indent=4))
