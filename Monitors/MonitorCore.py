@@ -128,7 +128,7 @@ class MonitorCore(object):
 
     def pinghost(self, job):
         pingobj = PingProtocol(job)
-        ping_d = pingobj.getDeferred()
+        ping_d = pingobj.deferred
         ping_d.addCallback(self.ping_pass, job, pingobj)
         ping_d.addErrback(self.ping_fail, job, pingobj)
         pingobj.ping()
