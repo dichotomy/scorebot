@@ -1,16 +1,19 @@
 #!/usr/bin/env python2
 
-# Twisted imports
-from twisted.protocols.ftp import FTPClient, FTPClientBasic, FTPFileListProtocol
+import sys
+import string
+import json
+from io import BytesIO
+
+from twisted.protocols.ftp import FTPClient, FTPClientBasic
 from twisted.internet.protocol import Protocol, ClientCreator
 from twisted.python.failure import Failure
-from twisted.python import usage
 from twisted.internet import reactor
+from twisted.python import log
 
-# Standard library imports
-import string
-import sys
-from io import BytesIO
+from Jobs import Jobs
+from Parameters import Parameters
+
 
 class BufferingProtocol(Protocol):
     """Simple utility class that holds all data written to it in a buffer."""
@@ -20,7 +23,7 @@ class BufferingProtocol(Protocol):
     def dataReceived(self, data):
         self.buffer.write(data)
 
-class ctfFTPclient(FTPClient):
+class CTFFTPclient(FTPClient):
 
     def __init__(self, passive):
         FTPClientBasic.__init__(self)
@@ -43,7 +46,8 @@ class FTP_client(object):
         self.failfunc = failfunc
         self.ftp_deferred = None
 
-    def success(self, response):
+    @staticmethod
+    def success(response):
         sys.stderr.write("Success!  Got response:\n----\n")
         if response is None:
             sys.stderr.write(None)
@@ -60,14 +64,16 @@ class FTP_client(object):
             self.failfunc(error, self.service, self.job_id)
             sys.stderr.write("Job ID %s:  FTP check failed, error %s\n" % (self.job_id, error))
 
-    def showFiles(self, result, fileListProtocol):
+    @staticmethod
+    def showFiles(result, fileListProtocol):
         sys.stderr.write('Processed file listing:')
-        for file in fileListProtocol.files:
-            sys.stderr.write('    %s: %d bytes, %s' \
-                  % (file['filename'], file['size'], file['date']))
+        for filename in fileListProtocol.files:
+            sys.stderr.write('    %s: %d bytes, %s' % \
+                (filename['filename'], filename['size'], filename['date']))
         sys.stderr.write('Total: %d files' % (len(fileListProtocol.files)))
 
-    def showBuffer(self, result, bufferProtocol):
+    @staticmethod
+    def showBuffer(result, bufferProtocol):
         sys.stderr.write("Got data: %s\n" % bufferProtocol.buffer.getvalue())
 
     def checkBuffer(self, result, bufferProtocol):
@@ -89,7 +95,7 @@ class FTP_client(object):
                          (self.job_id, self.service.get_port(), self.service.get_proto()))
         self.service.pass_conn()
         username = self.service.get_username()
-        password =  self.service.get_password()
+        password = self.service.get_password()
         if username and password:
             self.login(ftpClient, self.service.get_username(), self.service.get_password())
 
@@ -99,7 +105,7 @@ class FTP_client(object):
         # Create the client
         sys.stderr.write("Job ID %s:  Connecting to %s %s/%s\n" % \
                          (self.job_id, self.ip_addr, self.port, self.proto))
-        self.creator = ClientCreator(reactor, ctfFTPclient, passive=passive)
+        self.creator = ClientCreator(reactor, CTFFTPclient, passive=passive)
         self.ftp_deferred = self.creator.connectTCP(self.ip_addr, self.port)
         self.ftp_deferred.addCallback(self.connectionMade)
         self.ftp_deferred.addErrback(self.fail)
@@ -136,10 +142,6 @@ class FTP_client(object):
         #d.addCallbacks(self.showBuffer, self.fail, callbackArgs=(proto,))
 
 if __name__ == "__main__":
-    from twisted.python import log
-    from Parameters import Parameters
-    from Jobs import Jobs
-    import json
     def failFTP(failure, service, job_id):
         print failure
         if "530 Login incorrect" in failure:
@@ -151,7 +153,7 @@ if __name__ == "__main__":
         else:
             sys.stderr.write("Job ID %s:  Failure %s\n" % (job_id, failure))
     def test():
-        sys.stderr.write( "Testing ftp job\n")
+        sys.stderr.write("Testing ftp job\n")
         jobs = Jobs()
         params = Parameters()
         jobfile = open("test_ftpjob.txt")
