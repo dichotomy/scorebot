@@ -21,8 +21,7 @@ class DNSclient(object):
         self.timeout = timeout
 
     def query(self):
-        #print "Querying %s for %s" % (self.dnssvr, self.fqdn)
-        print "Job %s: starting DNS for FQDN %s using server %s\n" % \
+        print "Job %s: starting DNS for FQDN %s using server %s" % \
             (self.job_id, self.fqdn, self.dnssvr)
         self.d = self.proto.query((self.dnssvr, 53),
                                   [dns.Query(self.fqdn, dns.A)],
@@ -36,7 +35,7 @@ class DNSclient(object):
             ip_addr = answer_str.split(" ")[1].split("=")[1]
             self.job.set_ip(ip_addr)
             # TODO make this a proper debug statement
-            print "Job %s:  DNS lookup for %s gave %s\n" % \
+            print "Job %s:  DNS lookup for %s gave %s" % \
                 (self.job.get_job_id(), res.answers[0].name, self.job.get_ip())
         else:
             self.job.set_ping_sent(0)
