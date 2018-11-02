@@ -85,9 +85,8 @@ class MonitorCore(object):
         job_json = job.get_result_json_str()
         if len(result) > 300:
             filename = "sbe/%s.out" % time.strftime("%Y-%m-%d_%H%M%S", time.localtime(time.time()))
-            fileobj = open(filename, "w")
-            fileobj.write(result)
-            fileobj.close()
+            with open(filename, "w") as fileobj:
+                fileobj.write(result)
             sys.stderr.write("Job %s: submitted, SBE response in file %s\n" % (job_id, filename))
         else:
             sys.stderr.write("Job %s: submitted, SBE response: %s\n" % (job_id, result))
