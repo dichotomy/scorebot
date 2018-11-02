@@ -41,7 +41,6 @@ class SMTPClient(protocol.Protocol):
                 (self.factory.get_ip(), self.factory.get_port())
 
     def dataReceived(self, data):
-        data_len = len(data)
         self.recv += data
         sys.stderr.write("Job %s: Received %s" % (self.job_id, data))
         self.factory.add_data(data)
