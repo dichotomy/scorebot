@@ -31,9 +31,9 @@ class Cookie(object):
         for piece in pieces:
             if "=" in piece:
                 (key, value) = piece.split("=")
-                if "path" == key:
+                if key == "path":
                     self.path = value
-                elif "Expires" == key:
+                elif key == "Expires":
                     self.expires = value
             # TODO what is going on here?
             elif "HttpOnly":
