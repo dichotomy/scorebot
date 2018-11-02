@@ -36,10 +36,8 @@ class DNSclient(object):
             ip_addr = answer_str.split(" ")[1].split("=")[1]
             self.job.set_ip(ip_addr)
             # TODO make this a proper debug statement
-            sys.stderr.write("Job %s:  DNS lookup for %s gave %s\n" % \
-                                (self.job.get_job_id(),
-                                 res.answers[0].name,
-                                 self.job.get_ip()))
+            print "Job %s:  DNS lookup for %s gave %s\n" % \
+                (self.job.get_job_id(), res.answers[0].name, self.job.get_ip())
         else:
             self.job.set_ping_sent(0)
             self.job.set_ping_respond(0)
