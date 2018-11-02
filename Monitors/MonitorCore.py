@@ -197,24 +197,25 @@ class MonitorCore(object):
         jobid = job.get_job_id()
         sys.stderr.write("Job %s:  Service %s/%s failed:\n\t%s\n" % (jobid, port, proto, failure))
 
-def check_dir(dir):
+def check_dir(directory):
     try:
-        os.stat(dir)
+        os.stat(directory)
     except OSError as e:
         if e.errno == 2:
-            sys.stderr.write("No such directory %s, creating" % dir)
-            os.mkdir(dir)
+            sys.stderr.write("No such directory %s, creating" % directory)
+            # TODO make sure this succeeds
+            os.mkdir(directory)
         else:
             sys.stderr.write("Directory %s - Unknown error%s: %s" % (e.errno, e.strerror))
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     # Testing with an artificial job file
     from Parameters import Parameters
     from Jobs import Jobs
 
-    for dir in ("log", "raw", "sbe"):
-        check_dir(dir)
+    for directory in ("log", "raw", "sbe"):
+        check_dir(directory)
     #log.startLogging(open('log/MonitorCore.log', 'w'))
     syslog.startLogging(prefix="Scorebot")
     params = Parameters()
