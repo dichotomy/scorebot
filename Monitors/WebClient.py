@@ -342,9 +342,8 @@ class JobFactory(WebCoreFactory):
                 if self.body:
                     if "<!DOCTYPE html>" in self.body:
                         filename = "sbe/%s.out" % time.strftime("%Y-%m-%d_%H%M%S", time.localtime(time.time()))
-                        fileobj = open(filename, "w")
-                        fileobj.write(self.body)
-                        fileobj.close()
+                        with open(filename, "w") as fileobj:
+                            fileobj.write(self.body)
                         sys.stderr.write("HTML response from SBE detected, written to %s\n" % (filename))
                     else:
                         sys.stderr.write("Adding as job:\n %s\n" % self.body)
