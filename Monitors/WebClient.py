@@ -133,11 +133,11 @@ class WebClient(protocol.Protocol):
         self.factory.add_data(data)
         if self.factory.get_debug():
             print "Job %s: ConnID %s: Received:\n %s" % \
-                (self.job_id, self.factory.get_conn_id(), self.recv))
+                (self.job_id, self.factory.get_conn_id(), self.recv)
         self.parser.execute(data, data_len)
         if self.parser.is_headers_complete():
             status = self.parser.get_status_code()
-            print "Job %s: Returned status %s" % (self.job_id, status))
+            print "Job %s: Returned status %s" % (self.job_id, status)
             if self.authing:
                 if status != 302:
                     raise Exception("Job %s: Failed authentication\n" % (self.job_id))
@@ -156,7 +156,7 @@ class WebClient(protocol.Protocol):
             else:
                 conn_id = self.factory.get_conn_id()
             headers = self.parser.get_headers()
-            print "Job %s: ConnID %s: HEADER COMPLETE!\n\t%s\n\n" % \
+            print "Job %s: ConnID %s: HEADER COMPLETE!\n\t%s\n" % \
                 (self.job_id, conn_id, headers)
             if "Set-Cookie" in headers:
                 self.factory.set_cookie(headers["Set-Cookie"])
@@ -167,13 +167,11 @@ class WebClient(protocol.Protocol):
         if self.parser.is_partial_body():
             self.body += self.parser.recv_body()
             if self.factory.get_debug():
-                print "self.body:"
-                print self.body
                 sys.stderr.write("Current self.body: %s\n" % self.body)
         # TODO - find a way to deal with this, SBE jobs currently don't trigger
         #        this check, but we need it for health checks
         if self.parser.is_message_complete():
-            print "Job %s: ConnID %s: MESSAGE COMPLETE for %s!\n" % \
+            print "Job %s: ConnID %s: MESSAGE COMPLETE for %s!" % \
                 (self.job_id, self.factory.get_conn_id(), self.url)
             if self.conn:
                 self.conn.verify_page(self.body)
@@ -227,7 +225,6 @@ class WebCoreFactory(GenCoreFactory):
         header_str = ""
         for header in self.server_headers:
             header_str += "%s: %s\r\n" % (header, self.server_headers[header])
-            #print "%s: %s\r\n" % (header, self.server_headers[header])
         return header_str
 
     def proc_headers(self, headers):
@@ -267,7 +264,7 @@ class JobFactory(WebCoreFactory):
             self.verb = "POST"
             #self.postdata = self.job.get_json_str()
             self.postdata = self.job.get_result_json_str()
-            print "Job %s: Starting Job Post, sending JSON: %s\n" % \
+            print "Job %s: Starting Job Post, sending JSON: %s" % \
                 (self.job.get_job_id(), self.postdata)
         else:
             raise Exception("Job %s: Unknown operation %s\n" % (self.job_id, op))
@@ -343,9 +340,9 @@ class JobFactory(WebCoreFactory):
                             time.strftime("%Y-%m-%d_%H%M%S", time.localtime(time.time()))
                         with open(filename, "w") as fileobj:
                             fileobj.write(self.body)
-                        print "HTML response from SBE detected, written to %s\n" % filename
+                        print "HTML response from SBE detected, written to %s" % filename
                     else:
-                        print "Adding as job:\n %s\n" % self.body
+                        print "Adding as job:\n %s" % self.body
                         self.jobs.add(self.body)
                 else:
                     sys.stderr.write("No job to add!\n")
@@ -473,7 +470,7 @@ class WebServiceCheckFactory(WebCoreFactory):
     def content_pass(self, result, content):
         content.success()
         self.service.pass_conn()
-        print "Job %s: Finished content check for  %s/%s | %s\n" % \
+        print "Job %s: Finished content check for  %s/%s | %s" % \
             (self.job.get_job_id(),
              self.service.get_port(),
              self.service.get_proto(),
