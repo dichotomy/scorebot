@@ -205,7 +205,7 @@ class MonitorCore(object):
         proto = service.get_proto()
         port = service.get_port()
         jobid = job.get_job_id()
-        print "Job %s:  Service %s/%s passed. %s\n" % (jobid, port, proto, result)
+        print "Job %s:  Service %s/%s passed. %s" % (jobid, port, proto, result)
 
     @staticmethod
     def gen_service_connect_fail(failure, job, service):
