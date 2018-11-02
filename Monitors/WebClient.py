@@ -1,14 +1,15 @@
 #!/usr/bin/env python2
-# requires:  https://pypi.python.org/pypi/http-parser
-from twisted.internet import reactor, protocol, ssl
-from twisted.internet.defer import Deferred
+
+import sys
+import time
+
+from twisted.internet import reactor, protocol
 from http_parser.pyparser import HttpParser
+
 from Parameters import Parameters
 from GenSocket import GenCoreFactory
 from Jobs import Jobs
-import time
-import sys
-import re
+
 
 class Cookie(object):
 
@@ -528,11 +529,11 @@ class WebServiceCheckFactory(WebCoreFactory):
             self.service.pass_conn()
             self.deferreds[connector].callback(self.job.get_job_id())
 
+# TODO come up with better way to test
 if __name__ == "__main__":
     #from twisted.python import log
     from twisted.python import syslog
     from DNSclient import DNSclient
-    import sys
 
     def post_job(job_id):
         factory = JobFactory(params, jobs, "put", job_id)
