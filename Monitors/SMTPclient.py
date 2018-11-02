@@ -38,7 +38,7 @@ class SMTPClient(protocol.Protocol):
                 (self.job_id, self.factory.get_ip(), self.factory.get_port())
         else:
             print "Made connection to %s:%s" % \
-                (self.factory.get_ip(), self.factory.get_port()))
+                (self.factory.get_ip(), self.factory.get_port())
 
     def dataReceived(self, data):
         data_len = len(data)
