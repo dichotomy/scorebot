@@ -34,10 +34,11 @@ class SMTPClient(protocol.Protocol):
 
     def connectionMade(self):
         if self.job_id:
-            sys.stderr.write("Job %s: Made connection to %s:%s\n" % (self.job_id, self.factory.get_ip(), self.factory.get_port()))
+            print "Job %s: Made connection to %s:%s" % \
+                (self.job_id, self.factory.get_ip(), self.factory.get_port())
         else:
-            sys.stderr.write("Made connection to %s:%s\n" % (self.factory.get_ip(), self.factory.get_port()))
-        #sys.stderr.write("Sending: %s\n" % self.request)
+            print "Made connection to %s:%s" % \
+                (self.factory.get_ip(), self.factory.get_port()))
 
     def dataReceived(self, data):
         data_len = len(data)
@@ -70,18 +71,24 @@ class SMTPFactory(GenCoreFactory):
         return SMTPClient(self)
 
     def check_service(self):
-        connector = reactor.connectTCP(self.job.get_ip(), self.service.get_port(), self, self.params.get_timeout())
+        connector = reactor.connectTCP(self.job.get_ip(),
+                                       self.service.get_port(),
+                                       self,
+                                       self.params.get_timeout())
         deferred = self.get_deferred(connector)
         deferred.addCallback(self.service_pass)
         deferred.addErrback(self.service_fail)
 
+    # TODO is reason needed for twisted?
     def service_pass(self, reason):
         self.service.pass_conn()
-        sys.stdout.write("Job %s: Successfully checked SMTP connection for %s(%s)\n" % (self.job_id, self.fqdn, self.ip))
+        print "Job %s: Successfully checked SMTP connection for %s(%s)" % \
+            (self.job_id, self.fqdn, self.ip)
 
     def service_fail(self, failure):
         self.service.pass_conn(failure)
-        sys.stdout.write("Job %s: Failed check of SMTP connection for %s(%s)\n" % (self.job_id, self.fqdn, self.ip))
+        sys.stdout.write("Job %s: Failed check of SMTP connection for %s(%s)\n" % \
+                         (self.job_id, self.fqdn, self.ip))
 
     def clientConnectionFailed(self, connector, reason):
         self.end = time.time()
