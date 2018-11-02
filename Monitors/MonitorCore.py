@@ -80,7 +80,8 @@ class MonitorCore(object):
         deferred.addCallback(self.job_submit_pass, job)
         deferred.addErrback(self.job_submit_fail, job)
 
-    def proc_result(self, job, result):
+    @staticmethod
+    def proc_result(job, result):
         job_id = job.get_job_id()
         job_json = job.get_result_json_str()
         if len(result) > 300:
@@ -146,7 +147,8 @@ class MonitorCore(object):
         self.post_job(job)
         del pingobj
 
-    def ftp_fail(self, failure, service, job_id):
+    @staticmethod
+    def ftp_fail(failure, service, job_id):
         if "530 Login incorrect" in failure:
             sys.stderr.write("Job %s: Login failure\n" % job_id)
             service.fail_login()
@@ -183,14 +185,16 @@ class MonitorCore(object):
                 # and sending that back with the job report back.
                 service.fail_conn("Unknown service protocol %s/%s" % (service.get_port(), service.get_proto()))
 
-    def gen_service_connect_pass(self, result, job, service):
+    @staticmethod
+    def gen_service_connect_pass(result, job, service):
         service.pass_conn()
         proto = service.get_proto()
         port = service.get_port()
         jobid = job.get_job_id()
-        sys.stderr.write("Job %s:  Service %s/%s passed. %s\n" % (jobid, port, proto, result))
+        print "Job %s:  Service %s/%s passed. %s\n" % (jobid, port, proto, result)
 
-    def gen_service_connect_fail(self, failure, job, service):
+    @staticmethod
+    def gen_service_connect_fail(failure, job, service):
         service.fail_conn(failure)
         proto = service.get_proto()
         port = service.get_port()
