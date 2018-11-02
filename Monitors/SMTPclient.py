@@ -1,10 +1,11 @@
 #!/usr/bin/env python2
-# requires:  https://pypi.python.org/pypi/http-parser
-from twisted.internet import reactor, protocol, ssl
-from twisted.internet.defer import Deferred
-from GenSocket import GenCoreFactory
-import time
+
 import sys
+import time
+
+from twisted.internet import reactor, protocol
+
+from GenSocket import GenCoreFactory
 
 
 class SMTPClient(protocol.Protocol):
