@@ -35,7 +35,7 @@ class Cookie(object):
                 elif "Expires" == key:
                     self.expires = value
             elif "HttpOnly":
-                 self.httponly = True
+                self.httponly = True
             else:
                 raise Exception("Unknown token %s in Cookie %s!\n" % (piece, cookie_str))
 
@@ -93,10 +93,10 @@ class WebClient(protocol.Protocol):
             header = self.prep_data(data)
             headers += header
             self.request = self.no_unicode("%s %s HTTP/1.0\r\n%s\r\n%s\r\n\r\n" %
-                           (self.verb, self.url, headers, data))
+                                           (self.verb, self.url, headers, data))
         else:
             self.request = self.no_unicode("%s %s HTTP/1.0\r\n%s\r\n\r\n" %
-                       (self.verb, self.url, headers))
+                                           (self.verb, self.url, headers))
         self.recv = ""
         self.body = ""
         # We don't wait forever...
@@ -218,7 +218,7 @@ class WebCoreFactory(GenCoreFactory):
         return self.cj.get()
 
     def get_verb(self):
-       return self.verb
+        return self.verb
 
     def buildProtocol(self, addr):
         self.addr = addr
