@@ -1,18 +1,20 @@
 #!/usr/bin/env python2.7
-# requires:  https://pypi.python.org/pypi/http-parser
+
+import os
+import sys
+import time
+import traceback
+
+from twisted.python import syslog
 from twisted.internet import reactor, ssl
+
 from WebClient import WebServiceCheckFactory, JobFactory
 from GenSocket import GenCheckFactory
 from DNSclient import DNSclient
 from Pingclient import PingProtocol
 from FTPclient import FTP_client
 from SMTPclient import SMTPFactory
-from twisted.python import syslog
-#from twisted.python import log
-import traceback
-import time
-import sys
-import os
+
 
 class MonitorCore(object):
 
