@@ -103,12 +103,13 @@ class WebClient(protocol.Protocol):
         # We don't wait forever...
         reactor.callLater(self.factory.get_timeout(), self.TimedOut)
 
-    def prep_data(self, data):
-        length = len(data)
-        header = "Content-Length: %s\r\n" % str(length)
+    @staticmethod
+    def prep_data(data):
+        header = "Content-Length: %s\r\n" % str(len(data))
         return header
 
-    def no_unicode(self, text):
+    @staticmethod
+    def no_unicode(text):
         #sys.stderr.write("\nJob %s: Converting %s" % (self.job_id, text))
         if isinstance(text, unicode):
             return text.encode('utf-8')
@@ -447,6 +448,7 @@ class WebServiceCheckFactory(WebCoreFactory):
         print failure
         self.service.fail_conn()
 
+    # TODO is result being used??
     def content_pass(self, result, content):
         content.success()
         self.service.pass_conn()
