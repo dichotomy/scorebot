@@ -35,6 +35,7 @@ class Cookie(object):
                     self.path = value
                 elif "Expires" == key:
                     self.expires = value
+            # TODO what is going on here?
             elif "HttpOnly":
                 self.httponly = True
             else:
@@ -478,12 +479,12 @@ class WebServiceCheckFactory(WebCoreFactory):
 
     def clientConnectionFailed(self, connector, reason):
         self.end = time.time()
-        #if self.params.debug:
-        if True:
-            sys.stderr.write("Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
-            sys.stderr.write("reason %s\n" % reason.getErrorMessage())
-            reason.printTraceback()
-            sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
+
+        sys.stderr.write("Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
+        sys.stderr.write("reason %s\n" % reason.getErrorMessage())
+        reason.printTraceback()
+        sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
+
         conn_time = None
         if self.start:
             conn_time = self.end - self.start
@@ -500,13 +501,14 @@ class WebServiceCheckFactory(WebCoreFactory):
 
     def clientConnectionLost(self, connector, reason):
         self.end = time.time()
-        #if self.params.debug:
-        if True:
-            sys.stderr.write("Job %s: clientConnectionLost\t" % self.job.get_job_id())
-            sys.stderr.write("given reason: %s\t" % reason.getErrorMessage())
-            sys.stderr.write("self.reason: %s\t" % self.reason)
-            sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
+
+        sys.stderr.write("Job %s: clientConnectionLost\t" % self.job.get_job_id())
+        sys.stderr.write("given reason: %s\t" % reason.getErrorMessage())
+        sys.stderr.write("self.reason: %s\t" % self.reason)
+        sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
+
         conn_time = self.end - self.start
+
         if self.data:
             self.service.set_data(self.data)
         if self.fail and self.reason:
