@@ -66,7 +66,7 @@ class SMTPFactory(GenCoreFactory):
 
     def buildProtocol(self, addr):
         self.addr = addr
-        self.start = time.time()
+        self.start = time.time() # TODO is this used?!?!?!
         return SMTPClient(self)
 
     def check_service(self):
