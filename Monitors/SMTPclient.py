@@ -96,7 +96,6 @@ class SMTPFactory(GenCoreFactory):
             sys.stderr.write("Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
             sys.stderr.write("reason %s\t" % reason)
             sys.stderr.write("self.reason: %s\t" % self.reason)
-            sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
         conn_time = None
         if self.start:
             conn_time = self.end - self.start
@@ -111,7 +110,6 @@ class SMTPFactory(GenCoreFactory):
             sys.stderr.write("Job %s: clientConnectionLost\t" % self.job.get_job_id())
             sys.stderr.write("given reason: %s\t" % reason)
             sys.stderr.write("self.reason: %s\t" % self.reason)
-            #sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
         if self.data:
             self.service.set_data(self.data)
         if self.fail and self.reason:
