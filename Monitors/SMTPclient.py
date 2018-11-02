@@ -18,8 +18,10 @@ class SMTPClient(protocol.Protocol):
         self.request = "HELO %s\n" % self.fqdn
         self.recv = ""
 
-    def no_unicode(self, text):
-        #sys.stderr.write("\nJob %s: Converting %s" % (self.job_id, text))
+    # TODO this exists elsewhere. place it somewhere else to not duplicate
+    #      code?
+    @staticmethod
+    def no_unicode(text):
         if isinstance(text, unicode):
             return text.encode('utf-8')
         else:
