@@ -22,6 +22,7 @@ class MonitorCore(object):
         self.params = params
         self.resubmit_interval = 30
         self.jobs = jobs
+        # TODO: 'which' this.
         self.ping = "/usr/bin/ping"
         self.ping_cnt = str(5)
         self.jobs_done = []
@@ -211,7 +212,7 @@ def check_dir(directory):
             # TODO make sure this succeeds
             os.mkdir(directory)
         else:
-            sys.stderr.write("Directory %s - Unknown error%s: %s" % (e.errno, e.strerror))
+            sys.stderr.write("Directory %s - Unknown error: %s" % (e.errno, e.strerror))
 
 
 if __name__ == "__main__":
