@@ -129,11 +129,11 @@ class GenCheckFactory(GenCoreFactory):
     def clientConnectionFailed(self, connector, reason):
         self.end = time.time()
         if self.params.debug:
-            sys.stderr.write( "Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
-            sys.stderr.write( "reason %s\t" % reason)
-            sys.stderr.write( "self.reason: %s\t" % self.reason)
+            sys.stderr.write("Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
+            sys.stderr.write("reason %s\t" % reason)
+            sys.stderr.write("self.reason: %s\t" % self.reason)
             if self.debug:
-                sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
+                sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
         conn_time = None
         if self.start:
             conn_time = self.end - self.start
@@ -146,11 +146,11 @@ class GenCheckFactory(GenCoreFactory):
     def clientConnectionLost(self, connector, reason):
         self.end = time.time()
         if self.params.debug:
-            sys.stderr.write( "Job %s: clientConnectionLost\t" % self.job.get_job_id())
-            sys.stderr.write( "given reason: %s\t" % reason)
-            sys.stderr.write( "self.reason: %s\t" % self.reason)
+            sys.stderr.write("Job %s: clientConnectionLost\t" % self.job.get_job_id())
+            sys.stderr.write("given reason: %s\t" % reason)
+            sys.stderr.write("self.reason: %s\t" % self.reason)
             if self.debug:
-                sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
+                sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
         conn_time = self.end - self.start
         if self.data:
             self.service.set_data(self.data)
@@ -211,7 +211,7 @@ if __name__ == "__main__":
 
     log.startLogging(open('log/gensockettest.log', 'w'))
     jobs = Jobs()
-    sys.stderr.write( "Testing %s\n" % sys.argv[0])
+    sys.stderr.write("Testing %s\n" % sys.argv[0])
     params = Parameters()
     factory = JobFactory(params, jobs, "get")
     reactor.connectTCP(params.get_sb_ip(), params.get_sb_port(), factory, params.get_timeout())
