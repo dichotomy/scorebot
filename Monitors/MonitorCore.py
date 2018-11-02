@@ -49,10 +49,13 @@ class MonitorCore(object):
         if job:
             job_id = job.get_job_id()
             # DNS
+            # TODO what exception are we expecting? print_tb is missing
+            #      an argument
             try:
                 dnsobj = DNSclient(job)
             except:
-                sys.stderr.write("Job %s: Failure starting job %s:\n" % (job_id, job.get_json_str()))
+                sys.stderr.write("Job %s: Failure starting job %s:\n" % \
+                    (job_id, job.get_json_str()))
                 traceback.print_tb()
             # Execute the query
             query_d = dnsobj.query()
@@ -78,8 +81,10 @@ class MonitorCore(object):
 
     def post_job(self, job):
         factory = JobFactory(self.params, self.jobs, "put", job)
-        connector = reactor.connectTCP(self.params.get_sb_ip(), self.params.get_sb_port(), factory, \
-                           self.params.get_timeout())
+        connector = reactor.connectTCP(self.params.get_sb_ip(),
+                                       self.params.get_sb_port(),
+                                       factory,
+                                       self.params.get_timeout())
         deferred = factory.get_deferred(connector)
         deferred.addCallback(self.job_submit_pass, job)
         deferred.addErrback(self.job_submit_fail, job)
@@ -165,6 +170,7 @@ class MonitorCore(object):
 
     def check_services(self, job):
         # Service walk
+        # TODO add UDP support?
         for service in job.get_services():
             if "tcp" in service.get_proto():
                 if service.get_application() == "http":
@@ -180,14 +186,18 @@ class MonitorCore(object):
                     factory.check_service()
                 else:
                     factory = GenCheckFactory(self.params, job, service)
-                    connector = reactor.connectTCP(job.get_ip(), service.get_port(), factory, self.params.get_timeout())
+                    connector = reactor.connectTCP(job.get_ip(),
+                                                   service.get_port(),
+                                                   factory,
+                                                   self.params.get_timeout())
                     deferred = factory.get_deferred(connector)
                     deferred.addCallback(self.gen_service_connect_pass, job, service)
                     deferred.addErrback(self.gen_service_connect_fail, job, service)
             else:
                 # TODO handle the error by reporting the problem with the job in the json
                 # and sending that back with the job report back.
-                service.fail_conn("Unknown service protocol %s/%s" % (service.get_port(), service.get_proto()))
+                service.fail_conn("Unknown service protocol %s/%s" % \
+                    (service.get_port(), service.get_proto()))
 
     @staticmethod
     def gen_service_connect_pass(result, job, service):
