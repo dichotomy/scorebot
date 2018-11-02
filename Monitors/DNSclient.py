@@ -50,24 +50,3 @@ class DNSclient(object):
     def close(self):
         self.port.stopListening()
 
-
-if __name__ == "__main__":
-    sys.stderr.write("Testing %s\n" % sys.argv[0])
-    json_str1 = '{"pk": 120, "model": "scorebot.job", "fields": {"job_dns": ["10.100.101.60"], "job_host": {"host_services": [{"service_protocol": "tcp", "service_port": 80, "service_connect": "ERROR", "service_content": {}}], "host_ping_ratio": 50, "host_fqdn": "www.alpha.net"}}, "status": "job"}'
-    json_str2 = '{"pk": 120, "model": "scorebot.job", "fields": {"job_dns": ["10.100.101.60"], "job_host": {"host_services": [{"service_protocol": "tcp", "service_port": 80, "service_connect": "ERROR", "service_content": {}}], "host_ping_ratio": 50, "host_fqdn": "ftppub.alpha.net"}}, "status": "job"}'
-    json_str3 = '{"pk": 120, "model": "scorebot.job", "fields": {"job_dns": ["10.100.101.60"], "job_host": {"host_services": [{"service_protocol": "tcp", "service_port": 80, "service_connect": "ERROR", "service_content": {}}], "host_ping_ratio": 50, "host_fqdn": "mail.alpha.net"}}, "status": "job"}'
-    jobs_obj = Jobs()
-    jobs_obj.add(json_str1)
-    jobs_obj.add(json_str2)
-    jobs_obj.add(json_str3)
-    job = jobs_obj.get_job()
-    dnsobj = DNSclient(job)
-    query_defered = dnsobj.query()
-    job2 = jobs_obj.get_job()
-    dnsobj2 = DNSclient(job2)
-    query2_defered = dnsobj2.query()
-    job3 = jobs_obj.get_job()
-    dnsobj3 = DNSclient(job3)
-    query3_defered = dnsobj3.query()
-    reactor.callLater(5, reactor.stop)
-    reactor.run()

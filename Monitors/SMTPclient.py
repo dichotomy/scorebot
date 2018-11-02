@@ -117,31 +117,3 @@ class SMTPFactory(GenCoreFactory):
             self.service.pass_conn()
             self.deferreds[connector].callback(self.job.get_job_id())
 
-if __name__=="__main__":
-    from Parameters import Parameters
-    from Jobs import Jobs
-    import json
-    from twisted.python import log
-    import sys
-    log.startLogging(open('log/smtptest.log', 'w'))
-    jobs = Jobs()
-    jobfile = open("test_smtpjob.txt")
-    sys.stderr.write("Testing %s\n" % sys.argv[0])
-    params = Parameters()
-
-    def check_smtp(job):
-        print "Checking services for %s" % job.get_ip()
-        for service in job.get_services():
-            factory = SMTPFactory(params, job, service)
-            job.set_factory(factory)
-            factory.check_service()
-
-    jobs_raw = json.load(jobfile)
-    for job in jobs_raw:
-        jobs.add(json.dumps(job))
-        job = jobs.get_job()
-        check_smtp(job)
-
-    reactor.callLater(30, reactor.stop)
-    reactor.run()
-    print "Finished normally"

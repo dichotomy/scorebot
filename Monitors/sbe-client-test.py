@@ -71,7 +71,7 @@ class Service:
     name = None
     content = None
     protocol = None
-    
+
 
     def __init__(self):
         self.credentials = []
