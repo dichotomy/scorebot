@@ -83,10 +83,10 @@ class SMTPFactory(GenCoreFactory):
     def clientConnectionFailed(self, connector, reason):
         self.end = time.time()
         if self.params.debug:
-            sys.stderr.write( "Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
-            sys.stderr.write( "reason %s\t" % reason)
-            sys.stderr.write( "self.reason: %s\t" % self.reason)
-            sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
+            sys.stderr.write("Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
+            sys.stderr.write("reason %s\t" % reason)
+            sys.stderr.write("self.reason: %s\t" % self.reason)
+            sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
         conn_time = None
         if self.start:
             conn_time = self.end - self.start
@@ -98,10 +98,10 @@ class SMTPFactory(GenCoreFactory):
     def clientConnectionLost(self, connector, reason):
         self.end = time.time()
         if self.params.debug:
-            sys.stderr.write( "Job %s: clientConnectionLost\t" % self.job.get_job_id())
-            sys.stderr.write( "given reason: %s\t" % reason)
-            sys.stderr.write( "self.reason: %s\t" % self.reason)
-            #sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
+            sys.stderr.write("Job %s: clientConnectionLost\t" % self.job.get_job_id())
+            sys.stderr.write("given reason: %s\t" % reason)
+            sys.stderr.write("self.reason: %s\t" % self.reason)
+            #sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
         if self.data:
             self.service.set_data(self.data)
         if self.fail and self.reason:
@@ -126,7 +126,7 @@ if __name__=="__main__":
     log.startLogging(open('log/smtptest.log', 'w'))
     jobs = Jobs()
     jobfile = open("test_smtpjob.txt")
-    sys.stderr.write( "Testing %s\n" % sys.argv[0])
+    sys.stderr.write("Testing %s\n" % sys.argv[0])
     params = Parameters()
 
     def check_smtp(job):
