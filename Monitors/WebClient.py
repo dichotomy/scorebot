@@ -135,7 +135,7 @@ class WebClient(protocol.Protocol):
         #sys.stderr.write("Received this response: \n\t%s\n" % self.recv)
         #sys.stderr.write(line)
         if self.factory.get_debug():
-            sys.stderr.write( "Job %s: ConnID %s: Received:\n %s\n" % (self.job_id, self.factory.get_conn_id(), self.recv))
+            sys.stderr.write("Job %s: ConnID %s: Received:\n %s\n" % (self.job_id, self.factory.get_conn_id(), self.recv))
         self.parser.execute(data, data_len)
         #sys.stderr.write(line)
         #sys.stderr.write("Received this body: \n\t%s\n" % self.parser.recv_body())
@@ -161,7 +161,7 @@ class WebClient(protocol.Protocol):
             else:
                 conn_id = self.factory.get_conn_id()
             headers = self.parser.get_headers()
-            sys.stderr.write( "Job %s: ConnID %s: HEADER COMPLETE!\n\t%s\n\n" % (self.job_id, conn_id, headers))
+            sys.stderr.write("Job %s: ConnID %s: HEADER COMPLETE!\n\t%s\n\n" % (self.job_id, conn_id, headers))
             if "Location" in headers:
                 location = headers["Location"]
             if "Set-Cookie" in headers:
@@ -178,7 +178,7 @@ class WebClient(protocol.Protocol):
                 sys.stderr.write("Current self.body: %s\n" % self.body)
         # TODO - find a way to deal with this, SBE jobs currently don't trigger this check, but we need it for health checks
         if self.parser.is_message_complete():
-            sys.stderr.write( "Job %s: ConnID %s: MESSAGE COMPLETE for %s!\n" % (self.job_id, self.factory.get_conn_id(), self.url))
+            sys.stderr.write("Job %s: ConnID %s: MESSAGE COMPLETE for %s!\n" % (self.job_id, self.factory.get_conn_id(), self.url))
             if self.conn:
                 self.conn.verify_page(self.body)
             if self.factory.get_debug():
@@ -293,13 +293,13 @@ class JobFactory(WebCoreFactory):
     def clientConnectionFailed(self, connector, reason):
         if self.params.debug:
             if "put" in self.op:
-                sys.stderr.write( "Job %s:  JobFactory Put clientConnectionFailed\t" % self.job.get_job_id())
+                sys.stderr.write("Job %s:  JobFactory Put clientConnectionFailed\t" % self.job.get_job_id())
             else:
-                sys.stderr.write( "Job GET request clientConnectionFailed\t" % self.job.get_job_id())
-            sys.stderr.write( "given reason: %s\t" % reason)
-            sys.stderr.write( "self.reason: %s\t" % self.reason)
+                sys.stderr.write("Job GET request clientConnectionFailed\t" % self.job.get_job_id())
+            sys.stderr.write("given reason: %s\t" % reason)
+            sys.stderr.write("self.reason: %s\t" % self.reason)
             if self.debug:
-                sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
+                sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
         #self.params.fail_conn("Job %s connection failed\n" %
                               #(self.op), reason.getErrorMessage(), self.get_server_headers())
         if connector in self.deferreds:
@@ -315,14 +315,14 @@ class JobFactory(WebCoreFactory):
                 return
             else:
                 self.deferreds[connector].errback(reason)
-                sys.stderr.write( "Job %s: JobFactory Put clientConnectionLost, received code %s\n" % (job_id, self.code))
+                sys.stderr.write("Job %s: JobFactory Put clientConnectionLost, received code %s\n" % (job_id, self.code))
                 return
         elif "get" in self.op:
             if self.get_debug():
-                sys.stderr.write( "Job GET request clientConnectionLost\n")
+                sys.stderr.write("Job GET request clientConnectionLost\n")
             sys.stderr.write("\nReceived code %s:" % self.code)
             if self.debug:
-                sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
+                sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
             if self.code == 403:
                 # This means that SBE has no running games, so just die quietly.
                 sys.stderr.write("Got code 403, quitting\n")
@@ -330,8 +330,8 @@ class JobFactory(WebCoreFactory):
                 return
             if self.fail:
                 sys.stderr.write("Fail bit set\n")
-                sys.stderr.write( "given reason: %s\t" % reason)
-                sys.stderr.write( "self.reason: %s\t" % self.reason)
+                sys.stderr.write("given reason: %s\t" % reason)
+                sys.stderr.write("self.reason: %s\t" % self.reason)
                 sys.stderr.write("error message:\n%s\n\n" % reason.getErrorMessage())
             else:
                 #Connection closed cleanly, process the results
@@ -486,10 +486,10 @@ class WebServiceCheckFactory(WebCoreFactory):
         self.end = time.time()
         #if self.params.debug:
         if True:
-            sys.stderr.write( "Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
-            sys.stderr.write( "reason %s\n" % reason.getErrorMessage())
+            sys.stderr.write("Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
+            sys.stderr.write("reason %s\n" % reason.getErrorMessage())
             reason.printTraceback()
-            sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
+            sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
         conn_time = None
         if self.start:
             conn_time = self.end - self.start
@@ -508,10 +508,10 @@ class WebServiceCheckFactory(WebCoreFactory):
         self.end = time.time()
         #if self.params.debug:
         if True:
-            sys.stderr.write( "Job %s: clientConnectionLost\t" % self.job.get_job_id())
-            sys.stderr.write( "given reason: %s\t" % reason.getErrorMessage())
-            sys.stderr.write( "self.reason: %s\t" % self.reason)
-            sys.stderr.write( "\nReceived: %s\n" % self.get_server_headers())
+            sys.stderr.write("Job %s: clientConnectionLost\t" % self.job.get_job_id())
+            sys.stderr.write("given reason: %s\t" % reason.getErrorMessage())
+            sys.stderr.write("self.reason: %s\t" % self.reason)
+            sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
         conn_time = self.end - self.start
         if self.data:
             self.service.set_data(self.data)
@@ -579,7 +579,7 @@ if __name__ == "__main__":
     syslog.startLogging(prefix="Scorebot")
     jobs = Jobs()
     jobfile = open("test_webjob.txt")
-    sys.stderr.write( "Testing %s\n" % sys.argv[0])
+    sys.stderr.write("Testing %s\n" % sys.argv[0])
     params = Parameters()
     fetchjob = False
     if fetchjob:
