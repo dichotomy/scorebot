@@ -8,6 +8,8 @@ import traceback
 from twisted.python import syslog
 from twisted.internet import reactor, ssl
 
+from Jobs import Jobs
+from Parameters import Parameters
 from WebClient import WebServiceCheckFactory, JobFactory
 from GenSocket import GenCheckFactory
 from DNSclient import DNSclient
@@ -183,7 +185,7 @@ class MonitorCore(object):
                     deferred.addCallback(self.gen_service_connect_pass, job, service)
                     deferred.addErrback(self.gen_service_connect_fail, job, service)
             else:
-                # todo - handle the error by reporting the problem with the job in the json
+                # TODO handle the error by reporting the problem with the job in the json
                 # and sending that back with the job report back.
                 service.fail_conn("Unknown service protocol %s/%s" % (service.get_port(), service.get_proto()))
 
@@ -217,9 +219,6 @@ def check_dir(directory):
 
 if __name__ == "__main__":
     # Testing with an artificial job file
-    from Parameters import Parameters
-    from Jobs import Jobs
-
     for directory in ("log", "raw", "sbe"):
         check_dir(directory)
     #log.startLogging(open('log/MonitorCore.log', 'w'))
