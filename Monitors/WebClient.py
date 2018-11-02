@@ -493,9 +493,6 @@ class WebServiceCheckFactory(WebCoreFactory):
         else:
             self.service.fail_conn(reason, "%s\r\n%s" % (self.get_server_headers(), self.body))
 
-    #def get_job(self):
-        #return self.job.get_job_id()
-
     def get_job_id(self):
         return self.job.get_job_id()
 
