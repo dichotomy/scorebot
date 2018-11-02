@@ -1,13 +1,11 @@
 #!/usr/bin/env python2
-# requires:  https://pypi.python.org/pypi/http-parser
-from twisted.internet import reactor, protocol, ssl
-from twisted.internet.defer import Deferred
-from http_parser.pyparser import HttpParser
-from Parameters import Parameters
-from Jobs import Jobs
-import time
+
 import sys
-import re
+import time
+
+from twisted.internet import reactor, protocol
+from twisted.internet.defer import Deferred
+
 
 class GenClient(protocol.Protocol):
 
@@ -102,6 +100,7 @@ class GenCoreFactory(protocol.ClientFactory):
     def get_debug(self):
         return self.debug
 
+    # TODO is this used?!~
     def get_job_id(self):
         return None
 
@@ -134,7 +133,7 @@ class GenCheckFactory(GenCoreFactory):
             sys.stderr.write("self.reason: %s\t" % self.reason)
             if self.debug:
                 sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
-        conn_time = None
+        conn_time = None # TODO is this used?!
         if self.start:
             conn_time = self.end - self.start
         else:
