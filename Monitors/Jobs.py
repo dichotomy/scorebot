@@ -487,12 +487,12 @@ class Service(object):
 
     def set_data(self, data):
         today = time.strftime("%Y%m%d" ,time.gmtime())
-        data_file = open("raw/%s_Job_%s_data" % (today, self.job.get_job_id()), "w")
-        self.json["content"] = base64.b64encode(data)
-        data_file.write(base64.b64encode(data))
-        data_file.close()
+        with open("raw/%s_Job_%s_data" % (today, self.job.get_job_id()), "w") as data_file:
+            self.json["content"] = base64.b64encode(data)
+            data_file.write(base64.b64encode(data))
 
     def get_url(self):
+        # TODO figure out why so much profanity.
         sys.stderr.write("FUCK REMOVE THIS SHIT!")
         sys.stderr.write("FUCK REMOVE THIS SHIT!")
         sys.stderr.write("FUCK REMOVE THIS SHIT!")
@@ -607,7 +607,6 @@ class Content(object):
                     },
                     "type": "files"
                 },
-    
     """
 
     def __init__(self, json, job, debug=False):
@@ -682,10 +681,9 @@ class Content(object):
 
     def set_data(self, data):
         today = time.strftime("%Y%m%d" ,time.gmtime())
-        data_file = open("raw/%s_Job_%s_data" % (today, self.job.get_job_id()), "w")
-        self.json["data"] = base64.b64encode(data)
-        data_file.write(base64.b64encode(data))
-        data_file.close()
+        with open("raw/%s_Job_%s_data" % (today, self.job.get_job_id()), "w") as data_file:
+            self.json["data"] = base64.b64encode(data)
+            data_file.write(base64.b64encode(data))
 
     def get_data(self):
         if "data" in self.json:
