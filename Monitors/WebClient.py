@@ -18,7 +18,7 @@ class Cookie(object):
         self.value = ""
         self.domain = ""
         self.path = ""
-        # todo - add code to handle cookie expiry
+        # TODO add code to handle cookie expiry
         self.expires = ""
         self.httponly = False
 
@@ -131,16 +131,9 @@ class WebClient(protocol.Protocol):
         data_len = len(data)
         self.recv += data
         self.factory.add_data(data)
-        line = "="*80 + "\n"
-        #sys.stderr.write(line)
-        #sys.stderr.write("Received this response: \n\t%s\n" % self.recv)
-        #sys.stderr.write(line)
         if self.factory.get_debug():
             sys.stderr.write("Job %s: ConnID %s: Received:\n %s\n" % (self.job_id, self.factory.get_conn_id(), self.recv))
         self.parser.execute(data, data_len)
-        #sys.stderr.write(line)
-        #sys.stderr.write("Received this body: \n\t%s\n" % self.parser.recv_body())
-        #sys.stderr.write(line)
         if self.parser.is_headers_complete():
             status = self.parser.get_status_code()
             sys.stderr.write("Job %s: Returned status %s\n" % (self.job_id, status))
@@ -163,8 +156,6 @@ class WebClient(protocol.Protocol):
                 conn_id = self.factory.get_conn_id()
             headers = self.parser.get_headers()
             sys.stderr.write("Job %s: ConnID %s: HEADER COMPLETE!\n\t%s\n\n" % (self.job_id, conn_id, headers))
-            if "Location" in headers:
-                location = headers["Location"]
             if "Set-Cookie" in headers:
                 self.factory.set_cookie(headers["Set-Cookie"])
             self.factory.set_server_headers(self.parser.get_headers())
