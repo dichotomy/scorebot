@@ -108,7 +108,6 @@ class WebClient(protocol.Protocol):
 
     @staticmethod
     def no_unicode(text):
-        #sys.stderr.write("\nJob %s: Converting %s" % (self.job_id, text))
         if isinstance(text, unicode):
             return text.encode('utf-8')
         else:
@@ -156,7 +155,7 @@ class WebClient(protocol.Protocol):
             else:
                 conn_id = self.factory.get_conn_id()
             headers = self.parser.get_headers()
-            print "Job %s: ConnID %s: HEADER COMPLETE!\n\t%s\n" % \
+            print "Job %s: ConnID %s: HEADER COMPLETE!\n\t%s" % \
                 (self.job_id, conn_id, headers)
             if "Set-Cookie" in headers:
                 self.factory.set_cookie(headers["Set-Cookie"])
