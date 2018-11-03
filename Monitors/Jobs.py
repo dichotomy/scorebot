@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+
 import sys
 import time
 import json
@@ -131,7 +132,7 @@ class Job(object):
     """
 
     def __init__(self, job_json_str, debug=False):
-        # todo make this debug
+        # TODO make this debug
         self.job_id = 0
         #print "Attempting to parse json: %s" % job_json_str
         self.json = json.loads(job_json_str)
@@ -341,7 +342,7 @@ class Service(object):
                 pass
         else:
             self.contents = None
-        # todo - handle headers centrally somewhere, not here.
+        # TODO handle headers centrally somewhere, not here.
         self.headers = {}
         # Default values
         self.headers["Connection"] = "keep-alive"
@@ -374,12 +375,13 @@ class Service(object):
         return self.json["type"]
 
     def get_passive(self):
-        #todo - implement passive FTP bit
+        # TODO implement passive FTP bit
         return 0
 
     def get_contents(self):
         return self.contents
 
+    # TODO what in the sam hell is going on here?
     def has_auth(self):
         if "content" in self.json:
             if self.json["content"]:
@@ -612,7 +614,7 @@ class Content(object):
     def __init__(self, json, job, debug=False):
         self.job = job
         self.json = json
-        # todo - handle headers centrally somewhere, not here.
+        # TODO handle headers centrally somewhere, not here.
         self.headers = {}
         # Default values
         self.headers["Connection"] = "keep-alive"
@@ -654,7 +656,7 @@ class Content(object):
 
     def get_verb(self):
         #return self.json["verb"]
-        # todo - add support for post, but SBE must support
+        # TODO add support for post, but SBE must support
         return "GET"
 
     def get_url(self):

@@ -13,7 +13,7 @@ class GenClient(protocol.Protocol):
         self.factory = factory
         self.job_id = self.factory.get_job_id()
         reactor.callLater(self.factory.get_timeout(), self.TimedOut)
-        # todo - add the ability to pass data for the client to transmit to the server
+        # TODO add the ability to pass data for the client to transmit to the server
         self.request = None
 
     def TimedOut(self):
@@ -36,7 +36,7 @@ class GenClient(protocol.Protocol):
     def dataReceived(self, data):
         self.recv += data
         self.factory.add_data(data)
-        # todo - How do we know when to stop receiving data?
+        # TODO How do we know when to stop receiving data?
         # We shouldn't just close the connection after some data.
         self.transport.loseConnection()
 

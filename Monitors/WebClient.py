@@ -202,7 +202,7 @@ class WebCoreFactory(GenCoreFactory):
         return self.postdata
 
     def set_cookie(self, cookie_str):
-        # todo - make this debug level later
+        # TODO make this debug level later
         sys.stderr.write("Job %s: Parsing cookie string %s\n" % (self.get_job_id(), cookie_str))
         self.cj.add(cookie_str)
 
