@@ -220,11 +220,11 @@ def check_dir(directory):
         os.stat(directory)
     except OSError as e:
         if e.errno == 2:
-            sys.stderr.write("No such directory %s, creating" % directory)
+            sys.stderr.write("No such directory %s, creating\n" % directory)
             # TODO make sure this succeeds
             os.mkdir(directory)
         else:
-            sys.stderr.write("Directory %s - Unknown error: %s" % (e.errno, e.strerror))
+            sys.stderr.write("Directory %s - Unknown error: %s\n" % (e.errno, e.strerror))
 
 
 if __name__ == "__main__":
