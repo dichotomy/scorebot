@@ -262,9 +262,12 @@ class Service(object):
                         for page in pages:
                             self.contents.append(Content(page, self.job))
                     else:
-                        raise Exception ("Job %s: Unknown content type %s for job" % (self.job.get_job_id(), "|".join(self.json["content"]["content"].keys())))
+                        raise Exception("Job %s: Unknown content type %s for job" % \
+                                        (self.job.get_job_id(),
+                                         "|".join(self.json["content"]["content"].keys())))
                 else:
-                    raise Exception ("Job %s: Illegal content type in json" % self.job.get_job_id())
+                    raise Exception("Job %s: Illegal content type in json" % \
+                                    self.job.get_job_id())
             else:
                 pass
         else:
@@ -415,7 +418,7 @@ class Service(object):
         self.json["auth"][index]["login"] = "fail"
 
     def set_data(self, data):
-        today = time.strftime("%Y%m%d" ,time.gmtime())
+        today = time.strftime("%Y%m%d", time.gmtime())
         with open("raw/%s_Job_%s_data" % (today, self.job.get_job_id()), "w") as data_file:
             self.json["content"] = base64.b64encode(data)
             data_file.write(base64.b64encode(data))
@@ -497,7 +500,7 @@ class Content(object):
     def verify_page(self, page):
         if self.debug:
             sys.stderr.write("Checking contents...\n\tChecking size...\n")
-        if len(page)==self.json["size"]:
+        if len(page) == self.json["size"]:
             if self.debug:
                 sys.stderr.write("\tSize is good, checking keywords...\n:w")
             for keyword in self.json["keywords"]:
@@ -551,7 +554,7 @@ class Content(object):
             return False
 
     def set_data(self, data):
-        today = time.strftime("%Y%m%d" ,time.gmtime())
+        today = time.strftime("%Y%m%d", time.gmtime())
         with open("raw/%s_Job_%s_data" % (today, self.job.get_job_id()), "w") as data_file:
             self.json["data"] = base64.b64encode(data)
             data_file.write(base64.b64encode(data))
