@@ -42,7 +42,7 @@ class FTP_client(object):
         self.params = params
         self.creator = None
         self.fileList = None
-        self.debug = self.params.get_debug()
+        self.debug = self.params.debug
         self.failfunc = failfunc
         self.ftp_deferred = None
 
