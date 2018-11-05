@@ -255,8 +255,8 @@ class Service(object):
                             self.contents.append(Content(url, self.job))
                     elif "files" in self.json["content"]["content"]:
                         files = self.json["content"]["content"]["files"]
-                        for file in files:
-                            self.contents.append(Content(file, self.job))
+                        for filename in files:
+                            self.contents.append(Content(filename, self.job))
                     elif "pages" in self.json["content"]["content"]:
                         pages = self.json["content"]["content"]["pages"]
                         for page in pages:
