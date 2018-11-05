@@ -155,12 +155,6 @@ class Job(object):
         self.max = 5
 
 
-    def set_factory(self, factory):
-        self.factory = factory
-
-    def get_factory(self):
-        return self.factory
-
     def get_timeout(self):
         # We want to leave enough time to get the job back before SBE gives up
         if "timeout" in self.json:
