@@ -31,15 +31,22 @@ class MonitorCore(object):
 
     def get_job(self):
         factory = JobFactory(self.params, self.jobs, "get")
-        if self.params.get_scheme() == "https":
+        if self.params.scheme == "https":
             ssl_obj = ssl.CertificateOptions()
-            reactor.connectSSL(self.params.get_ip(), self.params.get_port(), factory, ssl_obj,\
-                                            self.params.get_timeout())
-        elif self.params.get_scheme() == "http":
-            reactor.connectTCP(self.params.get_sb_ip(), self.params.get_sb_port(), factory, \
-                    self.params.get_timeout())
+            # TODO params.get_ip() and get_port() dont exist?
+            reactor.connectSSL(self.params.get_ip(),
+                               self.params.get_port(),
+                               factory,
+                               ssl_obj,
+                               self.params.timeout)
+        elif self.params.scheme == "http":
+            # TODO params.get_ip() and get_port() dont exist?
+            reactor.connectTCP(self.params.sb_ip,
+                               self.params.sb_port,
+                               factory,
+                               self.params.timeout)
         else:
-            raise Exception("Unknown scheme:  %s" % self.params.get_scheme())
+            raise Exception("Unknown scheme:  %s" % self.params.scheme)
         # Keep looking for more work
         reactor.callLater(1, self.get_job)
 
@@ -81,10 +88,10 @@ class MonitorCore(object):
 
     def post_job(self, job):
         factory = JobFactory(self.params, self.jobs, "put", job)
-        connector = reactor.connectTCP(self.params.get_sb_ip(),
-                                       self.params.get_sb_port(),
+        connector = reactor.connectTCP(self.params.sb_ip,
+                                       self.params.sb_port,
                                        factory,
-                                       self.params.get_timeout())
+                                       self.params.timeout)
         deferred = factory.get_deferred(connector)
         deferred.addCallback(self.job_submit_pass, job)
         deferred.addErrback(self.job_submit_fail, job)
@@ -175,21 +182,21 @@ class MonitorCore(object):
             if "tcp" in service.get_proto():
                 if service.get_application() == "http":
                     factory = WebServiceCheckFactory(self.params, job, service)
-                    job.set_factory(factory)
+                    job.factory = factory
                     factory.authenticate()
                 elif service.get_application() == "ftp":
                     ftpobj = FTP_client(job, service, self.params, self.ftp_fail)
                     ftpobj.run()
                 elif service.get_application() == "smtp":
                     factory = SMTPFactory(self.params, job, service)
-                    job.set_factory(factory)
+                    job.factory = factory
                     factory.check_service()
                 else:
                     factory = GenCheckFactory(self.params, job, service)
                     connector = reactor.connectTCP(job.get_ip(),
                                                    service.get_port(),
                                                    factory,
-                                                   self.params.get_timeout())
+                                                   self.params.timeout)
                     deferred = factory.get_deferred(connector)
                     deferred.addCallback(self.gen_service_connect_pass, job, service)
                     deferred.addErrback(self.gen_service_connect_fail, job, service)
