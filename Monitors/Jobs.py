@@ -72,7 +72,7 @@ class Jobs(object):
                 self.submitted.reverse()
             self.submitted.append(job_id)
             self.pending_submitted.remove(job_id)
-            del(self.jobs[job_id])
+            del self.jobs[job_id]
         else:
             raise Exception("Job %s: marked submitted but not done.\n")
 
