@@ -8,7 +8,6 @@ from http_parser.pyparser import HttpParser
 
 from Parameters import Parameters
 from GenSocket import GenCoreFactory
-from Jobs import Jobs
 
 
 class Cookie(object):
@@ -88,7 +87,7 @@ class WebClient(protocol.Protocol):
             self.request = self.no_unicode("%s %s HTTP/1.0\r\n%s\r\n%s\r\n\r\n" %
                                            (self.verb, self.url, headers, data))
         elif "POST" in self.verb:
-            data = self.factory.get_postdata()
+            data = self.factory.postdata
             header = self.prep_data(data)
             headers += header
             self.request = self.no_unicode("%s %s HTTP/1.0\r\n%s\r\n%s\r\n\r\n" %
@@ -198,9 +197,6 @@ class WebCoreFactory(GenCoreFactory):
         self.authdata = ""
         self.url = None
 
-    def get_postdata(self):
-        return self.postdata
-
     def set_cookie(self, cookie_str):
         # TODO make this debug level later
         sys.stderr.write("Job %s: Parsing cookie string %s\n" % (self.get_job_id(), cookie_str))
@@ -208,9 +204,6 @@ class WebCoreFactory(GenCoreFactory):
 
     def get_cookies(self):
         return self.cj.get()
-
-    def get_verb(self):
-        return self.verb
 
     def buildProtocol(self, addr):
         self.addr = addr
@@ -247,12 +240,12 @@ class JobFactory(WebCoreFactory):
         WebCoreFactory.__init__(self)
         self.params = params
         self.jobs = jobs
-        self.url = self.params.get_url()
+        self.url = self.params.url
         self.headers = self.params.get_headers()
-        self.ip = self.params.get_sb_ip()
-        self.port = self.params.get_sb_port()
-        self.timeout = self.params.get_timeout()
-        self.debug = self.params.get_debug()
+        self.ip = self.params.sb_ip
+        self.port = self.params.sb_port
+        self.timeout = self.params.timeout
+        self.debug = self.params.debug
         self.op = op
         self.job = job
         self.code = None
@@ -354,12 +347,12 @@ class WebServiceCheckFactory(WebCoreFactory):
         WebCoreFactory.__init__(self)
         self.job = job
         self.params = params
-        self.debug = self.params.get_debug()
+        self.debug = self.params.debug
         self.service = service
         self.headers = self.service.get_headers()
         self.ip = job.get_ip()
         self.port = self.service.get_port()
-        self.timeout = self.params.get_timeout()
+        self.timeout = self.params.timeout
         self.conns_done = 0
         self.contents = self.service.get_contents()
         self.auth_data = ""
@@ -400,7 +393,7 @@ class WebServiceCheckFactory(WebCoreFactory):
             connector = reactor.connectTCP(self.job.get_ip(),
                                            self.service.get_port(),
                                            self,
-                                           self.params.get_timeout())
+                                           self.params.timeout)
             deferred = self.get_deferred(connector)
             deferred.addCallback(self.auth_pass)
             deferred.addErrback(self.auth_fail)
@@ -446,7 +439,7 @@ class WebServiceCheckFactory(WebCoreFactory):
                 connector = reactor.connectTCP(self.job.get_ip(),
                                                self.service.get_port(),
                                                self,
-                                               self.params.get_timeout())
+                                               self.params.timeout)
                 deferred = self.get_deferred(connector)
                 deferred.addCallback(self.conn_pass)
                 deferred.addErrback(self.conn_fail)
