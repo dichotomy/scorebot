@@ -88,48 +88,6 @@ class Jobs(object):
                 return None
 
 class Job(object):
-    """ json structure
-        {
-            "status": "job",
-            "game_id": 1,
-            "model": "apicore.job",
-            "pk": "71",
-            "fields": {
-                "job_timeout":  300,
-                "job_dns": [
-                    "10.100.101.100",
-                    "10.100.101.50"
-                ],
-                "job_host": {
-                    "fqdn": "mail.gamma.net",
-                    "ip_address":  "",
-                    "host_ping_ratio": "100",
-                    "services": [{
-                        "port": "443",
-                        "application": "http"|"https"|"ssh"|"telnet"|"ftp",
-                        "protocol": "tcp",
-                        "connect": "pass"|"reset"|"timeout",
-                        "auth":  [{
-                            "login_url": "http://www.gamma.net/login",
-                            "auth_type": "<type>",
-                            "username": "bob",
-                            "username_field": "username",
-                            "password": "password",
-                            "password_field": "password",
-                            "login": "pass"|"fail"
-                        }],
-                        "content": [{
-                            "verb": "GET"|"POST"|"POST",
-                            "url": "",
-                            "type": "text",
-                            "connect": "pass"|"reset"|"timeout",
-                            "data": ""
-                        }]
-                    }]
-                }
-            }
-        }
-    """
 
     def __init__(self, job_json_str, debug=False):
         # TODO make this debug
@@ -281,31 +239,6 @@ class Job(object):
         return True
 
 class Service(object):
-
-    """ json structure
-            "services": [{
-                "port": "443",
-                "application": "http"|"https"|"ssh"|"telnet"|"ftp",
-                "protocol": "tcp",
-                "connect": "pass"|"reset"|"timeout|refused",
-                "data":"",
-                "auth":    [{
-                    "auth_type": "<type>",
-                    "username": "bob",
-                    "username_field": "username",
-                    "password": "password",
-                    "password_field": "password",
-                    "login": "pass"|"fail"
-                }],
-                "content": [{
-                    "verb": "GET"|"POST"|"POST",
-                    "url": "",
-                    "type": "text",
-                    "connect": "pass"|"reset"|"timeout",
-                    "data": ""
-                }]
-
-    """
 
     def __init__(self, json, job, debug=False):
         self.json = json
@@ -546,64 +479,6 @@ class Service(object):
         return header_txt
 
 class Content(object):
-    """ JSON structure for web
-                "content": {
-                    "content": {
-                        "auth": {
-                            "password": "pass",
-                            "password_field": "pas",
-                            "url": "/login",
-                            "username": "user",
-                            "username_field": "usr"
-                        },
-                        "urls": [
-                            {
-                                "keywords": [
-                                    "Hello",
-                                    "Wordpress",
-                                    "First"
-                                ],
-                                "size": 990,
-                                "url": "/index.html"
-                            },
-                            {
-                                "keywords": [
-                                    "Hello",
-                                    "Wordpress",
-                                    "First"
-                                ],
-                                "size": 990,
-                                "url": "/index.html"
-                            }
-                        ]
-                    },
-                    "type": "web"
-                },
-
-    """
-    """ JSON structure for FTP
-                "content": {
-                    "content": {
-                        "auth": {
-                            "username": "blueteam",
-                            "password": "scorebot"
-                        },
-                        "files": [
-                            {
-                                "name": "file1.txt",
-                                "size": 16,
-                                "data": "This is a file"
-                            },
-                            {
-                                "name": "file2.txt",
-                                "size": 32,
-                                "data": "This is another file"
-                            }
-                        ],
-                    },
-                    "type": "files"
-                },
-    """
 
     def __init__(self, json, job, debug=False):
         self.job = job
