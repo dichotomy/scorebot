@@ -73,7 +73,7 @@ class SMTPFactory(GenCoreFactory):
         connector = reactor.connectTCP(self.job.get_ip(),
                                        self.service.get_port(),
                                        self,
-                                       self.params.get_timeout())
+                                       self.params.timeout)
         deferred = self.get_deferred(connector)
         deferred.addCallback(self.service_pass)
         deferred.addErrback(self.service_fail)
