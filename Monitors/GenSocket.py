@@ -30,7 +30,7 @@ class GenClient(protocol.Protocol):
         if self.request:
             self.transport.write("%s\r\n" % self.request)
         else:
-            self.factory.add_data("Simple socke connected, now terminating.\n")
+            self.factory.add_data("Simple socket connected, now terminating.\n")
             self.transport.loseConnection()
 
     def dataReceived(self, data):
@@ -110,7 +110,6 @@ class GenCheckFactory(GenCoreFactory):
         self.service = service
         self.ip = job.get_ip()
         self.port = self.service.get_port()
-        #self.timeout = self.params.get_timeout()
         self.timeout = self.job.get_timeout()
 
     def add_fail(self, reason):
