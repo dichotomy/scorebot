@@ -6,7 +6,7 @@ from twisted.internet import reactor, protocol
 from http_parser.pyparser import HttpParser
 
 from GenSocket import GenCoreFactory
-from common import errormsg, no_unicode
+from common import errormsg, no_unicode, get_headers
 
 class Cookie(object):
 
@@ -74,7 +74,7 @@ class WebClient(protocol.Protocol):
         self.conn_id = conn_id
         self.job_id = self.factory.get_job_id()
         self.authing = authing
-        headers = self.factory.get_headers()
+        headers = get_headers(self.factory.headers)
         cookies = self.factory.get_cookies()
         if cookies:
             headers += cookies
@@ -144,12 +144,12 @@ class WebClient(protocol.Protocol):
                 conn_id = self.conn_id
             else:
                 conn_id = self.factory.get_conn_id()
-            headers = self.parser.get_headers()
+            headers = get_headers(self.parser.headers)
             print "Job %s: ConnID %s: HEADER COMPLETE!\n\t%s" % \
                 (self.job_id, conn_id, headers)
             if "Set-Cookie" in headers:
                 self.factory.set_cookie(headers["Set-Cookie"])
-            self.factory.set_server_headers(self.parser.get_headers())
+            self.factory.set_server_headers(get_headers(self.parser.headers))
         self.factory.proc_body(self.parser.recv_body())
         if self.parser.is_partial_body():
             self.body += self.parser.recv_body()
@@ -217,9 +217,6 @@ class WebCoreFactory(GenCoreFactory):
     def get_url(self):
         return self.url
 
-    def get_headers(self):
-        return self.headers
-
     def get_body(self):
         return self.body
 
@@ -230,7 +227,7 @@ class JobFactory(WebCoreFactory):
         self.params = params
         self.jobs = jobs
         self.url = self.params.url
-        self.headers = self.params.get_headers()
+        self.headers = get_headers(self.params.headers)
         self.ip = self.params.sb_ip
         self.port = self.params.sb_port
         self.timeout = self.params.timeout
@@ -330,7 +327,7 @@ class WebServiceCheckFactory(WebCoreFactory):
         self.params = params
         self.debug = self.params.debug
         self.service = service
-        self.headers = self.service.get_headers()
+        self.headers = get_headers(self.service.headers)
         self.ip = job.get_ip()
         self.port = self.service.get_port()
         self.timeout = self.params.timeout

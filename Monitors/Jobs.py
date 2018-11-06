@@ -152,12 +152,6 @@ class Job(object):
     def get_services(self):
         return self.services
 
-    def get_headers(self):
-        header_txt = ""
-        for header in self.headers:
-            header_txt += "%s: %s\r\n" % (header, self.headers[header])
-        return header_txt
-
     def get_hostname(self):
         return self.json["host"]["fqdn"]
 
@@ -462,13 +456,6 @@ class Service(object):
             pp.pprint(self.json)
         return self.json
 
-    def get_headers(self):
-        # Dummy function until the JSON structure is updated
-        # TODO - replace with real code
-        header_txt = ""
-        for header in self.headers:
-            header_txt += "%s: %s\r\n" % (header, self.headers[header])
-        return header_txt
 
 class Content(object):
 

@@ -18,9 +18,3 @@ class Parameters(object):
         }
         self.scheme = "http"
 
-    def get_headers(self):
-        header_txt = ""
-        for header in self.headers:
-            header_txt += "%s: %s\r\n" % (header, self.headers[header])
-        return header_txt
-
