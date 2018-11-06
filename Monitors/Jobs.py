@@ -7,8 +7,7 @@ from time import strftime, gmtime
 
 from common import errormsg
 
-
-statuses = ["pass", "reset", "timeout", "refused", "invalid"]
+VALID_STATUSES = ("pass", "reset", "timeout", "refused", "invalid")
 
 class Jobs(object):
 
@@ -278,7 +277,7 @@ class Service(object):
 
     def is_done(self):
         if "status" in self.json:
-            if self.json["status"] in statuses:
+            if self.json["status"] in VALID_STATUSES:
                 pass
             else:
                 return False
@@ -536,10 +535,7 @@ class Content(object):
 
     def check(self):
         if "connect" in self.json:
-            if self.json["connect"] in statuses:
-                return True
-            else:
-                return False
+            return True if self.json["connect"] in VALID_STATUSES else False
         else:
             return False
 
