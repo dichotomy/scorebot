@@ -218,16 +218,16 @@ class MonitorCore(object):
 def check_dir(directory):
     try:
         os.stat(directory)
-    except OSError as e:
-        if e.errno == 2:
+    except OSError as exc:
+        if exc.errno == 2:
             errormsg("No such directory %s, creating" % directory)
             # TODO make sure this succeeds
             os.mkdir(directory)
         else:
-            errormsg("Directory %s - Unknown error: %s" % (e.errno, e.strerror))
+            errormsg("Directory %s - Unknown error: %s" % (exc.errno, exc.strerror))
 
 def main():
-    for directory in ("log", "raw", "sbe"):
+    for directory in ("raw", "sbe"):
         check_dir(directory)
     syslog.startLogging(prefix="Scorebot")
     params = Parameters()
