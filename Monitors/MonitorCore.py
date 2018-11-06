@@ -219,7 +219,7 @@ def main():
             try:
                 os.mkdir(directory)
             except OSError as exc:
-                errormsg("Unable to create directory %s - %s" % directory, exc)
+                errormsg("Unable to create directory %s - %s" % (directory, exc))
                 exit(os.EX_USAGE)
     syslog.startLogging(prefix="Scorebot")
     params = Parameters()
