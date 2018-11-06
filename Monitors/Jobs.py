@@ -1,10 +1,12 @@
 #!/usr/bin/env python2.7
 
-import sys
 import time
 import json
 import base64
 import pprint
+
+from common import errormsg
+
 
 statuses = ["pass", "reset", "timeout", "refused", "invalid"]
 
@@ -33,19 +35,20 @@ class Jobs(object):
         self.jobs[self.latest_job_id] = Job(job_json_str, self.debug)
         self.jobs[self.latest_job_id].set_job_id(self.latest_job_id)
         self.todo.append(self.latest_job_id)
-        sys.stderr.write("Job %s: added %s\n" % (self.latest_job_id, job_json_str))
+        print "Job %s: added %s" % (self.latest_job_id, job_json_str)
         return self.latest_job_id
 
     def find_done_jobs(self):
         for job_id in self.proc:
             if self.jobs[job_id].is_done():
-                sys.stderr.write("Job %s: is done, processing.\n" % job_id)
+                print "Job %s: is done, processing." % job_id
                 self.done.append(job_id)
         for job_id in self.done:
             if job_id in self.proc:
                 self.proc.remove(job_id)
             else:
-                sys.stderr.write("WTF? Job %s is done but not in self.proc!\n" % job_id)
+                # TODO why the profanity?
+                errormsg("WTF? Job %s is done but not in self.proc!" % job_id)
         return self.done
 
     def finish_job(self, job_id, reason):
@@ -53,13 +56,15 @@ class Jobs(object):
             self.jobs[job_id].fail_dns()
         if job_id in self.done:
             self.done.remove(job_id)
-            sys.stdout.write("Job %s: Closing out finished job because %s\n" % (job_id, reason))
+            print "Job %s: Closing out finished job because %s" % (job_id, reason)
         elif job_id in self.proc:
             self.proc.remove(job_id)
-            sys.stdout.write("Job %s: Prematurely closing out job while in process because %s!\n" % (job_id, reason))
+            print "Job %s: Prematurely closing out job while in process because %s!" % \
+                (job_id, reason)
         elif job_id in self.todo:
             self.todo.remove(job_id)
-            sys.stdout.write("Job %s: Prematurely closing out job before starting it because %s!\n" % (job_id, reason))
+            print "Job %s: Prematurely closing out job before starting it because %s!" % \
+                (job_id, reason)
         job = self.jobs[job_id]
         self.pending_submitted.append(job_id)
         return job
@@ -74,7 +79,7 @@ class Jobs(object):
             self.pending_submitted.remove(job_id)
             del self.jobs[job_id]
         else:
-            raise Exception("Job %s: marked submitted but not done.\n")
+            raise Exception("Job %s: marked submitted but not done.")
 
     def get_job(self, job_id=None):
         if job_id:
@@ -137,14 +142,13 @@ class Job(object):
 
     def get_json_str(self):
         #TODO - should this call self.get_json()?
-        sys.stderr.write("Job %s: Converting to JSON\n" % self.job_id)
+        print "Job %s: Converting to JSON" % self.job_id
         return json.dumps(self.get_json())
 
     def get_result_json_str(self):
         #TODO - should this call self.get_json()?
-        sys.stderr.write("Job %s: Converting to result JSON\n" % self.job_id)
-        #sys.stderr.write("Job %s: Before: %s\n" % (self.job_id, self.get_json_str()))
-        sys.stderr.write("Job %s: %s\n" % (self.job_id, json.dumps(self.get_result_json())))
+        print "Job %s: Converting to result JSON" % self.job_id
+        print "Job %s: %s" % (self.job_id, json.dumps(self.get_result_json()))
         return json.dumps(self.get_result_json())
 
     def get_dns(self):
@@ -173,7 +177,7 @@ class Job(object):
         return self.json["host"]["fqdn"]
 
     def set_ip(self, ip_address):
-        # Should add code here to sanity check the IP
+        # TODO Should add code here to sanity check the IP
         self.json["host"]["ip_address"] = ip_address
 
     def get_ip(self):
@@ -221,7 +225,7 @@ class Job(object):
         for service in self.services:
             json_services.append(service.get_json())
         self.json["host"]["services"] = json_services
-        sys.stderr.write("Job %s: converting to json:\n" % self.job_id)
+        print "Job %s: converting to json:" % self.job_id
         if self.debug:
             pp = pprint.PrettyPrinter(depth=4)
             pp.pprint(self.json)
@@ -397,7 +401,6 @@ class Service(object):
             return None
 
     def timeout(self, data):
-        #self.set_data(data)
         self.json["status"] = "timeout"
 
     def pass_conn(self):
@@ -427,9 +430,7 @@ class Service(object):
 
     def get_url(self):
         # TODO figure out why so much profanity.
-        sys.stderr.write("FUCK REMOVE THIS SHIT!")
-        sys.stderr.write("FUCK REMOVE THIS SHIT!")
-        sys.stderr.write("FUCK REMOVE THIS SHIT!")
+        errormsg("FUCK REMOVE THIS SHIT!")
         # TODO - replace with real code after the JSON is updated
         return self.url
 
@@ -459,7 +460,6 @@ class Service(object):
         else:
             result_json["content"] = None
         return result_json
-
 
     def get_json(self):
         json_content = []
@@ -501,25 +501,25 @@ class Content(object):
 
     def verify_page(self, page):
         if self.debug:
-            sys.stderr.write("Checking contents...\n\tChecking size...\n")
+            errormsg("Checking contents...\n\tChecking size...")
         if len(page) == self.json["size"]:
             if self.debug:
-                sys.stderr.write("\tSize is good, checking keywords...\n:w")
+                errormsg("\tSize is good, checking keywords...")
             for keyword in self.json["keywords"]:
                 if self.debug:
-                    sys.stderr.write("\t\tChecking %s..." % keyword)
+                    errormsg("\tChecking %s..." % keyword)
                 if keyword in page:
                     if self.debug:
-                        sys.stderr.write("Good!\n")
+                        errormsg("Good!")
                     continue
                 else:
                     if self.debug:
-                        sys.stderr.write("Bad!\n")
+                        errormsg("Bad!")
                     self.invalid()
         else:
             self.invalid()
         if self.debug:
-            sys.stderr.write("Done content check!\n")
+            errormsg("Done content check!")
         self.success()
 
     def get_size(self):
