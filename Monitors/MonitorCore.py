@@ -151,7 +151,7 @@ class MonitorCore(object):
     def ping_fail(self, failure, job, pingobj):
         jobid = job.get_job_id()
         errormsg("Job %s:  Ping failed. %s" % (jobid, failure))
-        job = self.jobs.finish_job(job_id, "Ping failed")
+        job = self.jobs.finish_job(jobid, "Ping failed")
         job.set_ip("fail")
         self.post_job(job)
         del pingobj
