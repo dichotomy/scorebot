@@ -17,6 +17,7 @@ class BufferingProtocol(Protocol):
     def dataReceived(self, data):
         self.buffer.write(data)
 
+# TODO why is this here?
 class CTFFTPclient(FTPClient):
 
     def __init__(self, passive):
@@ -46,7 +47,7 @@ class FTP_client(object):
         if response is None:
             print None
         else:
-            print "".join(response, '\n')
+            print response
         print "---"
 
     def fail(self, error):
