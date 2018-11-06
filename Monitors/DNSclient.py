@@ -32,7 +32,6 @@ class DNSclient(object):
             answer_str = '%s' % res.answers[0].payload
             ip_addr = answer_str.split(" ")[1].split("=")[1]
             self.job.set_ip(ip_addr)
-            # TODO make this a proper debug statement
             print "Job %s:  DNS lookup for %s gave %s" % \
                 (self.job.get_job_id(), res.answers[0].name, self.job.get_ip())
         else:
@@ -42,7 +41,7 @@ class DNSclient(object):
 
     @staticmethod
     def errorHandler(failure):
-        # Need to implement error handling
+        # TODO Need to implement error handling
         errormsg(str(failure))
 
     def close(self):
