@@ -6,7 +6,6 @@ import time
 from twisted.internet import reactor, protocol
 from http_parser.pyparser import HttpParser
 
-from Parameters import Parameters
 from GenSocket import GenCoreFactory
 
 
