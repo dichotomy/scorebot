@@ -179,7 +179,8 @@ class Job(object):
     def get_ip(self):
         return self.json["host"]["ip_address"]
 
-    def get_url(self):
+    @staticmethod
+    def get_url():
         # TODO replace this placeholder when the datastructure given by SBE is updated
         return "/index.html"
 
@@ -304,7 +305,8 @@ class Service(object):
     def get_type(self):
         return self.json["type"]
 
-    def get_passive(self):
+    @staticmethod
+    def get_passive():
         # TODO implement passive FTP bit
         return 0
 
@@ -526,8 +528,8 @@ class Content(object):
         else:
             return None
 
-    def get_verb(self):
-        #return self.json["verb"]
+    @staticmethod
+    def get_verb():
         # TODO add support for post, but SBE must support
         return "GET"
 
