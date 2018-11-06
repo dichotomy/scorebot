@@ -247,7 +247,7 @@ class JobFactory(WebCoreFactory):
             print "Job %s: Starting Job Post, sending JSON: %s" % \
                 (self.job.get_job_id(), self.postdata)
         else:
-            raise Exception("Job %s: Unknown operation %s" % (self.job_id, op))
+            raise Exception("Job %s: Unknown operation %s" % (self.job.get_job_id(), op))
 
     def set_code(self, code):
         self.code = int(code)
