@@ -6,6 +6,7 @@ import time
 from twisted.internet import reactor, protocol
 
 from GenSocket import GenCoreFactory
+from common import errormsg, no_unicode
 
 
 class SMTPClient(protocol.Protocol):
@@ -18,15 +19,6 @@ class SMTPClient(protocol.Protocol):
         self.port = self.factory.get_port()
         self.request = "HELO %s\n" % self.fqdn
         self.recv = ""
-
-    # TODO this exists elsewhere. place it somewhere else to not duplicate
-    #      code?
-    @staticmethod
-    def no_unicode(text):
-        if isinstance(text, unicode):
-            return text.encode('utf-8')
-        else:
-            return text
 
     def TimedOut(self):
         self.transport.loseConnection()
@@ -42,12 +34,12 @@ class SMTPClient(protocol.Protocol):
 
     def dataReceived(self, data):
         self.recv += data
-        sys.stderr.write("Job %s: Received %s" % (self.job_id, data))
+        print "Job %s: Received %s" % (self.job_id, data)
         self.factory.add_data(data)
         sys.stderr.write(data)
         if "220" in data and "SMTP" in data:
-            sys.stderr.write("Job %s: Sending %s" % (self.job_id, self.request))
-            self.transport.write(self.no_unicode(self.request))
+            print "Job %s: Sending %s" % (self.job_id, self.request)
+            self.transport.write(no_unicode(self.request))
             return
         elif "250" in data:
             self.transport.loseConnection()
@@ -86,15 +78,15 @@ class SMTPFactory(GenCoreFactory):
 
     def service_fail(self, failure):
         self.service.pass_conn(failure)
-        sys.stdout.write("Job %s: Failed check of SMTP connection for %s(%s)\n" % \
-                         (self.job_id, self.fqdn, self.ip))
+        errormsg("Job %s: Failed check of SMTP connection for %s(%s)" % \
+            (self.job_id, self.fqdn, self.ip))
 
     def clientConnectionFailed(self, connector, reason):
         self.end = time.time()
         if self.params.debug:
-            sys.stderr.write("Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
-            sys.stderr.write("reason %s\t" % reason)
-            sys.stderr.write("self.reason: %s\t" % self.reason)
+            errormsg("Job %s: clientConnectionFailed:" % self.job.get_job_id())
+            errormsg("reason %s" % reason)
+            errormsg("self.reason: %s" % self.reason)
         conn_time = None
         if self.start:
             conn_time = self.end - self.start
@@ -106,9 +98,9 @@ class SMTPFactory(GenCoreFactory):
     def clientConnectionLost(self, connector, reason):
         self.end = time.time()
         if self.params.debug:
-            sys.stderr.write("Job %s: clientConnectionLost\t" % self.job.get_job_id())
-            sys.stderr.write("given reason: %s\t" % reason)
-            sys.stderr.write("self.reason: %s\t" % self.reason)
+            errormsg("Job %s: clientConnectionLost" % self.job.get_job_id())
+            errormsg("given reason: %s" % reason)
+            errormsg("self.reason: %s" % self.reason)
         if self.data:
             self.service.set_data(self.data)
         if self.fail and self.reason:
