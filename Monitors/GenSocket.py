@@ -1,10 +1,11 @@
 #!/usr/bin/env python2
 
-import sys
 import time
 
 from twisted.internet import reactor, protocol
 from twisted.internet.defer import Deferred
+
+from common import errormsg
 
 
 class GenClient(protocol.Protocol):
@@ -22,11 +23,12 @@ class GenClient(protocol.Protocol):
 
     def connectionMade(self):
         if self.job_id:
-            sys.stderr.write("Job %s: Made connection to %s:%s\n" % (self.job_id, self.factory.get_ip(), self.factory.get_port()))
+            print "Job %s: Made connection to %s:%s" % \
+                (self.job_id, self.factory.get_ip(), self.factory.get_port())
         else:
-            sys.stderr.write("Made connection to %s:%s\n" % (self.factory.get_ip(), self.factory.get_port()))
+            print "Made connection to %s:%s" % \
+                (self.factory.get_ip(), self.factory.get_port())
         reactor.callLater(self.factory.get_timeout(), self.TimedOut)
-        #sys.stderr.write("Sending: %s\n" % self.request)
         if self.request:
             self.transport.write("%s\r\n" % self.request)
         else:
@@ -65,7 +67,7 @@ class GenCoreFactory(protocol.ClientFactory):
 
     def startedConnecting(self, connector):
         if self.job:
-            sys.stderr.write("Job %s:  Starting connection\n" % self.job.get_job_id())
+            print "Job %s:  Starting connection" % self.job.get_job_id()
 
     def buildProtocol(self, addr):
         self.addr = addr
@@ -98,7 +100,8 @@ class GenCoreFactory(protocol.ClientFactory):
         return self.debug
 
     # TODO is this used?!~
-    def get_job_id(self):
+    @staticmethod
+    def get_job_id():
         return None
 
 class GenCheckFactory(GenCoreFactory):
@@ -124,11 +127,11 @@ class GenCheckFactory(GenCoreFactory):
     def clientConnectionFailed(self, connector, reason):
         self.end = time.time()
         if self.params.debug:
-            sys.stderr.write("Job %s: clientConnectionFailed:\t" % self.job.get_job_id())
-            sys.stderr.write("reason %s\t" % reason)
-            sys.stderr.write("self.reason: %s\t" % self.reason)
+            errormsg("Job %s: clientConnectionFailed:" % self.job.get_job_id())
+            errormsg("reason %s" % reason)
+            errormsg("self.reason: %s" % self.reason)
             if self.debug:
-                sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
+                errormsg("\nReceived: %s\n" % self.get_server_headers())
         conn_time = None # TODO is this used?!
         if self.start:
             conn_time = self.end - self.start
@@ -141,11 +144,11 @@ class GenCheckFactory(GenCoreFactory):
     def clientConnectionLost(self, connector, reason):
         self.end = time.time()
         if self.params.debug:
-            sys.stderr.write("Job %s: clientConnectionLost\t" % self.job.get_job_id())
-            sys.stderr.write("given reason: %s\t" % reason)
-            sys.stderr.write("self.reason: %s\t" % self.reason)
+            errormsg("Job %s: clientConnectionLost" % self.job.get_job_id())
+            errormsg("given reason: %s" % reason)
+            errormsg("self.reason: %s" % self.reason)
             if self.debug:
-                sys.stderr.write("\nReceived: %s\n" % self.get_server_headers())
+                errormsg("\nReceived: %s\n" % self.get_server_headers())
         conn_time = self.end - self.start
         if self.data:
             self.service.set_data(self.data)
