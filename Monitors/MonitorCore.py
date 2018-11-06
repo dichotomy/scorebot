@@ -97,31 +97,32 @@ class MonitorCore(object):
             filename = "sbe/%s.out" % time.strftime("%Y-%m-%d_%H%M%S", time.localtime(time.time()))
             with open(filename, "w") as fileobj:
                 fileobj.write(result)
-            sys.stderr.write("Job %s: submitted, SBE response in file %s\n" % (job_id, filename))
+            print "Job %s: submitted, SBE response in file %s" % (job_id, filename)
         else:
-            sys.stderr.write("Job %s: submitted, SBE response: %s\n" % (job_id, result))
-        sys.stderr.write("Job %s: submitted: %s\n" % (job_id, job_json))
+            print "Job %s: submitted, SBE response: %s" % (job_id, result)
+        print "Job %s: submitted: %s" % (job_id, job_json)
 
     def job_submit_pass(self, result, job):
         job_id = job.get_job_id()
-        sys.stderr.write("Job %s: successfully submitted %s \n" % (job_id, result))
+        print "Job %s: successfully submitted %s" % (job_id, result)
         self.proc_result(job, result)
         self.jobs_done.append(job_id)
         self.jobs.submitted_job(job_id)
 
     def job_submit_fail(self, failure, job):
+        # TODO clean this up. the output is weird.
         job_id = job.get_job_id()
-        sys.stderr.write("Job %s: failed due to %s \n" % (job_id, failure.getErrorMessage()))
+        errormsg("Job %s: failed due to %s" % (job_id, failure.getErrorMessage()))
         if job.get_job_fail():
-            sys.stderr.write("giving up.\n")
+            errormsg("giving up.")
         else:
-            sys.stderr.write("retrying in %s.\n" % self.resubmit_interval)
+            errormsg("retrying in %s." % self.resubmit_interval)
             reactor.callLater(self.resubmit_interval, self.post_job, job)
 
     def dns_fail(self, failure, job, dnsobj):
         # Do this if the DNS check failed
         job_id = job.get_job_id()
-        sys.stderr.write("Job %s:  DNS failed. %s\n" % (job_id, failure))
+        errormsg("Job %s:  DNS failed. %s" % (job_id, failure))
         job = self.jobs.finish_job(job_id, "DNS failed")
         job.set_ip("fail")
         self.post_job(job)
@@ -144,13 +145,13 @@ class MonitorCore(object):
 
     def ping_pass(self, result, job, pingobj):
         jobid = job.get_job_id()
-        sys.stderr.write("Job %s:  Ping passed. %s\n" % (jobid, result))
+        print "Job %s:  Ping passed. %s" % (jobid, result)
         reactor.callLater(1, self.check_services, job)
         del pingobj
 
     def ping_fail(self, failure, job, pingobj):
         jobid = job.get_job_id()
-        sys.stderr.write("Job %s:  Ping failed. %s\n" % (jobid, failure))
+        errormsg("Job %s:  Ping failed. %s" % (jobid, failure))
         job = self.jobs.finish_job(job_id, "Ping failed")
         job.set_ip("fail")
         self.post_job(job)
@@ -159,13 +160,13 @@ class MonitorCore(object):
     @staticmethod
     def ftp_fail(failure, service, job_id):
         if "530 Login incorrect" in failure:
-            sys.stderr.write("Job %s: Login failure\n" % job_id)
+            errormsg("Job %s: Login failure" % job_id)
             service.fail_login()
         elif "Connection refused" in failure:
-            sys.stderr.write("Job %s: Connection failure\n" % job_id)
+            errormsg("Job %s: Connection failure" % job_id)
             service.fail_conn("refused")
         else:
-            sys.stderr.write("Job %s: Failure %s\n" % (job_id, failure))
+            errormsg("Job %s: Failure %s" % (job_id, failure))
             service.fail_conn(failure)
 
     def check_services(self, job):
@@ -213,25 +214,23 @@ class MonitorCore(object):
         proto = service.get_proto()
         port = service.get_port()
         jobid = job.get_job_id()
-        sys.stderr.write("Job %s:  Service %s/%s failed:\n\t%s\n" % (jobid, port, proto, failure))
+        errormsg("Job %s:  Service %s/%s failed:\n\t%s" % (jobid, port, proto, failure))
 
 def check_dir(directory):
     try:
         os.stat(directory)
     except OSError as e:
         if e.errno == 2:
-            sys.stderr.write("No such directory %s, creating\n" % directory)
+            errormsg("No such directory %s, creating" % directory)
             # TODO make sure this succeeds
             os.mkdir(directory)
         else:
-            sys.stderr.write("Directory %s - Unknown error: %s\n" % (e.errno, e.strerror))
+            errormsg("Directory %s - Unknown error: %s" % (e.errno, e.strerror))
 
 
 if __name__ == "__main__":
-    # Testing with an artificial job file
     for directory in ("log", "raw", "sbe"):
         check_dir(directory)
-    #log.startLogging(open('log/MonitorCore.log', 'w'))
     syslog.startLogging(prefix="Scorebot")
     params = Parameters()
     jobs = Jobs()
