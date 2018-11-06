@@ -167,20 +167,19 @@ class MonitorCore(object):
     def check_services(self, job):
         # Service walk
         # TODO add UDP support?
-        # TODO factory is being redefinied.
         for service in job.get_services():
             if "tcp" in service.get_proto():
                 if service.get_application() == "http":
-                    factory = WebServiceCheckFactory(self.params, job, service)
-                    job.factory = factory
-                    factory.authenticate()
+                    httpfactory = WebServiceCheckFactory(self.params, job, service)
+                    job.factory = httpfactory
+                    httpfactory.authenticate()
                 elif service.get_application() == "ftp":
                     ftpobj = FTP_client(job, service, self.params, self.ftp_fail)
                     ftpobj.run()
                 elif service.get_application() == "smtp":
-                    factory = SMTPFactory(self.params, job, service)
-                    job.factory = factory
-                    factory.check_service()
+                    smtpfactory = SMTPFactory(self.params, job, service)
+                    job.factory = smtpfactory
+                    smtpfactory.check_service()
                 else:
                     factory = GenCheckFactory(self.params, job, service)
                     connector = reactor.connectTCP(job.get_ip(),
@@ -212,20 +211,16 @@ class MonitorCore(object):
         jobid = job.get_job_id()
         errormsg("Job %s:  Service %s/%s failed:\n\t%s" % (jobid, port, proto, failure))
 
-def check_dir(directory):
-    try:
-        os.stat(directory)
-    except OSError as exc:
-        if exc.errno == 2:
-            errormsg("No such directory %s, creating" % directory)
-            # TODO make sure this succeeds
-            os.mkdir(directory)
-        else:
-            errormsg("Directory %s - Unknown error: %s" % (exc.errno, exc.strerror))
 
 def main():
     for directory in ("raw", "sbe"):
-        check_dir(directory)
+        if not os.path.isdir(directory):
+            errormsg("Directory %s does not exist. Creating." % directory)
+            try:
+                os.mkdir(directory)
+            except OSError as exc:
+                errormsg("Unable to create directory %s - %s" % directory, exc)
+                exit(os.EX_USAGE)
     syslog.startLogging(prefix="Scorebot")
     params = Parameters()
     jobs = Jobs()
