@@ -38,7 +38,7 @@ class Cookie(object):
             elif "HttpOnly":
                 self.httponly = True
             else:
-                raise Exception("Unknown token %s in Cookie %s!\n" % (piece, cookie_str))
+                raise Exception("Unknown token %s in Cookie %s!" % (piece, cookie_str))
 
     def get(self):
         return "%s=%s" % (self.name, self.value)
@@ -138,7 +138,7 @@ class WebClient(protocol.Protocol):
             print "Job %s: Returned status %s" % (self.job_id, status)
             if self.authing:
                 if status != 302:
-                    raise Exception("Job %s: Failed authentication\n" % (self.job_id))
+                    raise Exception("Job %s: Failed authentication" % (self.job_id))
             if self.isjob:
                 self.factory.set_code(status)
                 if status == 204:
@@ -259,7 +259,7 @@ class JobFactory(WebCoreFactory):
             print "Job %s: Starting Job Post, sending JSON: %s" % \
                 (self.job.get_job_id(), self.postdata)
         else:
-            raise Exception("Job %s: Unknown operation %s\n" % (self.job_id, op))
+            raise Exception("Job %s: Unknown operation %s" % (self.job_id, op))
 
     def set_code(self, code):
         self.code = int(code)
@@ -339,7 +339,7 @@ class JobFactory(WebCoreFactory):
                 else:
                     sys.stderr.write("No job to add!\n")
         else:
-            raise Exception("Unknown op: %s\n" % self.op)
+            raise Exception("Unknown op: %s" % self.op)
 
 class WebServiceCheckFactory(WebCoreFactory):
 
