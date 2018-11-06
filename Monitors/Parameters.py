@@ -1,8 +1,5 @@
 #!/usr/bin/env python2.7
 
-import sys
-import json
-
 class Parameters(object):
     # TODO Document methods and attributes
     def __init__(self):
