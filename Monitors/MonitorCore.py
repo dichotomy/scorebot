@@ -56,14 +56,7 @@ class MonitorCore(object):
         if job:
             job_id = job.get_job_id()
             # DNS
-            # TODO what exception are we expecting? print_tb is missing
-            #      an argument
-            try:
-                dnsobj = DNSclient(job)
-            except:
-                sys.stderr.write("Job %s: Failure starting job %s:\n" % \
-                    (job_id, job.get_json_str()))
-                traceback.print_tb()
+            dnsobj = DNSclient(job)
             # Execute the query
             query_d = dnsobj.query()
             # Handle a DNS success - move on to ping
