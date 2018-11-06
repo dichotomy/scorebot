@@ -35,6 +35,7 @@ class DNSclient(object):
             print "Job %s:  DNS lookup for %s gave %s" % \
                 (self.job.get_job_id(), res.answers[0].name, self.job.get_ip())
         else:
+            # TODO should this throw an exception?
             self.job.set_ping_sent(0)
             self.job.set_ping_respond(0)
             raise Exception("No results obtained")
