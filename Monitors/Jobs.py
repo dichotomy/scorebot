@@ -15,19 +15,13 @@ class Jobs(object):
     def __init__(self, debug=False):
         # Jobs
         self.jobs = {}
-        # List of IDs of the jobs to be done
-        self.todo = []
-        # List of IDs of the jobs being done
-        self.proc = []
-        # List of jobs done
-        self.done = []
-        # List of jobs being submitted
-        self.pending_submitted = []
+        self.todo = [] # List of IDs of the jobs to be done
+        self.proc = [] # List of IDs of the jobs being done
+        self.done = [] # List of jobs done
+        self.pending_submitted = [] # List of jobs being submitted
         self.max_submitted = 100
-        # List of jobs submitted
-        self.submitted = []
-        # The oldest job ID
-        self.latest_job_id = 0
+        self.submitted = [] # List of jobs submitted
+        self.latest_job_id = 0 # The oldest job ID
         self.debug = debug
 
     def add(self, job_json_str):
@@ -97,14 +91,12 @@ class Job(object):
     def __init__(self, job_json_str, debug=False):
         # TODO make this debug
         self.job_id = 0
-        #print "Attempting to parse json: %s" % job_json_str
         self.json = json.loads(job_json_str)
         self.services = []
         for service in self.json["host"]["services"]:
             self.services.append(Service(service, self, debug))
         self.headers = {}
         self.headers["Connection"] = "keep-alive"
-        #self.headers["Host"] = self.sb_ip
         self.headers["Accept-Encoding"] = "gzip, deflate"
         self.headers["User-Agent"] = "Scorebot Monitor/3.0.0"
         self.headers["Accept"] = "*/*"
@@ -285,7 +277,6 @@ class Service(object):
         self.headers["Accept-Encoding"] = "gzip, deflate"
         self.headers["User-Agent"] = "Scorebot Monitor/3.0.0"
         self.headers["Accept"] = "*/*"
-        # temp variable until JSON is updated
         self.url = "/index.html"
 
     def is_done(self):
