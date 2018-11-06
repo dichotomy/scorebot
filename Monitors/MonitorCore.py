@@ -23,9 +23,6 @@ class MonitorCore(object):
         self.params = params
         self.resubmit_interval = 30
         self.jobs = jobs
-        # TODO: 'which' this.
-        self.ping = "/usr/bin/ping"
-        self.ping_cnt = str(5)
         self.jobs_done = []
 
     def get_job(self):
