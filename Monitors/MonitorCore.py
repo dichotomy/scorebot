@@ -53,7 +53,6 @@ class MonitorCore(object):
         # Get the next job started
         job = self.jobs.get_job()
         if job:
-            job_id = job.get_job_id()
             # DNS
             dnsobj = DNSclient(job)
             # Execute the query
