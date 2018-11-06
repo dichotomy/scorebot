@@ -322,10 +322,6 @@ class JobFactory(WebCoreFactory):
                 sys.stderr.write("error message:\n%s\n\n" % reason.getErrorMessage())
             else:
                 #Connection closed cleanly, process the results
-                #sys.stderr.write("Adding job %s\n" % self.body)
-                #if "completed" in self.body:
-                #self.deferreds[connector].callback(self.body)
-                #else:
                 if self.body:
                     if "<!DOCTYPE html>" in self.body:
                         filename = "sbe/%s.out" % \
@@ -355,7 +351,6 @@ class WebServiceCheckFactory(WebCoreFactory):
         self.timeout = self.params.timeout
         self.conns_done = 0
         self.contents = self.service.get_contents()
-        self.auth_data = ""
         self.authenticated = False
         self.authenticating = False
         self.checking_contents = False
@@ -366,12 +361,11 @@ class WebServiceCheckFactory(WebCoreFactory):
         password = self.service.get_password()
         username_field = self.service.get_username_field()
         password_field = self.service.get_password_field()
-        # auth format
-        # email=test%40delta.net&password=password&action=Login
-        self.auth_data = "%s=%s&%s=%s&action=Login" % \
-                         (username_field, username, password_field, password)
-        sys.stderr.write("Job %s: authdata %s\n" % (self.get_job_id(), self.auth_data))
-        return self.auth_data
+        # auth format: email=test%40delta.net&password=password&action=Login
+        auth_data = "%s=%s&%s=%s&action=Login" % \
+            (username_field, username, password_field, password)
+        print "Job %s: authdata %s" % (self.get_job_id(), auth_data)
+        return auth_data
 
     def buildProtocol(self, addr):
         self.addr = addr
