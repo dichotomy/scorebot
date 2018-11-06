@@ -1,9 +1,9 @@
 #!/usr/bin/env python2.7
 
-import time
 import json
 import base64
 import pprint
+from time import strftime, gmtime
 
 from common import errormsg
 
@@ -423,7 +423,7 @@ class Service(object):
         self.json["auth"][index]["login"] = "fail"
 
     def set_data(self, data):
-        today = time.strftime("%Y%m%d", time.gmtime())
+        today = strftime("%Y%m%d", gmtime())
         with open("raw/%s_Job_%s_data" % (today, self.job.get_job_id()), "w") as data_file:
             self.json["content"] = base64.b64encode(data)
             data_file.write(base64.b64encode(data))
@@ -556,7 +556,7 @@ class Content(object):
             return False
 
     def set_data(self, data):
-        today = time.strftime("%Y%m%d", time.gmtime())
+        today = strftime("%Y%m%d", gmtime())
         with open("raw/%s_Job_%s_data" % (today, self.job.get_job_id()), "w") as data_file:
             self.json["data"] = base64.b64encode(data)
             data_file.write(base64.b64encode(data))
