@@ -2,17 +2,12 @@
 
 import sys
 import string
-import json
 from io import BytesIO
 
 from twisted.protocols.ftp import FTPClient, FTPClientBasic
 from twisted.internet.protocol import Protocol, ClientCreator
 from twisted.python.failure import Failure
 from twisted.internet import reactor
-from twisted.python import log
-
-from Jobs import Jobs
-from Parameters import Parameters
 
 
 class BufferingProtocol(Protocol):
