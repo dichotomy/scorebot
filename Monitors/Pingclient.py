@@ -12,8 +12,8 @@ class PingProtocol(protocol.ProcessProtocol):
         self.job = job
         self.ipaddr = self.job.get_ip()
         self.data = ""
-        self.received_re = re.compile("(\d) received")
-        self.transmitted_re = re.compile("(\d) packets transmitted")
+        self.received_re = re.compile(r"(\d) received")
+        self.transmitted_re = re.compile(r"(\d) packets transmitted")
         self.recv = 0
         self.fail = 0
         self.transmitted = 0
