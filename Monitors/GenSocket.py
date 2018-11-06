@@ -87,6 +87,7 @@ class GenCoreFactory(protocol.ClientFactory):
     def get_timeout(self):
         return self.timeout
 
+    # TODO self doesnt have ip ???
     def get_ip(self):
         return self.ip
 
