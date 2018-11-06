@@ -1,9 +1,6 @@
 #!/usr/bin/env python2
 
 import re
-import sys
-
-from Jobs import Jobs
 
 from twisted.internet import reactor, protocol
 from twisted.internet.defer import Deferred
