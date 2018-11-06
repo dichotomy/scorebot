@@ -159,9 +159,6 @@ class Job(object):
             header_txt += "%s: %s\r\n" % (header, self.headers[header])
         return header_txt
 
-    def get_scheme(self):
-        return self.scheme
-
     def get_hostname(self):
         return self.json["host"]["fqdn"]
 
