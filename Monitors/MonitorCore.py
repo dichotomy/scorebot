@@ -170,6 +170,7 @@ class MonitorCore(object):
     def check_services(self, job):
         # Service walk
         # TODO add UDP support?
+        # TODO factory is being redefinied.
         for service in job.get_services():
             if "tcp" in service.get_proto():
                 if service.get_application() == "http":
@@ -225,8 +226,7 @@ def check_dir(directory):
         else:
             errormsg("Directory %s - Unknown error: %s" % (e.errno, e.strerror))
 
-
-if __name__ == "__main__":
+def main():
     for directory in ("log", "raw", "sbe"):
         check_dir(directory)
     syslog.startLogging(prefix="Scorebot")
@@ -237,3 +237,7 @@ if __name__ == "__main__":
     reactor.callLater(10, mon_obj.start_job)
     reactor.callLater(1, mon_obj.finish_jobs)
     reactor.run()
+
+if __name__ == "__main__":
+    main()
+
