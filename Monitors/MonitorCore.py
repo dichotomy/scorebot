@@ -1,13 +1,12 @@
 #!/usr/bin/env python2.7
 
 import os
-import sys
 import time
-import traceback
 
 from twisted.python import syslog
 from twisted.internet import reactor, ssl
 
+from common import errormsg
 from Jobs import Jobs
 from Parameters import Parameters
 from WebClient import WebServiceCheckFactory, JobFactory
