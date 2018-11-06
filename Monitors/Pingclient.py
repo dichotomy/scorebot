@@ -20,6 +20,8 @@ class PingProtocol(protocol.ProcessProtocol):
         self.deferred = Deferred()
         self.ping_prog = "/usr/bin/ping" # TODO `which` this
         self.count = count
+        self.ratio = 0
+        self.lost = 0
 
     def ping(self):
         reactor.spawnProcess(self, self.ping_prog, [self.ping_prog, "-c", self.count, self.ipaddr])
@@ -34,8 +36,10 @@ class PingProtocol(protocol.ProcessProtocol):
         self.job.set_ping_sent(self.transmitted)
         self.job.set_ping_respond(self.recv)
         self.ratio = self.recv / self.transmitted
-        if 0 <= self.ratio <= 100:
-            self.d.callback(self)
-        else:
-            self.d.errback()
+
+        # TODO where is d?
+        #if 0 <= self.ratio <= 100:
+        #    self.d.callback(self)
+        #else:
+        #    self.d.errback()
 
