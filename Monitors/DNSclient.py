@@ -1,11 +1,9 @@
 #!/usr/bin/env python2
 
-import sys
-
 from twisted.internet import reactor
 from twisted.names import dns
 
-from Jobs import Jobs
+from common import errormsg
 
 
 class DNSclient(object):
@@ -23,11 +21,11 @@ class DNSclient(object):
     def query(self):
         print "Job %s: starting DNS for FQDN %s using server %s" % \
             (self.job_id, self.fqdn, self.dnssvr)
-        self.d = self.proto.query((self.dnssvr, 53),
+        dnsjob = self.proto.query((self.dnssvr, 53),
                                   [dns.Query(self.fqdn, dns.A)],
                                   timeout=self.timeout)
-        self.d.addCallback(self.getResults)
-        return self.d
+        dnsjob.addCallback(self.getResults)
+        return dnsjob
 
     def getResults(self, res):
         if len(res.answers):
@@ -45,7 +43,7 @@ class DNSclient(object):
     @staticmethod
     def errorHandler(failure):
         # Need to implement error handling
-        sys.stderr.write(str(failure))
+        errormsg(str(failure))
 
     def close(self):
         self.port.stopListening()
