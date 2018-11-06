@@ -13,7 +13,7 @@ class Parameters(object):
         self.sbe_auth = "124dd9b2-b89c-444b-9b15-30dc7bdd83bf"
         self.sb_ip = "10.150.100.81"
         self.sb_port = 80
-        self.job_url = "/api/job"
+        self.url = "/api/job"
         self.reason = ""
         self.headers = {}
         self.headers["Connection"] = "keep-alive"
