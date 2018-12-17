@@ -18,7 +18,7 @@ class PingProtocol(protocol.ProcessProtocol):
         self.fail = 0
         self.transmitted = 0
         self.deferred = Deferred()
-        self.ping_prog = "/usr/bin/ping" # TODO `which` this
+        self.ping_prog = "/bin/ping" # TODO `which` this
         self.count = str(count)
         self.ratio = 0
         self.lost = 0

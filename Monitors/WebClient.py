@@ -74,7 +74,7 @@ class WebClient(protocol.Protocol):
         self.conn_id = conn_id
         self.job_id = self.factory.get_job_id()
         self.authing = authing
-        headers = get_headers(self.factory.headers)
+        headers = self.factory.headers
         cookies = self.factory.get_cookies()
         if cookies:
             headers += cookies
@@ -144,12 +144,12 @@ class WebClient(protocol.Protocol):
                 conn_id = self.conn_id
             else:
                 conn_id = self.factory.get_conn_id()
-            headers = get_headers(self.parser.headers)
+            headers = self.factory.headers
             print "Job %s: ConnID %s: HEADER COMPLETE!\n\t%s" % \
                 (self.job_id, conn_id, headers)
             if "Set-Cookie" in headers:
                 self.factory.set_cookie(headers["Set-Cookie"])
-            self.factory.set_server_headers(get_headers(self.parser.headers))
+            self.factory.set_server_headers(self.factory.headers)
         self.factory.proc_body(self.parser.recv_body())
         if self.parser.is_partial_body():
             self.body += self.parser.recv_body()

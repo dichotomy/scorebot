@@ -221,7 +221,7 @@ def main():
             except OSError as exc:
                 errormsg("Unable to create directory %s - %s" % (directory, exc))
                 exit(os.EX_USAGE)
-    syslog.startLogging(prefix="Scorebot")
+    #syslog.startLogging(prefix="Scorebot")
     params = Parameters()
     jobs = Jobs()
     mon_obj = MonitorCore(params, jobs)
