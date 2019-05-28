@@ -1,0 +1,3 @@
+[submodule "Scorebot3"]
+	path = Scorebot3
+	url = https://github.com/iDigitalFlame/scorebot-core
