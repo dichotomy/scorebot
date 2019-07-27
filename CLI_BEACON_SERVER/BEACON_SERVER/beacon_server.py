@@ -16,7 +16,7 @@ class BeaconHandler(socketserver.BaseRequestHandler):
 
     def __init__(self, request, client_address, server):
 
-        self.log = self.server.log
+        self.log = server.log
         socketserver.BaseRequestHandler.__init__(self, request, client_address, server)
         return
 

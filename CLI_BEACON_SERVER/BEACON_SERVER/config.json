@@ -1,0 +1,5 @@
+{
+    "api": "<scorebot-engine-api-url>",
+    "key": "<scorebot-engine-key>",
+    "logtype": "file"
+}

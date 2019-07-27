@@ -1,0 +1,8 @@
+{
+    "url" : "<scorebot-engine-url",
+    "key": "<scorebot-engine-auth-key>",
+    "port": 50007,
+    "host": "0.0.0.0",
+    "mode": "default",
+    "logtype": "file"
+}

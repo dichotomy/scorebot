@@ -1,0 +1,12 @@
+[cli]
+<replace_this_with_cli_server_ip>
+[cli:vars]
+ansible_ssh_user=<username>
+ansible_password=<password>
+ansible_ssh_common_args='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+[beacon]
+<replace_this_with_beacon_server_ip>
+[beacon:vars]
+ansible_ssh_user=<usernane>
+ansible_password=<password>
+ansible_ssh_common_args='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'

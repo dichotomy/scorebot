@@ -1,0 +1,27 @@
+---
+- hosts: beacon
+  tasks:
+      - name: install docker
+        pacman:
+          name: docker
+          update_cache: no
+  
+      - name: start docker
+        systemd:
+          name: docker
+          state: restarted
+      
+      - name: copy beacon server files
+        copy:
+          src: BEACON_SERVER
+          dest: /root/
+      
+      - name: build docker image
+        shell: docker image build -t sbebeacon:latest .
+        args:
+          chdir: ~/BEACON_SERVER
+
+      - name: run docker container
+        shell: docker container run -d --name beacon_server --network host sbebeacon:latest
+        args:
+          chdir: ~/BEACON_SERVER

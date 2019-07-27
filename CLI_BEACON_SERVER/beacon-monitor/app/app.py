@@ -7,8 +7,8 @@ import requests
 
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
-TOKEN = "80d3c4fd-ccfa-43fc-8e1d-a23c9dd0ded9"
-API_URL = "http://192.168.1.12:8000/api/beacon/active"
+TOKEN = "d2f2d571-a7fc-4a08-8715-1eb4493ddafa"
+API_URL = "http://10.151.100.220/api/beacon/active"
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 log_file = os.path.join(basedir, 'log')

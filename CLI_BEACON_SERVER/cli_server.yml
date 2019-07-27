@@ -1,0 +1,27 @@
+---
+- hosts: cli
+  tasks:
+      - name: install docker
+        pacman:
+          name: docker
+          update_cache: yes
+  
+      - name: start docker
+        systemd:
+          name: docker
+          state: restarted
+      
+      - name: copy cli server files
+        copy:
+          src: CLI_SERVER
+          dest: /root/
+      
+      - name: build docker image
+        shell: docker image build -t sbecli:latest .
+        args:
+          chdir: ~/CLI_SERVER
+
+      - name: run docker container
+        shell: docker container run -d --name cli_server --publish 50007:50007 sbecli:latest
+        args:
+          chdir: ~/CLI_SERVER
