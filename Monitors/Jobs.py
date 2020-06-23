@@ -4,6 +4,7 @@ import time
 import json
 import base64
 import pprint
+import os
 
 statuses = ["pass", "reset", "timeout", "refused", "invalid"]
 
@@ -624,9 +625,17 @@ class Content(object):
         self.max_index = 0
         self.debug = debug
 
-    def verify_page(self, page):
-        if self.debug:
-            sys.stderr.write("Checking contents...\n\tChecking size...\n")
+    def verify_page(self, data):
+        if os.getenv("DEBUG") or self.debug:
+            sys.stderr.write("checking size:\n")
+            sys.stderr.write("data received:\n%s\n" % data)
+
+        # need to manually separate body from header because self.parser.recv_body() didn't work in WebClient.py
+
+        page = ''.join(data.split("\r\n\r\n")[1:])
+        if os.getenv("DEBUG") or self.debug:
+            sys.stderr.write("page body:\n%s\n" % page)
+
         if len(page)==self.json["size"]:
             if self.debug:
                 sys.stderr.write("\tSize is good, checking keywords...\n:w")
@@ -641,8 +650,11 @@ class Content(object):
                     if self.debug:
                         sys.stderr.write("Bad!\n")
                     self.invalid()
+                    return
         else:
+            sys.stderr.write("Size is bad! %d != %d\n" %(len(page), self.json["size"]))
             self.invalid()
+            return
         if self.debug:
             sys.stderr.write("Done content check!\n")
         self.success()
