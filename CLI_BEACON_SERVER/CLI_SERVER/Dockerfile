@@ -1,4 +1,4 @@
-FROM archlinux/base
+FROM archlinux:base
 LABEL maintainer="@gi0cann"
 RUN pacman -Sy --noconfirm python python-pip 
 COPY . /src
