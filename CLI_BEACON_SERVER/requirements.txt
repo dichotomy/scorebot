@@ -13,7 +13,7 @@ prompt-toolkit==1.0.14
 ptyprocess==0.5.1
 Pygments==2.7.4
 pylint==1.7.1
-requests==2.11.1
+requests==2.20.0
 simplegeneric==0.8.1
 six==1.10.0
 toml.py==0.1.7
