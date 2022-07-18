@@ -9,6 +9,7 @@ from Jobs import Jobs
 import time
 import sys
 import re
+import os
 
 class Cookie(object):
 
@@ -172,7 +173,7 @@ class WebClient(protocol.Protocol):
         self.factory.proc_body(self.parser.recv_body())
         if self.parser.is_partial_body():
             self.body += self.parser.recv_body()
-            if self.factory.get_debug():
+            if self.factory.get_debug() or os.getenv("DEBUG"):
                 print "self.body:"
                 print self.body
                 sys.stderr.write("Current self.body: %s\n" % self.body)
@@ -180,8 +181,8 @@ class WebClient(protocol.Protocol):
         if self.parser.is_message_complete():
             sys.stderr.write( "Job %s: ConnID %s: MESSAGE COMPLETE for %s!\n" % (self.job_id, self.factory.get_conn_id(), self.url))
             if self.conn:
-                self.conn.verify_page(self.body)
-            if self.factory.get_debug():
+                self.conn.verify_page(data)
+            if self.factory.get_debug() or os.getenv("DEBUG"):
                 sys.stderr.write("Job %s: Received this body: %s\n" % (self.job_id, self.body))
             self.factory.proc_body(self.body)
            # self.factory.proc_body(self.body)
@@ -422,10 +423,21 @@ class WebServiceCheckFactory(WebCoreFactory):
     def check_content(self, content):
         connector = reactor.connectTCP(self.job.get_ip(), self.service.get_port(), self, self.job.get_service_timeout())
         deferred = self.get_deferred(connector)
+
+        # currently it looks like its just connecting to the service.
+
+        print("[DEBUG][check_content] content:")
+        print(content)
+        print("type of content variable:", type(content))
+
+
         deferred.addCallback(self.content_pass, content)
         deferred.addErrback(self.content_fail, content)
 
     def check_contents(self):
+
+        print("[DEBUG][check_contents] called")
+
         if self.authenticating:
             # We can't do anything until the authentication buildProtocol is done...
             reactor.callLater(1, self.check_contents)
@@ -457,8 +469,25 @@ class WebServiceCheckFactory(WebCoreFactory):
         self.service.fail_conn()
 
     def content_pass(self, result, content):
-        content.success()
+        # content.success()
         self.service.pass_conn()
+        sys.stdout.write("connection succeed. checking content...")
+        print "original status:", self.service.json["status"]
+        for content in self.contents:
+            sys.stdout.write("content connect status: %s\n" % content.json["connect"])
+            if content.json["connect"] != "pass":
+                content.fail(content.json["connect"])
+
+                # if content fails, service status is invalid
+                self.service.fail_conn("invalid", "content mismatch")
+
+                sys.stdout.write("Job %s: Failed content integrity check with result %s:  %s/%s | %s\n" % \
+                         (self.job.get_job_id(), content.json["connect"], self.service.get_port(), self.service.get_proto(),
+                          content.get_url()))
+
+                print "new status:", self.service.json["status"]
+                return
+
         sys.stdout.write("Job %s: Finished content check for  %s/%s | %s\n" % \
                          (self.job.get_job_id(), self.service.get_port(), self.service.get_proto(),
                           content.get_url()))
